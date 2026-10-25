@@ -15,7 +15,7 @@ const dm = (t: number) => {
 const period = (r: Report) => `${dm(r.start)} עד ${dm(r.end - 1)}`;
 const kindName = (r: Report) => (r.kind === 'week' ? 'שבועי' : 'חודשי');
 
-const VERDICT_COLOR: Record<Verdict, string> = { on_track: C.ink, stuck: C.warn, drifting: C.bad, too_fast: C.warn, unknown: C.muted };
+const VERDICT_COLOR: Record<Verdict, string> = { on_track: C.ink, stuck: C.warn, drifting: C.bad, water: C.ink, too_fast: C.warn, unknown: C.muted };
 const STATUS: Record<Status, { label: string; color: string }> = {
   good: { label: 'ביעד', color: C.ink },
   ok: { label: 'כמעט', color: C.warn },

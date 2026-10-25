@@ -4,7 +4,8 @@ import { muscleSignal } from '../progress/journey';
 
 export type ReportKind = 'week' | 'month';
 export type Goal = 'lose' | 'recomp' | 'gain' | 'maintain';
-export type Verdict = 'on_track' | 'stuck' | 'drifting' | 'too_fast' | 'unknown';
+/** water: the weight went the wrong way while eating and training were on target (water, not fat) */
+export type Verdict = 'on_track' | 'stuck' | 'drifting' | 'water' | 'too_fast' | 'unknown';
 export type Status = 'good' | 'ok' | 'bad' | 'none';
 
 export const DAY = 24 * 3600 * 1000;
@@ -322,23 +323,27 @@ function decide(goal: Goal, change: number | undefined, fatDelta: number | undef
     return 'stuck';
   }
   if (change == null) return 'unknown';
+  // The scale moved the wrong way, but he ate and trained as planned: water, not a failed week
+  const habitsOn = (['kcal', 'workouts'] as const).every((k) => st(k) === 'good' || st(k) === 'ok');
+  const wrongWay = (v: Verdict): Verdict => (v === 'drifting' && habitsOn ? 'water' : v);
   if (goal === 'lose') {
     if (change < -1.2) return 'too_fast';
     if (change <= -0.15) return 'on_track';
-    return change >= 0.2 ? 'drifting' : 'stuck';
+    return wrongWay(change >= 0.2 ? 'drifting' : 'stuck');
   }
   if (goal === 'gain') {
     if (change > 0.6) return 'too_fast';
     if (change >= 0.1) return 'on_track';
-    return change <= -0.2 ? 'drifting' : 'stuck';
+    return wrongWay(change <= -0.2 ? 'drifting' : 'stuck');
   }
-  return Math.abs(change) < 0.3 ? 'on_track' : 'drifting';
+  return wrongWay(Math.abs(change) < 0.3 ? 'on_track' : 'drifting');
 }
 
 export const VERDICT_LABEL: Record<Verdict, string> = {
   on_track: 'בדרך הנכונה',
-  stuck: 'תקוע',
-  drifting: 'נסחף',
+  stuck: 'המשקל עומד',
+  drifting: 'המשקל עלה',
+  water: 'ההרגלים במקום, המשקל עוד לא',
   too_fast: 'מהר מדי',
   unknown: 'אין מספיק נתונים',
 };
@@ -482,9 +487,11 @@ function buildCore(inp: ReportInput, now: number): Report {
             : `בדרך הנכונה: ${changeText} ${period}.`
         : verdict === 'too_fast'
           ? `מהר מדי: ${changeText}. בקצב הזה יש סיכון לאבד שריר.`
-          : verdict === 'drifting'
-            ? `נסחף: ${changeText || 'ההרגלים לא במקום'} ${period}.`
-            : `תקוע: ${changeText ? `${changeText} ${period}` : 'אין התקדמות ברורה'}.`;
+          : verdict === 'water'
+            ? `ההרגלים במקום, המשקל עוד לא: ${changeText} ${period}. האוכל והאימונים היו ביעד, אז זה מים ולא שומן. אם זה ימשיך עוד שבוע, נבדוק.`
+            : verdict === 'drifting'
+              ? `${inp.goal === 'gain' ? 'המשקל ירד' : 'המשקל עלה'}: ${changeText || 'ההרגלים לא במקום'} ${period}.`
+              : `המשקל עומד: ${changeText ? `${changeText} ${period}` : 'אין שינוי ברור'}.`;
 
   const latest = [...clean.daily].reverse().find((d) => d.weight != null && d.day < inp.end);
   const cur = body.weightAvg ?? latest?.weight;

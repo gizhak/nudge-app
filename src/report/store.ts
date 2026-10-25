@@ -28,10 +28,26 @@ export async function loadReportPrefs(): Promise<ReportPrefs> {
 export const saveReportPrefs = (p: ReportPrefs) => AsyncStorage.setItem(PREFS, JSON.stringify(p));
 
 /** Newest first. */
+/**
+ * Reports made before the plain labels: "נסחף" and "תקוע" become what happened, and a week whose
+ * eating and training were on target while the scale went up becomes "water", as a new report would.
+ */
+function upgrade(r: Report): Report {
+  if (r.verdict === 'drifting') {
+    const on = (k: string) => ['good', 'ok'].includes(r.metrics?.find((m) => m.key === k)?.status ?? '');
+    const rest = r.headline.replace(/^נסחף:\s*/, '');
+    if (on('kcal') && on('workouts'))
+      return { ...r, verdict: 'water', headline: `ההרגלים במקום, המשקל עוד לא: ${rest} האוכל והאימונים היו ביעד, אז זה מים ולא שומן. אם זה ימשיך עוד שבוע, נבדוק.` };
+    return { ...r, headline: r.headline.replace(/^נסחף:/, 'המשקל עלה:') };
+  }
+  if (r.verdict === 'stuck') return { ...r, headline: r.headline.replace(/^תקוע:/, 'המשקל עומד:') };
+  return r;
+}
+
 export async function loadReports(): Promise<Report[]> {
   try {
     const raw = await AsyncStorage.getItem(LIST);
-    const list: Report[] = raw ? JSON.parse(raw) : [];
+    const list: Report[] = (raw ? JSON.parse(raw) : []).map(upgrade);
     return list.sort((a, b) => b.end - a.end || b.createdAt - a.createdAt);
   } catch {
     return [];
