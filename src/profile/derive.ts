@@ -250,7 +250,7 @@ function buildPlan(p: Profile): PlannedWorkout[] {
   const split = effectiveSplit(p);
   if (split !== 'full') {
     const ids = SPLIT_DAYS[split].map((d) => d.id);
-    return slots.map((s, i) => ({ day: s.day, hour: Math.floor(s.time / 60), minute: s.time % 60, session: ids[i % ids.length] }));
+    return slots.map((s, i) => ({ day: s.day, hour: Math.floor(s.time / 60), minute: s.time % 60, session: s.session && ids.includes(s.session) ? s.session : ids[i % ids.length] }));
   }
   // The weekend morning slot, if any, becomes the long session
   const weekend = p.weekendDays?.length ? p.weekendDays : defaultWeekend();
@@ -260,7 +260,7 @@ function buildPlan(p: Profile): PlannedWorkout[] {
     day: s.day,
     hour: Math.floor(s.time / 60),
     minute: s.time % 60,
-    session: i === longIdx ? 'F' : alt++ % 2 === 0 ? 'A' : 'B',
+    session: s.session && ['A', 'B', 'F'].includes(s.session) ? s.session : i === longIdx ? 'F' : alt++ % 2 === 0 ? 'A' : 'B',
   }));
 }
 

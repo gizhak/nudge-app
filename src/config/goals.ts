@@ -129,6 +129,8 @@ export interface WeekOverrides {
   shorts: number[];
   /** Which session is trained on which day, when the order changed: the missed one first, or his own swap */
   sessionAt?: Record<number, string>;
+  /** The whole week as he laid it out in the week planner; skips and short versions still apply on top */
+  plan?: PlannedWorkout[];
 }
 
 export const EMPTY_OVERRIDES: WeekOverrides = { week: '', moves: [], skips: [], shorts: [] };
@@ -152,6 +154,13 @@ export const weekStartKey = (now: Date) => {
 export function planThisWeek(now = new Date(), base: PlannedWorkout[] = WEEKLY_PLAN, ov: WeekOverrides = OVERRIDES): PlannedWorkout[] {
   if (ov.week !== weekStartKey(now)) return [...base].sort(byTime);
   const out: PlannedWorkout[] = [];
+  if (ov.plan) {
+    for (const w of ov.plan) {
+      if (ov.skips.includes(w.day)) continue;
+      out.push(ov.shorts.includes(w.day) ? { ...w, session: SHORT_SESSION_ID, short: true } : { ...w });
+    }
+    return out.sort(byTime);
+  }
   for (const w of base) {
     const move = ov.moves.find((m) => m.fromDay === w.day && m.session === w.session);
     if (ov.skips.includes(w.day) && !move) continue;

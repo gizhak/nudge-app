@@ -5,6 +5,7 @@ import { Appear, Pulse } from '../ui/grow';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { DAY_LETTERS, DAY_NAMES, GOALS, MINIMUM_WORKOUT, nextWorkout, pad2, planThisWeek, Session, SESSIONS, WEEKLY_PLAN } from '../config/goals';
 import Reschedule from './Reschedule';
+import WeekPlanner from './WeekPlanner';
 import { orderText, retimeWorkout, swapWithNext } from '../coach/reschedule';
 import { noteChange, sessionLine } from '../coach/replies';
 import { getWeekOverrides, PlannedWorkout, sessionOf } from '../config/goals';
@@ -69,6 +70,7 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
   const [minimum, setMinimum] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const [allOpen, setAllOpen] = useState(false);
+  const [plannerOpen, setPlannerOpen] = useState(false);
   // The how-to window: which list of moves, and which one it opened on
   const [how, setHow] = useState<{ list: Exercise[]; i: number } | null>(null);
   const openHow = (list: Exercise[], i: number) => setHow({ list, i });
@@ -209,11 +211,9 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
           <Text style={[T.muted, { fontSize: 13, flex: 1 }]}>
             קבוע: {WEEKLY_PLAN.length ? WEEKLY_PLAN.map((w) => `${DAY_NAMES[w.day]} ${pad2(w.hour)}:${pad2(w.minute)}`).join(' · ') : 'אין ימי אימון'}
           </Text>
-          {onEditDays && (
-            <Pressable onPress={onEditDays} hitSlop={8}>
-              <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>שנה ימים</Text>
-            </Pressable>
-          )}
+          <Pressable onPress={() => setPlannerOpen(true)} hitSlop={8}>
+            <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>לסדר את השבוע</Text>
+          </Pressable>
         </View>
         {week.some((w) => w.moved || w.short) && (
           <Text style={[T.muted, { fontSize: 13 }]}>
@@ -264,47 +264,12 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
                 }}
               />
             )}
-            <RetimeRow
-              workout={target}
-              onSave={async (time) => {
-                await saveWeekOverrides(retimeWorkout(getWeekOverrides(), now, target, time));
-                await applyReminders(await loadSettings()).catch(() => 0);
-                const hm = `${String(Math.floor(time / 60)).padStart(2, '0')}:${String(time % 60).padStart(2, '0')}`;
-                await noteChange(`מזיז את האימון ל${hm}`, `קיבלתי, ${sessionOf(target.session).title} ${isToday ? 'היום' : ''} ב${hm}. אזכיר לך לפני.`);
-                close();
-              }}
-            />
-            {(() => {
-              // His own order: this workout and the next one trade places
-              const swapped = swapWithNext(getWeekOverrides(), now, target);
-              if (!swapped) return null;
-              const name = (id: string) => sessionOf(id).title.split(':')[0];
-              const order = orderText(swapped, now, name);
-              return (
-                <View style={{ gap: 6 }}>
-                  <Text style={[T.bold, { fontSize: 15 }]}>להחליף עם האימון הבא</Text>
-                  <Text style={[T.muted, { fontSize: 13 }]}>אחרי ההחלפה: {order}</Text>
-                  <Pressable
-                    onPress={async () => {
-                      await saveWeekOverrides(swapped);
-                      await applyReminders(await loadSettings()).catch(() => 0);
-                      // Today's session changed: the coach says the new exercises, so the chat's latest word is the right one
-                      const todayNow = planThisWeek(now).find((w) => w.day === now.getDay());
-                      const todaySession = todayNow ? sessionOf(todayNow.session) : null;
-                      await noteChange(
-                        `מחליף את סדר האימונים`,
-                        `סגור. מעכשיו: ${order}.${todaySession ? ` היום ${todaySession.title}: ${sessionLine(todaySession.exercises)}` : ''}`,
-                      );
-                      close();
-                    }}
-                    style={({ pressed }) => [{ alignSelf: 'flex-end', borderWidth: 1, borderColor: C.track, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14, backgroundColor: C.card }, pressed && { opacity: 0.8 }]}
-                  >
-                    <Text style={[T.bold, { fontSize: 14 }]}>החלף</Text>
-                  </Pressable>
-                </View>
-              );
-            })()}
-            <Reschedule workout={target} onDone={close} />
+            <Pressable onPress={() => { setResched(false); setPlannerOpen(true); }} style={({ pressed }) => [s.planBtn, pressed && { opacity: 0.85 }]}>
+              <Ionicons name="calendar-outline" size={18} color={C.ink} />
+              <Text style={[T.bold, { fontSize: 15 }]}>לסדר את השבוע</Text>
+            </Pressable>
+            <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>להזיז אימון ליום אחר, להחליף בין אימונים, לשנות שעה או להוסיף יום.</Text>
+            <Reschedule workout={target} onDone={close} compact />
           </Sheet>
         );
       })()}
@@ -356,6 +321,14 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
         <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>בעיגולים של השבוע: מסגרת היא אימון מתוכנן, ומלא הוא אימון שהשעון רשם.</Text>
       </Sheet>
 
+      <WeekPlanner
+        open={plannerOpen}
+        done={done}
+        onClose={(changed) => {
+          setPlannerOpen(false);
+          if (changed) setTick((t) => t + 1);
+        }}
+      />
       {picking && (
         <PickMoves
           session={picking.session}
@@ -394,6 +367,7 @@ const s = StyleSheet.create({
   week: { flexDirection: 'row-reverse', justifyContent: 'space-between' },
   hero: { backgroundColor: C.ink, borderRadius: 28, padding: 20, gap: 8 },
   moves: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 6 },
+  planBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.ink, borderRadius: 14, paddingVertical: 13 },
   pickBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 13 },
   moveTag: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, backgroundColor: '#2C2A27', borderRadius: 14, paddingVertical: 6, paddingHorizontal: 10 },
   moveText: { fontFamily: T.base.fontFamily, fontSize: 13, color: '#fff' },

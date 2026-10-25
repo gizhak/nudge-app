@@ -13,7 +13,8 @@ import { TimeStepper } from '../ui/inputs';
 import { C, T } from '../ui/theme';
 
 /** "Can't make it": move to another day this week, a short home version, or skip. */
-export default function Reschedule({ workout, onDone }: { workout: PlannedWorkout; onDone: () => void }) {
+/** compact: only the short version and skipping; moving lives in the week planner */
+export default function Reschedule({ workout, onDone, compact = false }: { workout: PlannedWorkout; onDone: () => void; compact?: boolean }) {
   const now = new Date();
   const ov = getWeekOverrides();
   const stats = moveStats(ov, now, workout);
@@ -25,7 +26,7 @@ export default function Reschedule({ workout, onDone }: { workout: PlannedWorkou
 
   const usual = workout.hour * 60 + workout.minute;
   const suggestions = suggestDays(now, planThisWeek(now), workout, { usualTime: usual, kidsDays });
-  const canMove = stats.thisOne < 2;
+  const canMove = !compact && stats.thisOne < 2;
   const session = sessionOf(workout.session);
 
   const hhmm = (m: number) => `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`;
@@ -43,8 +44,8 @@ export default function Reschedule({ workout, onDone }: { workout: PlannedWorkou
 
   return (
     <Card>
-      <Text style={[T.bold, { fontSize: 16 }]}>לא מסתדר: {session.title}</Text>
-      {stats.week >= 1 && (
+      <Text style={[T.bold, { fontSize: 16 }]}>{compact ? 'לא מסתדר היום?' : `לא מסתדר: ${session.title}`}</Text>
+      {!compact && stats.week >= 1 && (
         <Text style={[T.bold, { fontSize: 14, color: C.signal }]}>
           {stats.thisOne >= 2 ? 'האימון הזה כבר זז פעמיים השבוע. נשארו רק גרסה קצרה או ויתור.' : 'זה כבר השינוי השני השבוע. מה מפריע? אם זה קבוע, כדאי לשנות את הימים בתיק שלי.'}
         </Text>

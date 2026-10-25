@@ -15,6 +15,8 @@ export interface WorkoutSlot {
   day: number;
   /** Minutes after midnight */
   time: number;
+  /** The session on this day, when he set it in the week planner; otherwise the plan's rotation */
+  session?: string;
 }
 
 export type WeekendStyle = 'same' | 'normal' | 'flex';
