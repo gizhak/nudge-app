@@ -1,0 +1,38 @@
+<title>Nudge הדגמה</title>
+<style>
+  /* One app column, phone width, centered on wider screens. The app paints its own ground. */
+  :root {
+    --ground: #F4F1EC;
+    --frame: #E7E1D7;
+    --ink: #1B1A18;
+    --pill: #1B1A18;
+    --pill-text: #F4F1EC;
+    color-scheme: light;
+  }
+  html, body { height: 100%; }
+  body { background: var(--frame); color: var(--ink); overflow: hidden; margin: 0; }
+  #root { display: flex; height: 100%; max-width: 430px; margin: 0 auto; background: var(--ground); position: relative; box-shadow: 0 0 0 1px rgba(27, 26, 24, 0.06); }
+  .demo {
+    position: fixed; top: calc(env(safe-area-inset-top, 0px) + 6px); left: calc(env(safe-area-inset-left, 0px) + 8px);
+    z-index: 1000; display: flex; align-items: center; gap: 8px;
+    font: 600 11px/1 system-ui, sans-serif; letter-spacing: 0.02em;
+    background: var(--pill); color: var(--pill-text); padding: 5px 10px; border-radius: 999px; opacity: 0.85;
+    direction: rtl; white-space: nowrap;
+  }
+  .demo button {
+    font: inherit; color: var(--pill); background: var(--pill-text); border: 0; border-radius: 999px;
+    padding: 3px 8px; cursor: pointer;
+  }
+  .demo button:focus-visible { outline: 2px solid var(--pill-text); outline-offset: 2px; }
+</style>
+<div class="demo"><span>הדגמה</span><button id="restart" type="button">התחל מחדש</button></div>
+<noscript>צריך JavaScript כדי להפעיל את ההדגמה.</noscript>
+<div id="root"></div>
+<script>
+  // Back to the welcome page: everything this browser kept for the demo is cleared
+  document.getElementById('restart').addEventListener('click', function () {
+    try { localStorage.clear(); } catch (e) {}
+    location.reload();
+  });
+</script>
+<script src="__BUNDLE__" defer></script>

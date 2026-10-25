@@ -1,0 +1,91 @@
+name: Android APK
+
+# Builds the APK here instead of on EAS (free EAS builds are limited per month).
+# Runs when a commit message contains [build], or by hand from the Actions tab.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install
+        run: npm ci
+
+      # Not in the repo: downloaded from the open exercise database the app's photos come from
+      - name: Exercise photos
+        run: node scripts/fetch-exercise-photos.js
+
+      # The signing key is in the repo only encrypted; the passphrase is a repository secret
+      - name: Signing key
+        env:
+          SIGNING_PASSPHRASE: ${{ secrets.SIGNING_PASSPHRASE }}
+        shell: bash
+        run: |
+          if [ -z "$SIGNING_PASSPHRASE" ]; then echo "::error title=Signing key::Add the SIGNING_PASSPHRASE secret (Settings, Secrets and variables, Actions)"; exit 1; fi
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:SIGNING_PASSPHRASE -in signing.tar.enc | tar xf -
+          test -f credentials.json && test -f credentials/android/coach-preview.keystore
+
+      - name: Version
+        run: node scripts/ci-android.js version
+
+      - name: Prebuild
+        run: npx expo prebuild --platform android --no-install
+        env:
+          CI: 1
+
+      - name: Signing
+        run: node scripts/ci-android.js signing
+
+      - name: Build APK
+        working-directory: android
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" 2>&1 | tee build.log
+
+      # Put the cause of a failed build where it can be read without signing in (annotations)
+      - name: Report failure
+        if: failure()
+        working-directory: android
+        shell: bash
+        run: |
+          [ -f build.log ] || exit 0
+          grep -nE "error:|Error:|ERROR|FAILED|What went wrong|Exception|e: " build.log | head -40 > why.txt || true
+          echo "---- tail ----" >> why.txt
+          tail -40 build.log >> why.txt
+          body=$(sed -e 's/%/%25/g' why.txt | awk '{printf "%s%%0A", $0}')
+          echo "::error title=Build APK failed::${body}"
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Nudge build ${{ github.run_number }}
+          body: ${{ github.event.head_commit.message || 'Manual build' }}
+          make_latest: true
+          files: android/app/build/outputs/apk/release/app-release.apk
