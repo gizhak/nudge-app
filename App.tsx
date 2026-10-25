@@ -5,6 +5,8 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 import { lookNow } from './src/coach/look';
+import { markSeen, unreadCount } from './src/coach/unread';
+import ChatTabIcon from './src/ui/ChatTabIcon';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { handleNotificationAction, startCoach } from './src/coach/tasks';
 import * as Notifications from 'expo-notifications';
@@ -114,6 +116,38 @@ function AppInner({ onReady }: { onReady: () => void }) {
   const [weighTick, setWeighTick] = useState(0);
   const [waistTick, setWaistTick] = useState(0);
   const [dataTick, setDataTick] = useState(0);
+  // Coach messages not seen yet: a count on the chat tab, and one swing when it grows or he comes back to it
+  const [unread, setUnread] = useState(0);
+  const [ring, setRing] = useState(0);
+  const unreadRef = useRef(0);
+  const tabRef = useRef<string>('today');
+  const refreshUnread = (cameBack: boolean) => {
+    if (tabRef.current === 'settings') {
+      markSeen().catch(() => 0);
+      unreadRef.current = 0;
+      setUnread(0);
+      return;
+    }
+    unreadCount()
+      .then((n) => {
+        if (n > unreadRef.current || (cameBack && n > 0)) setRing((r) => r + 1);
+        unreadRef.current = n;
+        setUnread(n);
+      })
+      .catch(() => undefined);
+  };
+  useEffect(() => {
+    tabRef.current = tab;
+    if (tab === 'settings') {
+      markSeen().catch(() => 0);
+      unreadRef.current = 0;
+      setUnread(0);
+    }
+  }, [tab]);
+  useEffect(() => {
+    refreshUnread(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataTick]);
   const [checkpointTick, setCheckpointTick] = useState(0);
   const [reportTick, setReportTick] = useState(0);
   const [runTick, setRunTick] = useState(0);
@@ -186,10 +220,16 @@ function AppInner({ onReady }: { onReady: () => void }) {
     const look = () =>
       lookNow().then((n) => {
         if (n > 0) setDataTick((t) => t + 1);
+        refreshUnread(true);
       });
     look();
     const sub = AppState.addEventListener('change', (st) => st === 'active' && look());
-    return () => sub.remove();
+    // Messages from background runs while the app is open
+    const id = setInterval(() => refreshUnread(false), 30_000);
+    return () => {
+      sub.remove();
+      clearInterval(id);
+    };
   }, [profile?.completed]);
 
   // The opening animation covers this while the profile loads
@@ -348,10 +388,14 @@ function AppInner({ onReady }: { onReady: () => void }) {
                 }}
                 style={[s.tab, on && s.tabOn]}
                 accessibilityRole="tab"
-                accessibilityLabel={t.label}
+                accessibilityLabel={t.key === 'settings' && unread && !on ? `${t.label}, ${unread} הודעות שלא נקראו` : t.label}
                 accessibilityState={{ selected: on }}
               >
-                <Ionicons name={on ? t.iconOn : t.icon} size={22} color={on ? '#fff' : C.muted} />
+                {t.key === 'settings' ? (
+                  <ChatTabIcon on={on} name={on ? t.iconOn : t.icon} count={on ? 0 : unread} ring={ring} />
+                ) : (
+                  <Ionicons name={on ? t.iconOn : t.icon} size={22} color={on ? '#fff' : C.muted} />
+                )}
               </Pressable>
             );
           })}

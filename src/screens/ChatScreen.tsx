@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadProfile } from '../profile/profile';
 import { acceptGuess, rejectGuess, wifiCheck } from '../coach/wifi';
 import { lookNow } from '../coach/look';
+import { markSeen } from '../coach/unread';
 
 type Mine = { at: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; text: string; sub?: string; water?: boolean; reply?: string };
 
@@ -89,6 +90,11 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
   const [container, setContainer] = useState(250);
   const [note, setNote] = useState<{ text: string; bad?: boolean } | null>(null);
   const scroll = useRef<ScrollView>(null);
+  // What was new when the chat opened: outlined once, then it counts as seen
+  const [newSince, setNewSince] = useState<number | null>(null);
+  useEffect(() => {
+    markSeen().then((before) => setNewSince(before || null));
+  }, []);
 
   const load = useCallback(async () => {
     const [l, q, a] = await Promise.all([loadLog(), loadSnoozes(), loadActed()]);
@@ -96,6 +102,8 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
     setQuiet(q);
     setActed(a);
     setReplies(await loadReplies());
+    // Looking at the chat: what just came in is seen too
+    markSeen().catch(() => 0);
     readDoings().then(setDoings).catch(() => undefined);
     try {
       const t = JSON.parse((await AsyncStorage.getItem('coach.waterTarget.v1')) ?? 'null');
@@ -240,7 +248,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
             return (
               <View key={m.id + m.at} style={{ gap: 8 }}>
                 {stampEl}
-                <View style={s.coach}>
+                <View style={[s.coach, newSince != null && m.at > newSince && s.coachNew]}>
                   <View style={s.tag}>
                     <Ionicons name={look.icon} size={13} color={look.color} />
                     <Text style={[T.bold, { fontSize: 12, color: C.muted }]}>{look.label}</Text>
@@ -308,6 +316,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
 }
 
 const s = StyleSheet.create({
+  coachNew: { borderWidth: 2, borderColor: C.signal },
   head: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 8 },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
   avatarDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.signal },
