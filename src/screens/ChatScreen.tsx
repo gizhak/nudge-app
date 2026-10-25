@@ -19,6 +19,7 @@ import { drinkReply, seedOf } from '../coach/voice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadProfile } from '../profile/profile';
 import { acceptGuess, rejectGuess, wifiCheck } from '../coach/wifi';
+import { lookNow } from '../coach/look';
 
 type Mine = { at: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; text: string; sub?: string; water?: boolean; reply?: string };
 
@@ -107,6 +108,10 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
   }, []);
   useEffect(() => {
     load();
+    // Opening the chat looks for anything new (a meal just logged) and shows the answer
+    lookNow().then((n) => {
+      if (n > 0) load();
+    });
     const sub = AppState.addEventListener('change', (st) => st === 'active' && load());
     return () => sub.remove();
   }, [load, tick]);

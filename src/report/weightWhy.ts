@@ -155,11 +155,15 @@ export function explainWeight(
       if (change >= 1 && opts.maintenance) {
         const win = days.filter((d) => d.day >= startOfDay(first.time) && d.day < lastDay && logged(d));
         const surplus = win.reduce((a, d) => a + (d.kcal - opts.maintenance!), 0);
-        const need = change * KCAL_PER_KG_FAT;
+        // The shown change, not the raw one: "1.0 kg" with 8,085 calories (from 1.05) read as a wrong sum
+        const shown = Math.round(change * 10) / 10;
+        const need = shown * KCAL_PER_KG_FAT;
+        const avgAte = win.length ? win.reduce((a, d) => a + d.kcal, 0) / win.length : 0;
+        const burn = `אכלת בממוצע ${num(avgAte)} קלוריות ביום, והגוף שורף כ ${num(opts.maintenance)}.`;
         reality =
           surplus <= 0
-            ? `כדי לעלות ${kg1(change)} שומן צריך לאכול כ ${num(need)} קלוריות מעבר לצורך. לפי מה שרשמת לא היית בעודף בכלל, אז זה לא שומן: זה מים.`
-            : `כדי לעלות ${kg1(change)} שומן צריך כ ${num(need)} קלוריות עודפות. לפי מה שרשמת, העודף בימים האלה היה כ ${num(surplus)}, כלומר לכל היותר ${num((surplus / KCAL_PER_KG_FAT) * 1000)} גרם שומן. כל השאר מים.`;
+            ? `ק"ג שומן נבנה רק מעודף של כ ${num(KCAL_PER_KG_FAT)} קלוריות מעל מה שהגוף שורף, בסך הכל. ${win.length ? burn + ' כלומר לא היה עודף, אז העלייה היא מים ולא שומן.' : ''}`
+            : `כדי לעלות ${kg1(shown)} שומן צריך עודף של כ ${num(need)} קלוריות מעל מה שהגוף שורף, בסך הכל. ${burn} העודף בימים האלה היה כ ${num(surplus)}, כלומר לכל היותר ${num((surplus / KCAL_PER_KG_FAT) * 1000)} גרם שומן. כל השאר מים.`;
       }
     } else {
       const light = before.filter((d) => logged(d) && d.kcal <= opts.target * 0.75);

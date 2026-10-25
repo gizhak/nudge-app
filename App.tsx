@@ -4,7 +4,7 @@ import Splash from './src/ui/Splash';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
-import { runCoach } from './src/coach/engine';
+import { lookNow } from './src/coach/look';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { handleNotificationAction, startCoach } from './src/coach/tasks';
 import * as Notifications from 'expo-notifications';
@@ -180,17 +180,13 @@ function AppInner({ onReady }: { onReady: () => void }) {
   }, [profile, onReady]);
 
   // Opening the app runs the coach: a meal logged in Zepp a minute ago gets its answer now, not at the
-  // next background run (Android does not tell us when another app writes a meal). At most every 2 minutes.
-  const lastLook = useRef(0);
+  // next background run (Android does not tell us when another app writes a meal)
   useEffect(() => {
     if (!profile?.completed) return;
-    const look = () => {
-      if (Date.now() - lastLook.current < 2 * 60000) return;
-      lastLook.current = Date.now();
-      runCoach(undefined, new Date(), { active: true })
-        .then((sent) => sent.length && setDataTick((t) => t + 1))
-        .catch(() => undefined);
-    };
+    const look = () =>
+      lookNow().then((n) => {
+        if (n > 0) setDataTick((t) => t + 1);
+      });
     look();
     const sub = AppState.addEventListener('change', (st) => st === 'active' && look());
     return () => sub.remove();
