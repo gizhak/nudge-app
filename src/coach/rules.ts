@@ -599,7 +599,7 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       out.push({
         id: `water@${bucket(120)}`,
         priority: far ? 1 : 2,
-        title: c.waterMl === 0 ? 'עוד לא שתית היום' : far ? `אתה מפגר ב ${waterText(gap, c.prefs.waterContainer)}` : `שתית ${waterText(c.waterMl, c.prefs.waterContainer)}`,
+        title: c.waterMl === 0 ? 'עוד לא שתית היום' : far ? `חסרים לך ${waterText(gap, c.prefs.waterContainer)} מים` : `שתית ${waterText(c.waterMl, c.prefs.waterContainer)}`,
         body: `עד עכשיו היית צריך ${waterProgress(expected, c.waterTarget, c.prefs.waterContainer)}. ${far ? 'לא לדחות לערב, ' : ''}${cupNow}, ולחץ על הכפתור כאן.`,
       });
     }

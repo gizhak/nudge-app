@@ -221,7 +221,7 @@ function coachLine(d: TodayData, now: Date, prefs: CoachPrefs, acked = false, ou
     if (mm >= wake + 90 && mm <= bed - 90 && gap > 500) {
       return mm >= bed - 150
         ? `חסרים ${waterText(water.target - water.ml, prefs.waterContainer)} מים להיום. זו ההזדמנות האחרונה, שתה עכשיו.`
-        : `אתה מפגר ב ${waterText(gap, prefs.waterContainer)} מים. ${drinkNow(250, prefs.waterContainer)} עכשיו, ולחץ על ה +.`;
+        : `חסרים לך ${waterText(gap, prefs.waterContainer)} מים לשעה הזו. ${drinkNow(250, prefs.waterContainer)} עכשיו, ולחץ על ה +.`;
     }
   }
   if (d.nutrition.meals === 0) return 'עוד לא נרשמה ארוחה היום. רשום את הארוחה הבאה, וכך אוכל לעקוב.';
