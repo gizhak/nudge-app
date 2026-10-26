@@ -147,7 +147,8 @@ const hm = (min: number) => {
   const h = Math.floor(min / 60);
   const m = Math.round(min % 60);
   if (!h) return `${m} דקות`;
-  return m ? `${h} שעות ו ${m} דקות` : `${h} שעות`;
+  const hs = h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : `${h} שעות`;
+  return m ? `${hs} ו ${m} דקות` : hs;
 };
 
 /** One day of the focus, in a line or two: what happened and how far from the target */

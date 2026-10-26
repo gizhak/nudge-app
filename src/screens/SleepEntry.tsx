@@ -25,7 +25,8 @@ export function hoursText(min: number) {
   const h = Math.floor(min / 60);
   const m = Math.round(min % 60);
   if (!h) return `${m} דקות`;
-  return m ? `${h} שעות ו ${m} דקות` : `${h} שעות`;
+  const hs = h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : `${h} שעות`;
+  return m ? `${hs} ו ${m} דקות` : hs;
 }
 
 export default function SleepEntry({ open, morning, onClose, onSaved }: { open: boolean; morning: number; onClose: () => void; onSaved: (n: ManualNight) => void }) {
