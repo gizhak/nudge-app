@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DAY_LETTERS, weekStartKey } from '../config/goals';
-import { Focus, focusProgress, isRealFocus, loadFocus } from '../coach/focus';
+import { dayLine, Focus, focusProgress, isRealFocus, loadFocus } from '../coach/focus';
+import type { DayData, Targets } from '../report/compute';
 import { answerProposal, loadProposal, Proposal } from '../coach/proposals';
 import { ackTopic } from '../coach/followupStore';
 import { Sheet } from '../ui/Sheet';
@@ -14,6 +15,9 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
   const [days, setDays] = useState<(boolean | null)[]>([]);
   const [prop, setProp] = useState<Proposal | null>(null);
   const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState<(DayData | null)[]>([]);
+  const [targets, setTargets] = useState<Targets | null>(null);
+  const [pick, setPick] = useState<number | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -21,7 +25,12 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
     // Last week's focus is not shown once the week turned; the coach picks the new one on its next run
     if (isRealFocus(f) && f.week === weekStartKey(new Date())) {
       setFocus(f);
-      focusProgress(f).then((p) => setDays(p.days)).catch(() => undefined);
+      focusProgress(f)
+        .then((p) => {
+          setDays(p.days);
+          setRows(p.rows);
+          setTargets(p.targets);
+        }).catch(() => undefined);
     } else setFocus(null);
     const p = await loadProposal().catch(() => null);
     setProp(p?.status === 'open' ? p : null);
@@ -57,9 +66,14 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
             {DAY_LETTERS.map((l, i) => {
               const v = days[i];
               return (
-                <View key={i} style={[s.day, v === true && s.dayHit, v === false && s.dayMiss, i === today && v == null && s.dayToday]}>
+                <Pressable
+                  key={i}
+                  onPress={() => setPick(i)}
+                  hitSlop={4}
+                  style={({ pressed }) => [s.day, v === true && s.dayHit, v === false && s.dayMiss, i === today && v == null && s.dayToday, pressed && { opacity: 0.7 }]}
+                >
                   {v === true ? <Ionicons name="checkmark" size={14} color="#fff" /> : <Text style={[T.bold, { fontSize: 12, color: v === false ? '#fff' : C.muted }]}>{l}</Text>}
-                </View>
+                </Pressable>
               );
             })}
           </View>
@@ -100,6 +114,15 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
               </Text>
             )}
             <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>המיקוד נבחר בכל יום ראשון לפי השבועיים שלפניו: הדבר שהכי משפיע על המטרה שלך ועוד לא ביעד.</Text>
+          </>
+        )}
+      </Sheet>
+
+      <Sheet open={pick != null} onClose={() => setPick(null)} title={focus && targets && pick != null ? dayLine(focus.key, pick, rows[pick] ?? null, targets).title : ''}>
+        {focus && targets && pick != null && (
+          <>
+            <Text style={[T.base, { fontSize: 16, lineHeight: 24 }]}>{dayLine(focus.key, pick, rows[pick] ?? null, targets).body}</Text>
+            <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>המיקוד: {focus.title}</Text>
           </>
         )}
       </Sheet>

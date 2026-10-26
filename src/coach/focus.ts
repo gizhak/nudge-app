@@ -120,20 +120,67 @@ export async function ensureFocus(now = new Date()): Promise<Focus | null> {
   return next;
 }
 
-/** This week's days against the focus: true, false, or null (no data yet, future, or not a training day) */
-export async function focusProgress(f: Focus, now = new Date()): Promise<{ days: (boolean | null)[]; hit: number }> {
+/** This week's days against the focus: true, false, or null (no data yet, future, or not a training day),
+ *  with each day's numbers for the day detail */
+export async function focusProgress(f: Focus, now = new Date()): Promise<{ days: (boolean | null)[]; hit: number; rows: (DayData | null)[]; targets: Targets }> {
   const start = startOfWeek(now);
   const { targets } = await context();
   const days = await collectDays(start, now.getTime() + 1);
   const out: (boolean | null)[] = Array(7).fill(null);
+  const rows: (DayData | null)[] = Array(7).fill(null);
   const today = now.getDay();
   for (const d of days) {
     const i = new Date(d.day).getDay();
     const h = dayHit(f.key, d, targets);
-    // Today counts once it is hit; a miss is only a miss when the day is over
-    out[i] = i === today ? (h === true ? true : null) : h;
+    rows[i] = d;
+    // Today counts once it is hit; a miss is only a miss when the day is over.
+    // Sleep is the exception: last night is over by the morning, so today is already final.
+    out[i] = i === today && f.key !== 'sleep' ? (h === true ? true : null) : h;
   }
-  return { days: out, hit: out.filter((x) => x === true).length };
+  return { days: out, hit: out.filter((x) => x === true).length, rows, targets };
+}
+
+const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const n = (x: number) => Math.round(x).toLocaleString('en-US');
+const hm = (min: number) => {
+  const h = Math.floor(min / 60);
+  const m = Math.round(min % 60);
+  if (!h) return `${m} דקות`;
+  return m ? `${h} שעות ו ${m} דקות` : `${h} שעות`;
+};
+
+/** One day of the focus, in a line or two: what happened and how far from the target */
+export function dayLine(key: FocusKey, i: number, d: DayData | null, t: Targets, now = new Date()): { title: string; body: string } {
+  const today = now.getDay();
+  const title = `יום ${DAY_NAMES[i]}${i === today ? ', היום' : ''}`;
+  if (i > today) return { title, body: 'עוד לא הגיע.' };
+  const open = i === today && key !== 'sleep' ? ' היום עוד לא נגמר.' : '';
+  if (!d) return { title, body: 'אין נתונים ליום הזה.' };
+  const kcal = t.dayCalories?.[i] ?? t.calories;
+  switch (key) {
+    case 'sleep': {
+      if (d.sleepMin == null) return { title, body: 'אין נתון. השעון לא רשם את הלילה, אז הוא לא נספר כפספוס.' };
+      const goal = t.sleepHours * 60;
+      const gap = goal - d.sleepMin;
+      return { title, body: `ישנת ${hm(d.sleepMin)}. ${gap <= 30 ? 'ביעד.' : `חסרות ${hm(gap)} ליעד של ${t.sleepHours} שעות.`}` };
+    }
+    case 'protein':
+      if (!d.meals) return { title, body: `לא נרשמו ארוחות.${open}` };
+      return { title, body: `${n(d.protein)} גרם חלבון מתוך ${t.proteinG}.${d.protein >= t.proteinG * 0.9 ? ' ביעד.' : ` חסרים ${n(t.proteinG - d.protein)} גרם.`}${open}` };
+    case 'kcal':
+      if (!isLogged(d, t)) return { title, body: `היום לא נרשם במלואו (${n(d.kcal)} קלוריות ב ${d.meals} ארוחות), אז אי אפשר לדעת.${open}` };
+      return {
+        title,
+        body: `${n(d.kcal)} קלוריות מול יעד ${n(kcal)}.${d.kcal > kcal * 1.1 ? ` ${n(d.kcal - kcal)} מעל.` : d.kcal < kcal * 0.7 ? ' נמוך מדי, זה לא עוזר.' : ' ביעד.'}${open}`,
+      };
+    case 'steps':
+      if (d.steps == null) return { title, body: 'אין נתון צעדים מהשעון.' };
+      return { title, body: `${n(d.steps)} צעדים מתוך ${n(t.steps)}.${d.steps >= t.steps ? ' ביעד.' : ` חסרים ${n(t.steps - d.steps)}.`}${open}` };
+    case 'logging':
+      return { title, body: isLogged(d, t) ? `נרשם במלואו: ${d.meals} ארוחות, ${n(d.kcal)} קלוריות.` : `נרשמו ${d.meals} ארוחות, ${n(d.kcal)} קלוריות. זה לא מספיק כדי לדעת מה אכלת.${open}` };
+    case 'workouts':
+      return { title, body: d.workout ? 'היה אימון.' : `לא היה אימון.${open}` };
+  }
 }
 
 /** Empty focus records (an on-target week) are stored too, so the choice is not made again */
