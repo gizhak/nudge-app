@@ -16,6 +16,9 @@ import { Bar, Card, GrowNumber, MiniBars, OpenRow, RowsCard, Screen } from '../u
 import { DoubleRing } from '../ui/tiles';
 import { C, FONT, fmt, T } from '../ui/theme';
 import MenuAdvisor from './MenuAdvisor';
+import DietMenuScreen from './DietMenu';
+import { DietMenu, looksLikeDiet } from '../diet/parse';
+import { checkMeal, loadMenu, menuMealOf } from '../diet/store';
 import Craving from './Craving';
 import { Sheet } from '../ui/Sheet';
 
@@ -47,9 +50,15 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
   const [open, setOpen] = useState<string | null>(null);
   const [slotOpen, setSlotOpen] = useState<SlotId | null>(null);
   const [weekOpen, setWeekOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(!!sharedMenu);
+  // A shared text is a dietitian's menu or a restaurant's: each has its own place
+  const sharedDiet = !!sharedMenu && looksLikeDiet(sharedMenu);
+  const [menuOpen, setMenuOpen] = useState(!!sharedMenu && !sharedDiet);
+  const [dietOpen, setDietOpen] = useState(sharedDiet);
+  const [diet, setDiet] = useState<DietMenu | null>(null);
   useEffect(() => {
-    if (sharedMenu) setMenuOpen(true);
+    if (!sharedMenu) return;
+    if (looksLikeDiet(sharedMenu)) setDietOpen(true);
+    else setMenuOpen(true);
   }, [sharedMenu]);
   const [app, setApp] = useState<AppInfo | null>(APPS.zepp);
 
@@ -58,6 +67,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
     try {
       const setup = await setupHealthConnect();
       if (!setup.ok) return;
+      loadMenu().then(setDiet).catch(() => undefined);
       const [m, w, prefs] = await Promise.all([readMeals(), readProteinByDay(7), loadPrefs()]);
       setSlots(prefs.mealSlots);
       setBedTime(prefs.bedTime);
@@ -208,8 +218,12 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
           <Ionicons name={menuOpen ? 'close' : 'restaurant-outline'} size={24} color={menuOpen ? '#fff' : C.kcal} />
           <Text style={[T.bold, { fontSize: 14, textAlign: 'center', color: menuOpen ? '#fff' : C.ink }]}>{menuOpen ? 'סגור' : 'מסעדה'}</Text>
         </Pressable>
+        <Pressable onPress={() => setDietOpen(true)} style={({ pressed }) => [s.actTile, pressed && { opacity: 0.85 }]}>
+          <Ionicons name="document-text-outline" size={24} color={C.good} />
+          <Text style={[T.bold, { fontSize: 14, textAlign: 'center' }]}>התפריט שלי</Text>
+        </Pressable>
       </View>
-      {menuOpen && <MenuAdvisor kcal={kcal} protein={protein} initialText={sharedMenu} />}
+      {menuOpen && <MenuAdvisor kcal={kcal} protein={protein} initialText={sharedDiet ? undefined : sharedMenu} />}
       {waiting && (
         <View style={s.waiting}>
           <ActivityIndicator color={C.accent} />
@@ -229,12 +243,16 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
 
 
       <RowsCard>
-        {SLOTS.filter((slot) => slots.includes(slot.id) || meals.some((m) => slotOf(m.time) === slot.id)).map((slot, idx) => {
+        {SLOTS.filter((slot) => slots.includes(slot.id) || meals.some((m) => slotOf(m.time) === slot.id) || !!menuMealOf(diet, slot.id)).map((slot, idx) => {
           const inSlot = meals.filter((m) => slotOf(m.time) === slot.id);
           const slotKcal = inSlot.reduce((a, m) => a + m.kcal, 0);
           const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
           const passed = slot.from < slot.to ? nowMin >= slot.to : false;
           const at = inSlot[0]?.time.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+          // With a dietitian's menu: what it says for this meal, and how the meal compares
+          const mm = menuMealOf(diet, slot.id);
+          const started = slot.from < slot.to ? nowMin >= slot.from : nowMin >= slot.from || nowMin < slot.to;
+          const check = mm ? checkMeal(mm, { kcal: slotKcal, protein: inSlot.reduce((a, m) => a + m.protein, 0), count: inSlot.length }, passed ? 'past' : started ? 'now' : 'future') : null;
           return (
             <OpenRow
               key={slot.id}
@@ -242,6 +260,12 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
               title={inSlot.length ? `${slot.label} · ${fmt(slotKcal)}` : slot.label}
               sub={inSlot.length ? `${at} · ${inSlot.map((m) => m.name).join(', ')}` : passed ? 'לא נרשמה' : 'בהמשך'}
               dot={!inSlot.length && passed}
+              note={check ? `בתפריט: ${check.plan}` : undefined}
+              right={
+                check ? (
+                  <Text style={[T.bold, { fontSize: 12, color: check.tone === 'good' ? C.good : check.tone === 'off' ? C.warn : C.muted }]}>{check.chip}</Text>
+                ) : undefined
+              }
               onPress={() => (inSlot.length === 1 ? setOpen(inSlot[0].id) : inSlot.length ? setSlotOpen(slot.id) : logInZepp())}
             />
           );
@@ -256,6 +280,8 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
         <MiniBars values={week.map((d) => d.protein)} labels={week.map((d) => DAY_SHORT[d.date.getDay()])} target={GOALS.proteinG} />
         <Text style={[T.muted, { fontSize: 13 }]}>הקו הוא היעד, {GOALS.proteinG} גרם ביום.</Text>
       </Sheet>
+
+      <DietMenuScreen open={dietOpen} onClose={() => setDietOpen(false)} initialText={sharedDiet ? sharedMenu : undefined} onSaved={() => loadMenu().then(setDiet).catch(() => undefined)} />
 
       <Sheet open={cravingOpen} onClose={() => setCravingOpen(false)} title="בא לי משהו">
         {craving > 0 && <Craving key={craving} kcalLeft={target - kcal} proteinLeft={GOALS.proteinG - protein} bedTime={bedTime} />}

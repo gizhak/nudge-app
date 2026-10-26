@@ -299,7 +299,7 @@ export function RowsCard({ children }: { children: ReactNode }) {
 }
 
 /** One line that opens its details: a title, one line under it, a dot when something is new or missing. */
-export function OpenRow({ title, sub, dot, onPress, first, right }: { title: string; sub?: string; dot?: boolean; onPress: () => void; first?: boolean; right?: ReactNode }) {
+export function OpenRow({ title, sub, dot, onPress, first, right, note }: { title: string; sub?: string; dot?: boolean; onPress: () => void; first?: boolean; right?: ReactNode; note?: string }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [r.line, !first && r.sep, pressed && { opacity: 0.6 }]}>
       <View style={{ flex: 1, gap: 2 }}>
@@ -311,6 +311,11 @@ export function OpenRow({ title, sub, dot, onPress, first, right }: { title: str
               {sub}
             </Text>
           </View>
+        ) : null}
+        {note ? (
+          <Text style={[T.muted, { fontSize: 12 }]} numberOfLines={2}>
+            {note}
+          </Text>
         ) : null}
       </View>
       {right}

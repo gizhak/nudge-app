@@ -73,6 +73,8 @@ export async function checkProposal(now = Date.now()): Promise<Proposal | null> 
   if (cur?.answeredAt && now - cur.answeredAt < COOLDOWN) return null;
   const profile = await loadProfile();
   if (!profile.completed || !profile.heightCm) return null;
+  // A dietitian's menu is hers to change, not the coach's
+  if (profile.menuTargets) return null;
   const goal = safeGoal(profile);
   const weights = await readWeights(28).catch(() => [] as { date: Date; kg: number }[]);
   const { targets } = await context();
