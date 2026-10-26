@@ -8,6 +8,7 @@ import type { DayData, Targets } from '../report/compute';
 import { answerProposal, loadProposal, Proposal } from '../coach/proposals';
 import { ackTopic } from '../coach/followupStore';
 import { Sheet } from '../ui/Sheet';
+import SleepEntry from './SleepEntry';
 import { C, FONT, T } from '../ui/theme';
 
 export default function FocusCards({ tick = 0 }: { tick?: number }) {
@@ -18,6 +19,7 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
   const [rows, setRows] = useState<(DayData | null)[]>([]);
   const [targets, setTargets] = useState<Targets | null>(null);
   const [pick, setPick] = useState<number | null>(null);
+  const [entry, setEntry] = useState<number | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -70,7 +72,7 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
                   key={i}
                   onPress={() => setPick(i)}
                   hitSlop={4}
-                  style={({ pressed }) => [s.day, v === true && s.dayHit, v === false && s.dayMiss, i === today && v == null && s.dayToday, pressed && { opacity: 0.7 }]}
+                  style={({ pressed }) => [s.day, v === true && s.dayHit, v === false && s.dayMiss, i === today && v == null && s.dayToday, focus.key === 'sleep' && rows[i]?.sleepManual && s.dayManual, pressed && { opacity: 0.7 }]}
                 >
                   {v === true ? <Ionicons name="checkmark" size={14} color="#fff" /> : <Text style={[T.bold, { fontSize: 12, color: v === false ? '#fff' : C.muted }]}>{l}</Text>}
                 </Pressable>
@@ -122,10 +124,35 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
         {focus && targets && pick != null && (
           <>
             <Text style={[T.base, { fontSize: 16, lineHeight: 24 }]}>{dayLine(focus.key, pick, rows[pick] ?? null, targets).body}</Text>
+            {focus.key === 'sleep' && pick <= today && rows[pick]?.sleepMin == null && (
+              <Pressable
+                onPress={() => {
+                  const d = new Date();
+                  d.setHours(9, 0, 0, 0);
+                  d.setDate(d.getDate() - (today - pick));
+                  setPick(null);
+                  // One drawer closes before the next opens
+                  setTimeout(() => setEntry(d.getTime()), 320);
+                }}
+                style={({ pressed }) => [s.yes, { flex: 0 }, pressed && { opacity: 0.85 }]}
+              >
+                <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>להכניס ידנית</Text>
+              </Pressable>
+            )}
             <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>המיקוד: {focus.title}</Text>
           </>
         )}
       </Sheet>
+
+      <SleepEntry
+        open={entry != null}
+        morning={entry ?? Date.now()}
+        onClose={() => setEntry(null)}
+        onSaved={() => {
+          setEntry(null);
+          load();
+        }}
+      />
     </>
   );
 }
@@ -139,6 +166,8 @@ const s = StyleSheet.create({
   dayHit: { backgroundColor: C.good, borderColor: C.good },
   dayMiss: { backgroundColor: '#B9B2A8', borderColor: '#B9B2A8' },
   dayToday: { borderColor: C.signal, borderWidth: 2 },
+  /** A night entered by hand: the same color, a dashed edge */
+  dayManual: { borderStyle: 'dashed', borderWidth: 2, borderColor: '#FFFFFF' },
   yes: { flex: 1, backgroundColor: C.ink, borderRadius: 14, paddingVertical: 12 },
   no: { flex: 1, borderWidth: 1.5, borderColor: C.track, borderRadius: 14, paddingVertical: 12, backgroundColor: '#fff' },
 });

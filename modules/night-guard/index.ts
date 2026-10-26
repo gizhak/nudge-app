@@ -17,6 +17,7 @@ interface NativeNightGuard {
   setGraceUntil(epochMs: number): void;
   takeInitialSharedText(): string | null;
   addListener(event: 'onSharedText', cb: (e: { text: string }) => void): { remove: () => void };
+  getUnlocks(): number[];
   getState(): { ack: string | null; babyNights: string[]; lastAlert: number };
   listPairedDevices(): PairedDevice[] | null;
   setCar(address: string, name: string): void;
@@ -160,5 +161,14 @@ export function wifiNow(scan = false): WifiNow {
     return native ? native.wifiNow(scan) : { ok: false, reason: 'no_native', nearby: [] };
   } catch {
     return { ok: false, reason: 'permission', nearby: [] };
+  }
+}
+
+/** Unlock times of the last three days, ms; empty on builds without it */
+export function phoneUnlocks(): number[] {
+  try {
+    return native?.getUnlocks ? native.getUnlocks() : [];
+  } catch {
+    return [];
   }
 }

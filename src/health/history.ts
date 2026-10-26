@@ -6,6 +6,7 @@ import { withoutHidden } from './hiddenMeals';
 import { merge } from '../report/weightWhy';
 import { currentEatingDayStart, eatingDayStart, SleepSpan } from './eatingDay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loadManual, morningKey } from '../sleep/manual';
 
 const readNutrition = async (start: Date, end: Date): Promise<any[]> => {
   const { records }: any = await readRecords('Nutrition', range(start, end));
@@ -197,12 +198,15 @@ export const readNutritionByDay = (days = 7, now = new Date()) => readNutritionB
 export async function readSleepByNight(nights = 7, now = new Date()) {
   const today = startOfDay(now);
   const first = new Date(today.getTime() - (nights - 1) * DAY);
-  const { records }: any = await readRecords('SleepSession', range(new Date(first.getTime() - 6 * 3600 * 1000), now));
+  const [{ records }, manual]: any = await Promise.all([readRecords('SleepSession', range(new Date(first.getTime() - 6 * 3600 * 1000), now)), loadManual()]);
   return Array.from({ length: nights }, (_, i) => {
     const day = new Date(first.getTime() + i * DAY);
     const winStart = day.getTime() - 6 * 3600 * 1000;
     const winEnd = day.getTime() + 14 * 3600 * 1000;
     const inWindow = records.filter((r: any) => new Date(r.endTime).getTime() > winStart && new Date(r.startTime).getTime() < winEnd);
-    return { date: day, minutes: inWindow.length ? sleepMinutesInWindow(inWindow, winStart, winEnd) : null };
+    if (inWindow.length) return { date: day, minutes: sleepMinutesInWindow(inWindow, winStart, winEnd) as number | null, manual: false };
+    // The watch missed the night: what he entered by hand, if anything
+    const m = manual[morningKey(day.getTime())];
+    return { date: day, minutes: (m ? m.minutes : null) as number | null, manual: !!m };
   });
 }

@@ -16,6 +16,7 @@ import { activityApp, foodApp, hasWatch } from '../setup/devices';
 import { CHANNELS } from '../notifications/schedule';
 import { caloriesFor, GOALS, nextWorkout, planThisWeek, sessionOf } from '../config/goals';
 import { weeklyMessages } from './weekly';
+import { sleepMessages } from '../sleep/ask';
 import { readHourFacts } from './dayFacts';
 import { loadGuess, loadPrints, wifiPlaceNow } from './wifi';
 import { checkIn, moodOf, summarizeDay } from './daySummary';
@@ -277,6 +278,9 @@ async function runOnce(
       level: prefs.level,
     }).catch(() => [])),
   );
+
+  // A night the watch missed: asked once, in the morning
+  candidates.push(...(await sleepMessages(now, prefs.wakeTime).catch(() => [])));
 
   // The evening sweet, said before it happens; it goes through the same caps as the rest
   if (data) {

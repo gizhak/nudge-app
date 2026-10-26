@@ -18,6 +18,8 @@ export interface DayData {
   meals: number;
   steps: number | null;
   sleepMin: number | null;
+  /** The night was entered by hand, the watch missed it */
+  sleepManual?: boolean;
   workout: boolean;
 }
 

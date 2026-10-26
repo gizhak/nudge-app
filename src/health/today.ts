@@ -4,6 +4,7 @@ import { sourceLabel, sourceLabels } from '../config/sources';
 import { dedupeNutrition } from './meals';
 import { withoutHidden } from './hiddenMeals';
 import { currentEatingDayStart } from './eatingDay';
+import { loadManual, morningKey } from '../sleep/manual';
 
 export type Quality = 'ok' | 'partial' | 'missing';
 
@@ -89,6 +90,11 @@ async function readSleep(dayStart: Date) {
   const winEnd = dayStart.getTime() + 14 * 3600 * 1000; // 14:00 today
   const { records }: any = await readRecords('SleepSession', range(new Date(winStart), new Date(winEnd)));
   const minutes = sleepMinutesInWindow(records, winStart, winEnd);
+  if (!records.length) {
+    // The watch missed the night: what he entered by hand
+    const m = (await loadManual().catch(() => ({}) as Record<string, any>))[morningKey(dayStart.getTime())];
+    if (m) return { minutes: m.minutes as number | null, sources: ['הזנה ידנית'] };
+  }
   return { minutes: records.length ? minutes : null, sources: records.map(origin) };
 }
 

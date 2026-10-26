@@ -22,6 +22,14 @@ import { acceptGuess, rejectGuess, wifiCheck } from '../coach/wifi';
 import { lookNow } from '../coach/look';
 import { markSeen } from '../coach/unread';
 import { answerProposal } from '../coach/proposals';
+import { noteChange } from '../coach/replies';
+import SleepEntry, { hoursText } from './SleepEntry';
+import { SLEEP_MISSING, SLEEP_MISSING2 } from '../sleep/ask';
+
+const WATCH_CHANGED =
+  'ככה מחברים שעון חדש:\n1. באפליקציה של השעון החדש (ל Bip Max זו Zepp) מפעילים סנכרון ל Health Connect.\n2. ב Health Connect, בהרשאות של אותה אפליקציה, מאשרים לה לכתוב שינה, צעדים, דופק ואימונים.\n3. ב Nudge, בהגדרות, מעדכנים את סוג השעון.\nמהלילה הבא הנתונים אמורים להגיע.';
+const NOTHING_CHANGED =
+  'אז כנראה הסנכרון נתקע.\n1. פתח את אפליקציית השעון ותן לה דקה לסנכרן מהשעון.\n2. ב Health Connect, בדוק שהיא עדיין מורשית לכתוב שינה.\nאם מחר בבוקר עדיין אין נתון, תגיד לי.';
 
 type Mine = { at: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; text: string; sub?: string; water?: boolean; reply?: string };
 
@@ -62,9 +70,11 @@ const baseOf = (id: string) => id.split('@')[0];
 const keyOf = (id: string) => (/^meal_\d+$/.test(id) ? 'food' : /^status_\d+$/.test(id) ? 'status' : baseOf(id));
 
 /** What the button inside a message does, by topic. */
-function actionOf(m: SentMessage, container = 250): { label: string; kind: 'water' | 'route' | 'gym' | 'proposal'; ml?: number } | null {
+function actionOf(m: SentMessage, container = 250): { label: string; kind: 'water' | 'route' | 'gym' | 'proposal' | 'sleep' | 'sleep2'; ml?: number } | null {
   const k = baseOf(m.id);
   if (k === 'proposal') return { label: 'כן, לעדכן', kind: 'proposal' };
+  if (k === SLEEP_MISSING) return { label: 'לא ענדתי', kind: 'sleep' };
+  if (k === SLEEP_MISSING2) return { label: 'החלפתי שעון', kind: 'sleep2' };
   if (k === 'wifi_guess') return { label: 'כן, זה חדר הכושר', kind: 'gym' };
   if (k === 'water' || k === 'water_morning') {
     if (container === 30) return { label: '10 לגימות', kind: 'water', ml: 300 };
@@ -91,6 +101,8 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
   const [who, setWho] = useState<{ name?: string; target: number }>({ target: 0 });
   const [container, setContainer] = useState(250);
   const [note, setNote] = useState<{ text: string; bad?: boolean } | null>(null);
+  /** The message whose night is being entered by hand */
+  const [sleepFor, setSleepFor] = useState<SentMessage | null>(null);
   const scroll = useRef<ScrollView>(null);
   // What was new when the chat opened: outlined once, then it counts as seen
   const [newSince, setNewSince] = useState<number | null>(null);
@@ -136,6 +148,13 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
     await ackTopic(baseOf(m.id));
     await load();
   };
+  /** His answer and the coach's reply, kept in the chat */
+  const say = async (m: SentMessage, text: string, reply: string) => {
+    await noteChange(text, reply).catch(() => undefined);
+    await ackTopic(baseOf(m.id)).catch(() => undefined);
+    await load();
+    setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 200);
+  };
   const act = async (m: SentMessage) => {
     const a = actionOf(m, container);
     if (!a) return;
@@ -158,6 +177,11 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
       setTimeout(() => setNote(null), 4000);
       return load();
     }
+    if (a.kind === 'sleep') {
+      setSleepFor(m);
+      return;
+    }
+    if (a.kind === 'sleep2') return say(m, 'החלפתי שעון', WATCH_CHANGED);
     if (a.kind === 'gym') {
       const ok = await acceptGuess().catch(() => false);
       await ackTopic('wifi_guess').catch(() => undefined);
@@ -285,6 +309,19 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                         >
                           <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא עכשיו</Text>
                         </Pressable>
+                      ) : a?.kind === 'sleep' ? (
+                        <Pressable onPress={() => say(m, 'לא יודע', 'בסדר. הלילה הזה לא ייספר, לא לטובה ולא לרעה.')} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא יודע</Text>
+                        </Pressable>
+                      ) : a?.kind === 'sleep2' ? (
+                        <>
+                          <Pressable onPress={() => say(m, 'לא שיניתי כלום', NOTHING_CHANGED)} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                            <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא שיניתי כלום</Text>
+                          </Pressable>
+                          <Pressable onPress={() => setSleepFor(m)} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                            <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא ענדתי</Text>
+                          </Pressable>
+                        </>
                       ) : a?.kind === 'gym' ? (
                         // A question gets its two answers, not "got it"
                         <Pressable
@@ -307,7 +344,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                     </View>
                   )}
                 </View>
-                {latest && answerable && (done || acked) && !drankAfter && !moot && (
+                {latest && answerable && (done || acked) && !drankAfter && !moot && !key.startsWith('sleep_missing') && (
                   <View style={s.me}>
                     <Text style={[T.bold, { fontSize: 15, color: '#fff' }]}>{done ? 'בוצע' : 'הבנתי'}</Text>
                     {done && <Ionicons name="checkmark" size={16} color="#fff" />}
@@ -333,6 +370,16 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
           {busy ? <ActivityIndicator color={C.ink} /> : <Text style={[T.bold, { fontSize: 15, textAlign: 'center' }]}>מה עכשיו?</Text>}
         </Pressable>
       </View>
+      <SleepEntry
+        open={!!sleepFor}
+        morning={sleepFor?.at ?? Date.now()}
+        onClose={() => setSleepFor(null)}
+        onSaved={(n) => {
+          const m = sleepFor;
+          setSleepFor(null);
+          if (m) say(m, `לא ענדתי. ישנתי בערך ${hoursText(n.minutes)}`, n.minutes >= 6.5 * 60 ? 'רשמתי. לילה סביב היעד.' : `רשמתי. זה פחות מהיעד, אז היום הרעב יהיה חזק מהרגיל. תכנן מראש ארוחה עם חלבון.`);
+        }}
+      />
     </View>
   );
 }
@@ -348,7 +395,7 @@ const s = StyleSheet.create({
   coach: { alignSelf: 'flex-end', width: '86%', backgroundColor: C.card, borderRadius: 22, borderBottomRightRadius: 8, padding: 14, gap: 6 },
   coachShort: { alignSelf: 'flex-end', maxWidth: '80%', backgroundColor: C.card, borderRadius: 18, borderBottomRightRadius: 6, paddingVertical: 9, paddingHorizontal: 14 },
   tag: { flexDirection: 'row-reverse', alignItems: 'center', gap: 5 },
-  btns: { flexDirection: 'row-reverse', gap: 8, paddingTop: 4 },
+  btns: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8, paddingTop: 4 },
   btnDark: { backgroundColor: C.ink, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 },
   btnLight: { borderWidth: 1, borderColor: '#D9D2C7', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 14 },
   me: { alignSelf: 'flex-start', flexDirection: 'row-reverse', alignItems: 'center', gap: 6, backgroundColor: C.ink, borderRadius: 22, borderBottomLeftRadius: 8, paddingVertical: 10, paddingHorizontal: 16 },

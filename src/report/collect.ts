@@ -60,6 +60,7 @@ export async function collectDays(start: number, end: number, now = Date.now()):
       meals: nd?.meals ?? 0,
       steps: steps[i] ?? null,
       sleepMin: sl?.minutes ?? null,
+      sleepManual: !!sl?.manual,
       workout: workoutDays.has(day),
     };
   });

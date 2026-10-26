@@ -153,6 +153,7 @@ class NightGuardService : Service() {
     fun onUnlock(ctx: Context) {
       val prefs = NightPrefs.get(ctx)
       if (!prefs.getBoolean(NightPrefs.ENABLED, false)) return
+      NightPrefs.noteUnlock(ctx)
       val now = Calendar.getInstance()
       val m = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
       val bed = prefs.getInt(NightPrefs.BED, 23 * 60 + 30)

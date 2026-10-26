@@ -159,10 +159,10 @@ export function dayLine(key: FocusKey, i: number, d: DayData | null, t: Targets,
   const kcal = t.dayCalories?.[i] ?? t.calories;
   switch (key) {
     case 'sleep': {
-      if (d.sleepMin == null) return { title, body: 'אין נתון. השעון לא רשם את הלילה, אז הוא לא נספר כפספוס.' };
+      if (d.sleepMin == null) return { title, body: 'אין נתון. השעון לא רשם את הלילה, אז הוא לא נספר כפספוס. אם לא ענדת, אפשר להכניס אותו ידנית.' };
       const goal = t.sleepHours * 60;
       const gap = goal - d.sleepMin;
-      return { title, body: `ישנת ${hm(d.sleepMin)}. ${gap <= 30 ? 'ביעד.' : `חסרות ${hm(gap)} ליעד של ${t.sleepHours} שעות.`}` };
+      return { title, body: `ישנת ${hm(d.sleepMin)}${d.sleepManual ? ' (הזנה ידנית)' : ''}. ${gap <= 30 ? 'ביעד.' : `חסרות ${hm(gap)} ליעד של ${t.sleepHours} שעות.`}` };
     }
     case 'protein':
       if (!d.meals) return { title, body: `לא נרשמו ארוחות.${open}` };

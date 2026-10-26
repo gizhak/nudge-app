@@ -16,6 +16,20 @@ object NightPrefs {
   const val LABEL = "interruptLabel"
   const val GRACE = "graceUntil"
   const val LAST_MORNING = "lastMorning"
+  const val UNLOCKS = "unlocks"
+
+  /** Every unlock of the last three days, so the app can tell when he went to sleep and woke up
+   *  on a night the watch did not record */
+  fun noteUnlock(ctx: Context, at: Long = System.currentTimeMillis()) {
+    val prefs = get(ctx)
+    val keep = (prefs.getString(UNLOCKS, "") ?: "").split(',').mapNotNull { it.toLongOrNull() }.filter { at - it < 3 * 86400000L && it <= at }
+    // Unlocks seconds apart say nothing more than one
+    val next = if (keep.isNotEmpty() && at - keep.last() < 60000L) keep else keep + at
+    prefs.edit().putString(UNLOCKS, next.takeLast(400).joinToString(",")).apply()
+  }
+
+  fun unlocks(ctx: Context): List<Double> =
+    (get(ctx).getString(UNLOCKS, "") ?: "").split(',').mapNotNull { it.toLongOrNull()?.toDouble() }
 
   fun get(ctx: Context): SharedPreferences = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 

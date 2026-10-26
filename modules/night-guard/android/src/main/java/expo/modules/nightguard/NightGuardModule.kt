@@ -114,6 +114,10 @@ class NightGuardModule : Module() {
       CarPrefs.takeEvents(context)
     }
 
+    Function("getUnlocks") {
+      NightPrefs.unlocks(appContext.reactContext ?: return@Function emptyList<Double>())
+    }
+
     Function("getState") {
       val prefs = NightPrefs.get(context)
       mapOf(
