@@ -63,6 +63,8 @@ export interface Profile {
   rope?: boolean;
   /** Two abs exercises at the end of every workout */
   abs?: boolean;
+  /** Calories added to (or taken from) the daily target by plan changes he approved */
+  calorieAdjust?: number;
   /** Moves the user picked, per split, place and session (see train/library pickKey). None: the recommendation */
   picks?: Record<string, string[]>;
   schema?: number;

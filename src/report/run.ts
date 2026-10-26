@@ -13,7 +13,7 @@ import { loadReportPrefs, loadReports, saveReport } from './store';
 
 let running: Promise<number> | null = null;
 
-async function context() {
+export async function context() {
   const profile = await loadProfile();
   const usable = profile.completed && profile.heightCm > 0 && profile.weightKg > 0;
   const d = usable ? derive(profile) : null;

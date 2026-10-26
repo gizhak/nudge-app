@@ -12,6 +12,8 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 /** Each topic's mark: an icon in its color, the only color in the bubble. */
 export function topicLook(key: string): { icon: IconName; color: string; label: string } {
   const k = key.toLowerCase();
+  if (k.startsWith('focus')) return { icon: 'locate', color: C.signal, label: 'המיקוד של השבוע' };
+  if (k.startsWith('proposal')) return { icon: 'git-compare-outline', color: C.signal, label: 'שינוי בתוכנית' };
   if (k.startsWith('water')) return { icon: 'water', color: C.water, label: 'מים' };
   if (k.startsWith('weigh') || k.startsWith('weight')) return { icon: 'scale-outline', color: C.good, label: 'משקל' };
   if (/^(go_to_sleep|short_sleep|sleep|night)/.test(k)) return { icon: 'moon', color: C.sleep, label: 'שינה' };

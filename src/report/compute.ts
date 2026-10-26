@@ -238,7 +238,7 @@ function statusOf(share: number, good: number, ok: number): Status {
   return share >= good ? 'good' : share >= ok ? 'ok' : 'bad';
 }
 
-function metrics(days: DayData[], prev: DayData[], t: Targets, kind: ReportKind) {
+export function metrics(days: DayData[], prev: DayData[], t: Targets, kind: ReportKind) {
   const weeks = days.length / 7;
   const word = kind === 'week' ? 'בשבוע הקודם' : 'בחודש הקודם';
   const logged = days.filter((d) => isLogged(d, t));

@@ -15,6 +15,7 @@ import { checklist } from './checklist';
 import { activityApp, foodApp, hasWatch } from '../setup/devices';
 import { CHANNELS } from '../notifications/schedule';
 import { caloriesFor, GOALS, nextWorkout, planThisWeek, sessionOf } from '../config/goals';
+import { weeklyMessages } from './weekly';
 import { readHourFacts } from './dayFacts';
 import { loadGuess, loadPrints, wifiPlaceNow } from './wifi';
 import { checkIn, moodOf, summarizeDay } from './daySummary';
@@ -263,6 +264,19 @@ async function runOnce(
       body: `אני רואה רשת חזקה בשם "${guess.ssid}". זה חדר הכושר שלך? אם כן, מעכשיו אזהה אותו לבד. אם לא, לא אשאל עליה שוב.`,
     });
   }
+
+  // The week's focus, its evening check, and a proposed change to the plan; through the same caps
+  candidates.push(
+    ...(await weeklyMessages(now, {
+      kcal: data?.nutrition.kcal ?? 0,
+      protein: data?.nutrition.protein ?? 0,
+      meals: data?.nutrition.meals ?? 0,
+      steps: data?.steps ?? 0,
+      targets: { calories: caloriesFor(now), proteinG: GOALS.proteinG, steps: GOALS.steps },
+      bedTime: prefs.bedTime,
+      level: prefs.level,
+    }).catch(() => [])),
+  );
 
   // The evening sweet, said before it happens; it goes through the same caps as the rest
   if (data) {

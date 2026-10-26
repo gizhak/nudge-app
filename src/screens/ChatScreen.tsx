@@ -21,6 +21,7 @@ import { loadProfile } from '../profile/profile';
 import { acceptGuess, rejectGuess, wifiCheck } from '../coach/wifi';
 import { lookNow } from '../coach/look';
 import { markSeen } from '../coach/unread';
+import { answerProposal } from '../coach/proposals';
 
 type Mine = { at: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; text: string; sub?: string; water?: boolean; reply?: string };
 
@@ -61,8 +62,9 @@ const baseOf = (id: string) => id.split('@')[0];
 const keyOf = (id: string) => (/^meal_\d+$/.test(id) ? 'food' : /^status_\d+$/.test(id) ? 'status' : baseOf(id));
 
 /** What the button inside a message does, by topic. */
-function actionOf(m: SentMessage, container = 250): { label: string; kind: 'water' | 'route' | 'gym'; ml?: number } | null {
+function actionOf(m: SentMessage, container = 250): { label: string; kind: 'water' | 'route' | 'gym' | 'proposal'; ml?: number } | null {
   const k = baseOf(m.id);
+  if (k === 'proposal') return { label: 'כן, לעדכן', kind: 'proposal' };
   if (k === 'wifi_guess') return { label: 'כן, זה חדר הכושר', kind: 'gym' };
   if (k === 'water' || k === 'water_morning') {
     if (container === 30) return { label: '10 לגימות', kind: 'water', ml: 300 };
@@ -146,6 +148,13 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
       } catch (e: any) {
         setNote({ text: `לא נשמר: ${String(e?.message ?? e)}. בדוק את הרשאת המים בבדיקת מוכנות.`, bad: true });
       }
+      setTimeout(() => setNote(null), 4000);
+      return load();
+    }
+    if (a.kind === 'proposal') {
+      const reply = await answerProposal(true).catch(() => '');
+      await ackTopic('proposal').catch(() => undefined);
+      if (reply) setNote({ text: reply });
       setTimeout(() => setNote(null), 4000);
       return load();
     }
@@ -263,7 +272,20 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                           <Text style={[T.bold, { fontSize: 14, color: '#fff' }]}>{a.label}</Text>
                         </Pressable>
                       )}
-                      {a?.kind === 'gym' ? (
+                      {a?.kind === 'proposal' ? (
+                        <Pressable
+                          onPress={async () => {
+                            const reply = await answerProposal(false).catch(() => '');
+                            await ackTopic('proposal').catch(() => undefined);
+                            if (reply) setNote({ text: reply });
+                            setTimeout(() => setNote(null), 4000);
+                            load();
+                          }}
+                          style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}
+                        >
+                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא עכשיו</Text>
+                        </Pressable>
+                      ) : a?.kind === 'gym' ? (
                         // A question gets its two answers, not "got it"
                         <Pressable
                           onPress={async () => {

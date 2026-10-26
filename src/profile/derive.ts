@@ -272,7 +272,8 @@ export function derive(input: Profile): Derived {
   const workouts = p.slots.length;
   const maintenance = bmr * activityFactor(workouts, p.workLoad);
   const floor = bmr * 1.05;
-  const calories = round(Math.max(floor, maintenance + CALORIE_DELTA[p.goal][p.pace]), 25);
+  // Plan changes he approved (a plateau, losing too fast) move the target, never under the floor
+  const calories = round(Math.max(floor, maintenance + CALORIE_DELTA[p.goal][p.pace] + (p.calorieAdjust ?? 0)), 25);
   const proteinG = round(p.weightKg * PROTEIN_PER_KG[p.goal], 5);
   const weeklyRateKg = WEEKLY_RATE[p.goal][p.pace];
   const toTarget = p.targetWeightKg ? Math.abs(p.weightKg - p.targetWeightKg) : 0;

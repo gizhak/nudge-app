@@ -14,6 +14,7 @@ import { loadLastReadiness, Readiness } from '../setup/readiness';
 import { GOALS, nextWorkout, caloriesFor, planThisWeek, sessionOf } from '../config/goals';
 import PlaceChip from '../ui/PlaceChip';
 import { confirmExits, verifyPlace } from '../coach/tasks';
+import FocusCards from './FocusCards';
 import { GYM_MIN } from '../coach/gymDays';
 import { PlaceState } from '../coach/store';
 import { setupHealthConnect } from '../health/permissions';
@@ -509,6 +510,8 @@ export default function TodayScreen({
           )}
         </NowCard>
       )}
+
+      <FocusCards tick={dataTick} />
 
       {eveningWindow(now, prefs, night) && !night.notOut?.includes(nightKey(now)) && (
         <OutingCard
