@@ -77,7 +77,7 @@ export async function checkProposal(now = Date.now()): Promise<Proposal | null> 
   const weights = await readWeights(28).catch(() => [] as { date: Date; kg: number }[]);
   const { targets } = await context();
   // Adherence over the last two weeks: calories and workouts on target in each
-  const weeks = await Promise.all([collectDays(now - 7 * DAY, now), collectDays(now - 14 * DAY, now - 7 * DAY)]);
+  const weeks = await Promise.all([collectDays(now - 7 * DAY, now), collectDays(now - 14 * DAY, now - 7 * DAY - 1)]);
   const adherent = weeks.every((days) => {
     const m = metrics(days, [], targets, 'week');
     const ok = (k: string) => ['good', 'ok'].includes(m.list.find((x) => x.key === k)?.status ?? '');

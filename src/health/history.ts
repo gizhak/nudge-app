@@ -26,6 +26,14 @@ const startOfDay = (d: Date) => {
   return x;
 };
 
+/** Midnight `n` calendar days after (or before) a midnight. Not n × 24 hours: a day with a clock
+ *  change is 23 or 25 hours long, and counting hours lands on the wrong day. */
+export const addDays = (d: Date | number, n: number) => {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+};
+
 export interface Meal {
   id: string;
   /** The meal across its copies, for hiding */
@@ -81,11 +89,11 @@ export async function readMealsSince(days: number, now = new Date()): Promise<Me
 
 /** Protein per day for the last `days` days, oldest first. */
 export async function readProteinByDay(days = 7, now = new Date()) {
-  const start = startOfDay(new Date(now.getTime() - (days - 1) * DAY));
+  const start = addDays(startOfDay(now), -(days - 1));
   const records = await readNutrition(start, now);
-  const out = Array.from({ length: days }, (_, i) => ({ date: new Date(start.getTime() + i * DAY), protein: 0 }));
+  const out = Array.from({ length: days }, (_, i) => ({ date: addDays(start, i), protein: 0 }));
   for (const r of records) {
-    const idx = Math.floor((startOfDay(new Date(r.startTime)).getTime() - start.getTime()) / DAY);
+    const idx = Math.round((startOfDay(new Date(r.startTime)).getTime() - start.getTime()) / DAY);
     if (idx >= 0 && idx < days) out[idx].protein += r.protein?.inGrams ?? 0;
   }
   return out;
@@ -149,7 +157,7 @@ export async function readWorkoutDaysThisWeek(now = new Date()): Promise<Set<num
  * each day with its meals, so a total can be checked meal by meal.
  */
 export async function readNutritionByEatingDay(days = 14, now = new Date()) {
-  const first = startOfDay(new Date(now.getTime() - (days - 1) * DAY));
+  const first = addDays(startOfDay(now), -(days - 1));
   let wakeMin = 6 * 60 + 30;
   try {
     const p = JSON.parse((await AsyncStorage.getItem('coach.prefs.v1')) ?? '{}');
@@ -166,7 +174,7 @@ export async function readNutritionByEatingDay(days = 14, now = new Date()) {
   }
   // Where each day starts: that morning's wake-up
   const starts = Array.from({ length: days + 1 }, (_, i) => {
-    const day = first.getTime() + i * DAY;
+    const day = addDays(first, i).getTime();
     const noon = Math.min(day + 12 * 3600000, now.getTime());
     return eatingDayStart(noon, wakeMin, sleeps);
   });
@@ -182,7 +190,7 @@ export async function readNutritionByEatingDay(days = 14, now = new Date()) {
       .map((r: any) => ({ name: r.name || 'ארוחה', time: new Date(r.startTime), kcal: r.energy?.inKilocalories ?? 0, protein: r.protein?.inGrams ?? 0 }))
       .sort((a: any, b: any) => a.time.getTime() - b.time.getTime());
     return {
-      date: new Date(first.getTime() + i * DAY),
+      date: addDays(first, i),
       kcal: meals.reduce((a: number, m: any) => a + m.kcal, 0),
       protein: meals.reduce((a: number, m: any) => a + m.protein, 0),
       meals: meals.length,
@@ -197,10 +205,10 @@ export const readNutritionByDay = (days = 7, now = new Date()) => readNutritionB
 /** Sleep per night for the last `nights` nights (night of day D = 18:00 on D-1 to 14:00 on D), oldest first. */
 export async function readSleepByNight(nights = 7, now = new Date()) {
   const today = startOfDay(now);
-  const first = new Date(today.getTime() - (nights - 1) * DAY);
+  const first = addDays(today, -(nights - 1));
   const [{ records }, manual]: any = await Promise.all([readRecords('SleepSession', range(new Date(first.getTime() - 6 * 3600 * 1000), now)), loadManual()]);
   return Array.from({ length: nights }, (_, i) => {
-    const day = new Date(first.getTime() + i * DAY);
+    const day = addDays(first, i);
     const winStart = day.getTime() - 6 * 3600 * 1000;
     const winEnd = day.getTime() + 14 * 3600 * 1000;
     const inWindow = records.filter((r: any) => new Date(r.endTime).getTime() > winStart && new Date(r.startTime).getTime() < winEnd);

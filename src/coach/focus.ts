@@ -4,6 +4,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { weekStartKey } from '../config/goals';
 import { collectDays } from '../report/collect';
+import { addDays } from '../health/history';
 import { DayData, isLogged, metrics, Targets } from '../report/compute';
 import { context } from '../report/run';
 import { safeGoal } from '../profile/safety';
@@ -105,7 +106,7 @@ export async function ensureFocus(now = new Date()): Promise<Focus | null> {
   const start = startOfWeek(now);
   const { profile, targets } = await context();
   if (!profile.completed) return null;
-  const [last, before] = await Promise.all([collectDays(start - 7 * DAY, start), collectDays(start - 14 * DAY, start - 7 * DAY)]);
+  const [last, before] = await Promise.all([collectDays(addDays(start, -7).getTime(), start), collectDays(addDays(start, -14).getTime(), addDays(start, -7).getTime())]);
   // How last week's focus went, measured on last week's days
   let lastResult: Focus['last'];
   if (cur && cur.week !== week && cur.need > 0 && cur.title) {
@@ -152,7 +153,11 @@ const hm = (min: number) => {
 /** One day of the focus, in a line or two: what happened and how far from the target */
 export function dayLine(key: FocusKey, i: number, d: DayData | null, t: Targets, now = new Date()): { title: string; body: string } {
   const today = now.getDay();
-  const title = `יום ${DAY_NAMES[i]}${i === today ? ', היום' : ''}`;
+  // A night is named by the morning it ends: Monday's circle is the night from Sunday to Monday
+  const title =
+    key === 'sleep'
+      ? `הלילה שבין ${DAY_NAMES[(i + 6) % 7]} ל${DAY_NAMES[i]}${i === today ? ', הלילה האחרון' : ''}`
+      : `יום ${DAY_NAMES[i]}${i === today ? ', היום' : ''}`;
   if (i > today) return { title, body: 'עוד לא הגיע.' };
   const open = i === today && key !== 'sleep' ? ' היום עוד לא נגמר.' : '';
   if (!d) return { title, body: 'אין נתונים ליום הזה.' };

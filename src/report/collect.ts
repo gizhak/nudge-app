@@ -1,7 +1,7 @@
 // Gathers what a report needs from Health Connect and the app's own records.
 import { workoutsOnly } from '../health/isWorkout';
 import { aggregateRecord, readRecords } from 'react-native-health-connect';
-import { readNutritionByDay, readSleepByNight } from '../health/history';
+import { addDays, readNutritionByDay, readSleepByNight } from '../health/history';
 import { groupWeighIns } from '../health/scale';
 import { loadPlaceState } from '../coach/store';
 import { BodyPoint, DAY, DayData } from './compute';
@@ -25,9 +25,13 @@ const startOfDay = (t: number) => {
 };
 
 /** One row per day from start (a day start) to end (exclusive), never past now. */
-export async function collectDays(start: number, end: number, now = Date.now()): Promise<DayData[]> {
+export async function collectDays(from: number, end: number, now = Date.now()): Promise<DayData[]> {
+  // Whole days: a start in the middle of a day, or an end in the middle of today, still counts that day
+  // (an hour of slack: a midnight counted back in 24-hour steps across a clock change lands at 23:00)
+  const start = startOfDay(from + 3 * 3600000);
   const last = Math.min(end, startOfDay(now) + DAY);
-  const n = Math.max(0, Math.round((last - start) / DAY));
+  let n = 0;
+  while (addDays(start, n).getTime() < last) n++;
   if (!n) return [];
   const until = new Date(Math.min(last, now) - 1);
   const [nut, sleep, sessions, place] = await Promise.all([
@@ -42,15 +46,15 @@ export async function collectDays(start: number, end: number, now = Date.now()):
   for (let i = 0; i < n; i += 7) {
     const chunk = await Promise.all(
       Array.from({ length: Math.min(7, n - i) }, (_, j) => {
-        const s = start + (i + j) * DAY;
-        const e = Math.min(s + DAY, now);
+        const s = addDays(start, i + j).getTime();
+        const e = Math.min(addDays(s, 1).getTime(), now);
         return safe(async () => ((await aggregateRecord({ recordType: 'Steps', ...range(s, e) } as any)) as any)?.COUNT_TOTAL ?? null, null);
       }),
     );
     steps.push(...chunk);
   }
   return Array.from({ length: n }, (_, i) => {
-    const day = start + i * DAY;
+    const day = addDays(start, i).getTime();
     const nd = nut.find((x) => startOfDay(x.date.getTime()) === day);
     const sl = sleep.find((x) => startOfDay(x.date.getTime()) === day);
     return {
