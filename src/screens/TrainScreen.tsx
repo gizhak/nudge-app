@@ -30,23 +30,26 @@ import { Exercise } from '../config/goals';
 import ExerciseHow, { HowMark } from '../train/ExerciseHow';
 import { hasHow } from '../train/exercisePics';
 import PickMoves from '../train/PickMoves';
+import { kindOf, Load, loadKey, loadLoads, loadText } from '../train/loads';
 import { gearFor } from '../train/library';
 import { applyDerived, derive, EditableSession, editableSessions } from '../profile/derive';
 import { loadProfile, Profile, saveProfile } from '../profile/profile';
 
 /** The moves of a session; a move with photos opens the how-to window */
-function ExerciseList({ list, onHow }: { list: Exercise[]; onHow: (list: Exercise[], i: number) => void }) {
+function ExerciseList({ list, onHow, loads }: { list: Exercise[]; onHow: (list: Exercise[], i: number) => void; loads: Record<string, Load> }) {
   return (
     <>
       {list.map((e, i) => {
         const how = hasHow(e.name);
+        const l = loads[loadKey(e.name)];
         return (
-          <Pressable key={e.name} disabled={!how} onPress={() => onHow(list, i)} style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}>
+          <Pressable key={e.name} disabled={!how && !kindOf(e.name)} onPress={() => onHow(list, i)} style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}>
             <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 8, flex: 1 }}>
               {how && <HowMark />}
               <Text style={[T.base, s.text, { flexShrink: 1 }]}>{e.name}</Text>
             </View>
             <Text style={[T.muted, s.text]}>
+              {l ? <Text style={[T.bold, { color: C.ink }]}>{loadText(l)} · </Text> : null}
               {e.sets} × {e.reps}
             </Text>
           </Pressable>
@@ -74,6 +77,12 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
   // The how-to window: which list of moves, and which one it opened on
   const [how, setHow] = useState<{ list: Exercise[]; i: number } | null>(null);
   const openHow = (list: Exercise[], i: number) => setHow({ list, i });
+  // His weight per move, shown on the tags and in the lists
+  const [loads, setLoads] = useState<Record<string, Load>>({});
+  const reloadLoads = () => loadLoads().then(setLoads).catch(() => undefined);
+  useEffect(() => {
+    reloadLoads();
+  }, []);
   // Picking the moves of a session, from its exercise list
   const [picking, setPicking] = useState<{ profile: Profile; session: EditableSession } | null>(null);
   const openPick = async (id: string) => {
@@ -140,12 +149,15 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
           {next.session.exercises.slice(0, 4).map((e, i) => (
             <Appear key={e.name} delay={220 + i * 60}>
               <Pressable
-                disabled={!hasHow(e.name)}
+                disabled={!hasHow(e.name) && !kindOf(e.name)}
                 onPress={() => openHow(next.session.exercises, i)}
                 style={({ pressed }) => [s.moveTag, pressed && { opacity: 0.7 }]}
                 accessibilityLabel={`${e.name}: איך עושים`}
               >
-                <Text style={s.moveText}>{e.name}</Text>
+                <Text style={s.moveText}>
+                  {e.name}
+                  {loads[loadKey(e.name)] ? <Text style={{ fontWeight: '700' }}> · {loadText(loads[loadKey(e.name)])}</Text> : null}
+                </Text>
                 {hasHow(e.name) && <HowMark />}
               </Pressable>
             </Appear>
@@ -282,7 +294,7 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
 
       <Sheet open={planOpen} onClose={() => setPlanOpen(false)} title={`${next.session.title} · ${next.session.minutes} דקות`}>
         <Card>
-          <ExerciseList list={next.session.exercises} onHow={openHow} />
+          <ExerciseList list={next.session.exercises} onHow={openHow} loads={loads} />
         </Card>
         {next.session.id !== 'F' && next.session.id !== 'MIN' && (
           <Pressable onPress={() => openPick(next.session.id)} style={({ pressed }) => [s.pickBtn, pressed && { opacity: 0.7 }]}>
@@ -301,7 +313,7 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
                 <Text style={[T.bold, s.text]}>{session.title}</Text>
                 <Text style={[T.muted, s.text]}>{session.minutes} דקות</Text>
               </View>
-              {open === session.id && <ExerciseList list={session.exercises} onHow={openHow} />}
+              {open === session.id && <ExerciseList list={session.exercises} onHow={openHow} loads={loads} />}
             </Card>
           </Pressable>
         ))}
@@ -309,7 +321,7 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
 
       <Sheet open={minimum} onClose={() => setMinimum(false)} title="10 דקות בבית">
         <Card>
-          <ExerciseList list={MINIMUM_WORKOUT} onHow={openHow} />
+          <ExerciseList list={MINIMUM_WORKOUT} onHow={openHow} loads={loads} />
         </Card>
         <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>עדיף 10 דקות מאפס. זה שומר על הרצף, והרצף הוא מה שבונה הרגל.</Text>
       </Sheet>
@@ -337,7 +349,7 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
           onSave={savePick}
         />
       )}
-      <ExerciseHow list={how?.list ?? []} start={how ? how.i : null} onClose={() => setHow(null)} />
+      <ExerciseHow list={how?.list ?? []} start={how ? how.i : null} onClose={() => setHow(null)} onLoads={reloadLoads} />
     </Screen>
   );
 }

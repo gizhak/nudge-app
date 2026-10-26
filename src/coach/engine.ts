@@ -16,6 +16,7 @@ import { activityApp, foodApp, hasWatch } from '../setup/devices';
 import { CHANNELS } from '../notifications/schedule';
 import { caloriesFor, GOALS, nextWorkout, planThisWeek, sessionOf } from '../config/goals';
 import { weeklyMessages } from './weekly';
+import { loadKey, loadLoads } from '../train/loads';
 import { sleepMessages } from '../sleep/ask';
 import { readHourFacts } from './dayFacts';
 import { loadGuess, loadPrints, wifiPlaceNow } from './wifi';
@@ -220,6 +221,17 @@ async function runOnce(
           title: plan ? 'אימון בפנים' : 'אימון בונוס',
           body: `${lastDone.minutes} דקות.${vsPlan}${vsPrev} עכשיו ארוחה עם 30 גרם חלבון בתוך שעתיים, והרבה מים.`,
         });
+        // How the weights felt, for the moves he set a weight for: his answers move the weights over time
+        if (plan) {
+          const loads = await loadLoads().catch(() => ({}) as Record<string, unknown>);
+          if (sessionOf(plan.session).exercises.some((e) => loads[loadKey(e.name)]))
+            candidates.push({
+              id: `workout_feel@${lastDone.start}:${plan.session}`,
+              priority: 1,
+              title: 'איך היו המשקלים?',
+              body: 'לכל תרגיל: קל, בדיוק או קשה. פעמיים ברצף אותה תשובה, ואציע לשנות את המשקל.',
+            });
+        }
       }
       const facts = {
         now,

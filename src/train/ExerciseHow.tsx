@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Exercise } from '../config/goals';
 import { C, FONT, T } from '../ui/theme';
 import { choicesOf, picsOf } from './exercisePics';
+import LoadEditor from './LoadEditor';
+import { Load, loadKey, loadLoads } from './loads';
 
 const FLIP_MS = 900;
 
@@ -15,11 +17,16 @@ function repsParts(reps: string): { big: string; unit: string } {
   return m ? { big: m[1], unit: m[2] } : { big: reps, unit: 'חזרות' };
 }
 
-export default function ExerciseHow({ list, start, onClose }: { list: Exercise[]; start: number | null; onClose: () => void }) {
+export default function ExerciseHow({ list, start, onClose, onLoads }: { list: Exercise[]; start: number | null; onClose: () => void; onLoads?: () => void }) {
   const [i, setI] = useState(start ?? 0);
   const [pick, setPick] = useState(0);
   const [flip, setFlip] = useState(false);
   const fade = useRef(new Animated.Value(0)).current;
+  const [loads, setLoads] = useState<Record<string, Load>>({});
+  const [editing, setEditing] = useState(false);
+  useEffect(() => {
+    if (start != null) loadLoads().then(setLoads).catch(() => undefined);
+  }, [start]);
 
   useEffect(() => {
     if (start != null) {
@@ -82,7 +89,7 @@ export default function ExerciseHow({ list, start, onClose }: { list: Exercise[]
             </Pressable>
           </View>
 
-          <View style={s.photo}>
+          {!editing && <View style={s.photo}>
             {pics ? (
               <>
                 <Animated.Image source={pics.a} style={[s.img, { opacity: pics.b ? Animated.subtract(1, fade) : 1 }]} resizeMode="contain" />
@@ -91,9 +98,9 @@ export default function ExerciseHow({ list, start, onClose }: { list: Exercise[]
             ) : (
               <Text style={[T.muted, { fontSize: 14 }]}>אין תמונה לתרגיל הזה</Text>
             )}
-          </View>
+          </View>}
 
-          {choices.length > 1 && (
+          {!editing && choices.length > 1 && (
             <View style={s.toggle}>
               {choices.map((c, k) => (
                 <Pressable key={c} onPress={() => setPick(k)} style={[s.opt, k === pick && s.optOn]}>
@@ -117,7 +124,17 @@ export default function ExerciseHow({ list, start, onClose }: { list: Exercise[]
             </View>
           </View>
 
-          {list.length > 1 && (
+          <LoadEditor
+            name={e.name}
+            load={loads[loadKey(e.name)]}
+            onEditing={setEditing}
+            onSaved={() => {
+              loadLoads().then(setLoads).catch(() => undefined);
+              onLoads?.();
+            }}
+          />
+
+          {!editing && list.length > 1 && (
             <View style={s.nav}>
               <Pressable onPress={() => go(i - 1)} style={[s.arrow, { opacity: first ? 0.35 : 1 }]} disabled={first} accessibilityLabel="התרגיל הקודם">
                 <Ionicons name="chevron-forward" size={22} color={C.ink} />

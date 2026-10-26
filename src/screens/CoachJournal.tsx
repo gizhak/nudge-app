@@ -14,6 +14,7 @@ export function topicLook(key: string): { icon: IconName; color: string; label: 
   const k = key.toLowerCase();
   if (k.startsWith('focus')) return { icon: 'locate', color: C.signal, label: 'המיקוד של השבוע' };
   if (k.startsWith('proposal')) return { icon: 'git-compare-outline', color: C.signal, label: 'שינוי בתוכנית' };
+  if (k.startsWith('workout_feel')) return { icon: 'barbell', color: '#F2A58E', label: 'משקלים' };
   if (k.startsWith('sleep_missing')) return { icon: 'moon-outline', color: '#8E9BD8', label: 'שינה' };
   if (k.startsWith('water')) return { icon: 'water', color: C.water, label: 'מים' };
   if (k.startsWith('weigh') || k.startsWith('weight')) return { icon: 'scale-outline', color: C.good, label: 'משקל' };

@@ -24,6 +24,7 @@ import { markSeen } from '../coach/unread';
 import { answerProposal } from '../coach/proposals';
 import { noteChange } from '../coach/replies';
 import SleepEntry, { hoursText } from './SleepEntry';
+import WorkoutFeel from '../train/WorkoutFeel';
 import { SLEEP_MISSING, SLEEP_MISSING2 } from '../sleep/ask';
 
 const WATCH_CHANGED =
@@ -274,7 +275,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
             const done = doneSince(acted, key, m.at);
             const acked = (quiet[baseOf(m.id)] ?? 0) > Date.now();
             const moot = lastChange > m.at && WORKOUT_TOPICS.includes(baseOf(m.id));
-            const answerable = key !== 'food' && key !== 'status';
+            const answerable = key !== 'food' && key !== 'status' && key !== 'workout_feel';
             const look = topicLook(m.id);
             const a = actionOf(m, container);
             const drankAfter = key.startsWith('water') && drinks.some((r) => r.at >= m.at);
@@ -288,6 +289,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                   </View>
                   <Text style={[T.bold, { fontSize: 16, lineHeight: 22 }]}>{m.title}</Text>
                   <Text style={[T.base, { fontSize: 15, lineHeight: 22, color: '#4A453F' }]}>{m.body}</Text>
+                  {key === 'workout_feel' && <WorkoutFeel id={m.id} />}
                   {moot && <Text style={[T.muted, { fontSize: 13 }]}>עדכנת את האימון אחרי ההודעה הזו.</Text>}
                   {latest && answerable && !done && !acked && !moot && (
                     <View style={s.btns}>
