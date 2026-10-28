@@ -370,7 +370,7 @@ async function runOnce(
       hasWatch: profile.watch === undefined ? undefined : hasWatch(profile.watch),
       unloggedSlots: unlogged,
     }).filter((i) => !i.done);
-    const next = nextWorkout(now);
+    const next = nextWorkout(now, !!sit.workedOutToday || (data?.workouts.count ?? 0) > 0);
     chosen.push(
       open.length
         ? {

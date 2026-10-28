@@ -186,8 +186,10 @@ export function sessionOf(id: string): Session {
   return SESSIONS[id] ?? Object.values(SESSIONS)[0];
 }
 
-export function nextWorkout(now = new Date()): { workout: PlannedWorkout; session: Session; label: string; at?: Date } {
-  for (let offset = 0; offset < 8; offset++) {
+/** The next planned workout. Once he trained today, today's slot is done even if its hour is still ahead
+ *  (trained at 17:00 for a 20:30 slot), so the next one is the following planned day. */
+export function nextWorkout(now = new Date(), doneToday = false): { workout: PlannedWorkout; session: Session; label: string; at?: Date } {
+  for (let offset = doneToday ? 1 : 0; offset < 8; offset++) {
     const d = new Date(now);
     d.setDate(now.getDate() + offset);
     const hit = planThisWeek(d).filter((w) => w.day === d.getDay())

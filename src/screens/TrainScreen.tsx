@@ -102,7 +102,7 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
     setTick((t) => t + 1);
   };
   const now = new Date();
-  const next = nextWorkout(now);
+  const next = nextWorkout(now, done.has(now.getDay()));
   const week = planThisWeek(now);
   const planned = new Map(week.map((w) => [w.day, w]));
 
