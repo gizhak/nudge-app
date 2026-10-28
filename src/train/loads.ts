@@ -5,7 +5,7 @@
 // What the number means depends on the move:
 //   barbell: the total on the bar, the bar included (the bar's weight is chosen per move)
 //   dumbbell: the weight of one dumbbell
-//   machine: the pin number on the stack (cables too)
+//   machine: the weight on the stack, as the machine shows it (cables too)
 //   body: only the weight added (a belt, a vest); 0 is bodyweight alone
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { moveOf } from './library';
@@ -47,8 +47,8 @@ export function kindOf(name: string): LoadKind | null {
   return mv?.gear === 'body' ? 'body' : mv ? 'machine' : null;
 }
 
-/** One step up or down: 2.5 kg or 5 lb; one pin on a machine */
-export const stepOf = (kind: LoadKind, unit: Unit) => (kind === 'machine' ? 1 : unit === 'kg' ? 2.5 : 5);
+/** One step up or down: 2.5 kg or 5 lb; a machine's stack goes by its plates, usually 5 kg or 10 lb */
+export const stepOf = (kind: LoadKind, unit: Unit) => (kind === 'machine' ? (unit === 'kg' ? 5 : 10) : unit === 'kg' ? 2.5 : 5);
 
 export const BARS: Record<Unit, number[]> = { kg: [20, 15, 10], lb: [45, 35, 25] };
 
@@ -56,7 +56,7 @@ export const BARS: Record<Unit, number[]> = { kg: [20, 15, 10], lb: [45, 35, 25]
 export function startLoad(kind: LoadKind, unit: Unit = 'kg'): Pick<Load, 'kind' | 'unit' | 'value' | 'bar'> {
   if (kind === 'barbell') return { kind, unit, value: unit === 'kg' ? 40 : 95, bar: unit === 'kg' ? 20 : 45 };
   if (kind === 'dumbbell') return { kind, unit, value: unit === 'kg' ? 10 : 25 };
-  if (kind === 'machine') return { kind, unit, value: 5 };
+  if (kind === 'machine') return { kind, unit, value: unit === 'kg' ? 30 : 60 };
   return { kind, unit, value: 0 };
 }
 
@@ -65,7 +65,6 @@ const unitText = (u: Unit) => (u === 'kg' ? 'ק"ג' : 'lb');
 
 /** The weight as said in a tag or a row */
 export function loadText(l: Pick<Load, 'kind' | 'unit' | 'value'>): string {
-  if (l.kind === 'machine') return `פין ${fmtNum(l.value)}`;
   if (l.kind === 'body') return l.value > 0 ? `+${fmtNum(l.value)} ${unitText(l.unit)}` : 'משקל גוף';
   return `${fmtNum(l.value)} ${unitText(l.unit)}`;
 }
