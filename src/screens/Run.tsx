@@ -37,7 +37,7 @@ import { Choice } from '../ui/inputs';
 import { Sheet } from '../ui/Sheet';
 import { C, T } from '../ui/theme';
 
-import { END, ROW, START, t as tr, LOCALE } from '../i18n';
+import { END, ROW, START, t as tr, LOCALE, RTL } from '../i18n';
 const ORANGE = C.signal;
 const when = (t: number) => {
   const d = new Date(t);
@@ -128,7 +128,7 @@ function HrLine({ run, b, width }: { run: Run; b: HrBounds; width: number }) {
   return (
     <Svg width={width} height={h}>
       <Line x1={0} x2={width} y1={y(easy)} y2={y(easy)} stroke={C.muted} strokeDasharray="4 4" strokeWidth={1} />
-      <Polyline points={run.hr.map((p) => `${width - x(p.t)},${y(p.bpm)}`).join(' ')} fill="none" stroke={ORANGE} strokeWidth={2} />
+      <Polyline points={run.hr.map((p) => `${RTL ? width - x(p.t) : x(p.t)},${y(p.bpm)}`).join(' ')} fill="none" stroke={ORANGE} strokeWidth={2} />
     </Svg>
   );
 }

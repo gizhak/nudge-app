@@ -7,7 +7,7 @@ import { EnterCtx, useGrow } from './tabEnter';
 import { onEnter } from './enter';
 import { GrowText } from './grow';
 
-import { ROW } from '../i18n';
+import { ROW, RTL } from '../i18n';
 const ACircle = Animated.createAnimatedComponent(Circle);
 const APolyline = Animated.createAnimatedComponent(Polyline);
 
@@ -141,7 +141,8 @@ export function Sparkline({
   const lo = Math.min(...values);
   const hi = Math.max(...values);
   const pad = 4;
-  const pts = values.map((v, i) => [width - pad - (i / (values.length - 1)) * (width - 2 * pad), pad + (1 - (v - lo) / (hi - lo || 1)) * (height - 2 * pad)]);
+  // Time runs the way reading does: oldest at the start side (right in Hebrew, left in English)
+  const pts = values.map((v, i) => [RTL ? width - pad - (i / (values.length - 1)) * (width - 2 * pad) : pad + (i / (values.length - 1)) * (width - 2 * pad), pad + (1 - (v - lo) / (hi - lo || 1)) * (height - 2 * pad)]);
   const last = pts[pts.length - 1];
   let len = 0;
   for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);

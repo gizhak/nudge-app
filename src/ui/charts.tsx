@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Line, Polyline, Circle as Dot } from 'react-native-svg';
 import { C, FONT, T } from './theme';
 
-import { ROW } from '../i18n';
+import { ROW, RTL } from '../i18n';
 /** Progress ring with the value in the middle and a label under it. */
 export function Ring({
   value,
@@ -105,7 +105,7 @@ export function TargetBars({
   );
 }
 
-/** Simple line for a trend (weight). Oldest point on the right. */
+/** Simple line for a trend (weight). Oldest point on the reading start side. */
 export function TrendLine({ values, height = 80, width = 300, ends }: { values: number[]; height?: number; width?: number; ends?: [string, string] }) {
   if (values.length < 2) return null;
   const min = Math.min(...values);
@@ -113,7 +113,9 @@ export function TrendLine({ values, height = 80, width = 300, ends }: { values: 
   const span = Math.max(max - min, 0.5);
   const pad = 8;
   const pts = values.map((v, i) => {
-    const x = width - pad - (i / (values.length - 1)) * (width - 2 * pad);
+    // Time runs the way reading does: oldest at the start side (right in Hebrew, left in English)
+    const along = (i / (values.length - 1)) * (width - 2 * pad);
+    const x = RTL ? width - pad - along : pad + along;
     const y = pad + (1 - (v - min) / span) * (height - 2 * pad);
     return [x, y] as const;
   });
