@@ -35,7 +35,7 @@ import { gearFor } from '../train/library';
 import { applyDerived, derive, EditableSession, editableSessions } from '../profile/derive';
 import { loadProfile, Profile, saveProfile } from '../profile/profile';
 
-import { ROW, SIDE_START } from '../i18n';
+import { ROW, SIDE_START, t as tr } from '../i18n';
 /** The moves of a session; a move with photos opens the how-to window */
 function ExerciseList({ list, onHow, loads }: { list: Exercise[]; onHow: (list: Exercise[], i: number) => void; loads: Record<string, Load> }) {
   return (
@@ -134,15 +134,15 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
   }, [load]);
 
   return (
-    <Screen title="אימון" enter="train" refreshing={loading} onRefresh={load}>
+    <Screen title={tr("אימון", 'Training')} enter="train" refreshing={loading} onRefresh={load}>
       <View style={s.hero}>
         {/* A tap on the workout opens today's workout: done, another hour, another day */}
         <Pressable onPress={() => setResched(true)} style={({ pressed }) => [{ flexDirection: ROW, alignItems: 'center', gap: 14 }, pressed && { opacity: 0.85 }]}>
           {next.at && <Countdown at={next.at} />}
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={[T.bold, { fontSize: 12, color: '#BDB8B0' }]}>הבא · {next.label} · {next.session.minutes} דקות</Text>
+            <Text style={[T.bold, { fontSize: 12, color: '#BDB8B0' }]}>{tr('הבא ·', 'Next ·')} {next.label} · {next.session.minutes} {tr('דקות', 'minutes')}</Text>
             <Text style={[T.bold, { fontSize: 24, color: '#fff' }]}>{next.session.title}</Text>
-            <Text style={[T.base, { fontSize: 12, color: '#8A847B' }]}>לחץ לשינוי שעה או יום</Text>
+            <Text style={[T.base, { fontSize: 12, color: '#8A847B' }]}>{tr('לחץ לשינוי שעה או יום', 'Tap to change the time or day')}</Text>
           </View>
         </Pressable>
         {/* The exercises as small tags, each rising in after the one before */}
@@ -153,7 +153,7 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
                 disabled={!hasHow(e.name) && !kindOf(e.name)}
                 onPress={() => openHow(next.session.exercises, i)}
                 style={({ pressed }) => [s.moveTag, pressed && { opacity: 0.7 }]}
-                accessibilityLabel={`${e.name}: איך עושים`}
+                accessibilityLabel={tr(`${e.name}: איך עושים`, `${e.name}: how it is done`)}
               >
                 <Text style={s.moveText}>
                   {e.name}
@@ -166,22 +166,22 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
           {next.session.exercises.length > 4 && (
             <Appear delay={220 + 4 * 60}>
               <Pressable onPress={() => openHow(next.session.exercises, 4)} style={({ pressed }) => [s.moveTag, pressed && { opacity: 0.7 }]}>
-                <Text style={s.moveText}>ועוד {next.session.exercises.length - 4}</Text>
+                <Text style={s.moveText}>{tr('ועוד', 'and')} {next.session.exercises.length - 4}</Text>
               </Pressable>
             </Appear>
           )}
         </View>
         <View style={s.heroBtns}>
           <Pressable onPress={() => setPlanOpen(true)} style={({ pressed }) => [s.heroBtn, pressed && { opacity: 0.85 }]}>
-            <Text style={[T.bold, { fontSize: 15, color: C.ink, textAlign: 'center' }]}>התרגילים</Text>
+            <Text style={[T.bold, { fontSize: 15, color: C.ink, textAlign: 'center' }]}>{tr('התרגילים', 'Exercises')}</Text>
           </Pressable>
           <Pressable onPress={() => setResched(true)} style={({ pressed }) => [s.heroGhost, pressed && { opacity: 0.85 }]}>
-            <Text style={[T.bold, { fontSize: 15, color: '#fff', textAlign: 'center' }]}>לא מסתדר</Text>
+            <Text style={[T.bold, { fontSize: 15, color: '#fff', textAlign: 'center' }]}>{tr('לא מסתדר', 'Can\'t make it')}</Text>
           </Pressable>
         </View>
       </View>
 
-      <Card title={`השבוע: ${done.size} מתוך ${GOALS.workoutsPerWeek}${done.size >= GOALS.workoutsPerWeek && GOALS.workoutsPerWeek > 0 ? ' · הושלם' : ''}`}>
+      <Card title={tr(`השבוע: ${done.size} מתוך ${GOALS.workoutsPerWeek}${done.size >= GOALS.workoutsPerWeek && GOALS.workoutsPerWeek > 0 ? ' · הושלם' : ''}`, `This week: ${done.size} of ${GOALS.workoutsPerWeek}${done.size >= GOALS.workoutsPerWeek && GOALS.workoutsPerWeek > 0 ? ' · done' : ''}`)}>
         <View style={s.week}>
           {DAY_LETTERS.map((letter, day) => {
             const isPlanned = planned.has(day);
@@ -222,15 +222,15 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
         {/* The fixed days every week starts from, and where to change them */}
         <View style={s.fixedRow}>
           <Text style={[T.muted, { fontSize: 13, flex: 1 }]}>
-            קבוע: {WEEKLY_PLAN.length ? WEEKLY_PLAN.map((w) => `${DAY_NAMES[w.day]} ${pad2(w.hour)}:${pad2(w.minute)}`).join(' · ') : 'אין ימי אימון'}
+            {tr('קבוע:', 'Fixed:')} {WEEKLY_PLAN.length ? WEEKLY_PLAN.map((w) => `${DAY_NAMES[w.day]} ${pad2(w.hour)}:${pad2(w.minute)}`).join(' · ') : tr('אין ימי אימון', 'No workout days')}
           </Text>
           <Pressable onPress={() => setPlannerOpen(true)} hitSlop={8}>
-            <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>לסדר את השבוע</Text>
+            <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>{tr('לסדר את השבוע', 'Arrange the week')}</Text>
           </Pressable>
         </View>
         {week.some((w) => w.moved || w.short) && (
           <Text style={[T.muted, { fontSize: 13 }]}>
-            שינויים השבוע: {week.filter((w) => w.moved || w.short).map((w) => `${w.short ? 'קצר' : 'הועבר'} ביום ${DAY_LETTERS[w.day]}`).join(', ')}
+            {tr('שינויים השבוע:', 'Changes this week:')} {week.filter((w) => w.moved || w.short).map((w) => tr(`${w.short ? 'קצר' : 'הועבר'} ביום ${DAY_LETTERS[w.day]}`, `${w.short ? 'short' : 'moved'} on ${DAY_LETTERS[w.day]}`)).join(', ')}
           </Text>
         )}
       </Card>
@@ -263,56 +263,56 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
           setTick((t) => t + 1);
         };
         return (
-          <Sheet open={resched} onClose={close} title={`${isToday ? 'האימון של היום' : 'האימון הבא'}: ${sessionOf(target.session).title}`}>
+          <Sheet open={resched} onClose={close} title={tr(`${isToday ? 'האימון של היום' : 'האימון הבא'}: ${sessionOf(target.session).title}`, `${isToday ? 'Today\'s workout' : 'Next workout'}: ${sessionOf(target.session).title}`)}>
             {isToday && (
               <PrimaryButton
-                label="התאמנתי"
+                label={tr("התאמנתי", 'I trained')}
                 onPress={async () => {
                   await markWorkoutDone();
                   await didIt(['workout']).catch(() => undefined);
                   await Promise.all(['workout_today', 'workout_now', 'missed_workout', 'outing_workout'].map((t) => snoozeToday(t)));
                   setDone(new Set([...done, now.getDay()]));
-                  await noteChange('התאמנתי היום', 'כל הכבוד. רשמתי את האימון של היום, ועכשיו חלבון ומים.');
+                  await noteChange(tr('התאמנתי היום', 'I trained today'), tr('כל הכבוד. רשמתי את האימון של היום, ועכשיו חלבון ומים.', 'Well done. I logged today\'s workout; now protein and water.'));
                   close();
                 }}
               />
             )}
             <Pressable onPress={() => { setResched(false); setPlannerOpen(true); }} style={({ pressed }) => [s.planBtn, pressed && { opacity: 0.85 }]}>
               <Ionicons name="calendar-outline" size={18} color={C.ink} />
-              <Text style={[T.bold, { fontSize: 15 }]}>לסדר את השבוע</Text>
+              <Text style={[T.bold, { fontSize: 15 }]}>{tr('לסדר את השבוע', 'Arrange the week')}</Text>
             </Pressable>
-            <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>להזיז אימון ליום אחר, להחליף בין אימונים, לשנות שעה או להוסיף יום.</Text>
+            <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>{tr('להזיז אימון ליום אחר, להחליף בין אימונים, לשנות שעה או להוסיף יום.', 'Move a workout to another day, swap workouts, change the time or add a day.')}</Text>
             <Reschedule workout={target} onDone={close} compact />
           </Sheet>
         );
       })()}
 
       <RowsCard>
-        <OpenRow first title="אין זמן? 10 דקות בבית" sub="עדיף 10 דקות מאפס" onPress={() => setMinimum(true)} />
-        <OpenRow title="כל האימונים" sub={Object.values(SESSIONS).map((x) => x.title).join(' · ')} onPress={() => setAllOpen(true)} />
-        <OpenRow title="איך להתאמן" sub="משקלים, חזרות ומנוחה" onPress={() => setTips(true)} />
+        <OpenRow first title={tr("אין זמן? 10 דקות בבית", 'No time? 10 minutes at home')} sub={tr("עדיף 10 דקות מאפס", '10 minutes beats zero')} onPress={() => setMinimum(true)} />
+        <OpenRow title={tr("כל האימונים", 'All workouts')} sub={Object.values(SESSIONS).map((x) => x.title).join(' · ')} onPress={() => setAllOpen(true)} />
+        <OpenRow title={tr("איך להתאמן", 'How to train')} sub={tr("משקלים, חזרות ומנוחה", 'Weights, reps and rest')} onPress={() => setTips(true)} />
       </RowsCard>
 
-      <Sheet open={planOpen} onClose={() => setPlanOpen(false)} title={`${next.session.title} · ${next.session.minutes} דקות`}>
+      <Sheet open={planOpen} onClose={() => setPlanOpen(false)} title={tr(`${next.session.title} · ${next.session.minutes} דקות`, `${next.session.title} · ${next.session.minutes} minutes`)}>
         <Card>
           <ExerciseList list={next.session.exercises} onHow={openHow} loads={loads} />
         </Card>
         {next.session.id !== 'F' && next.session.id !== 'MIN' && (
           <Pressable onPress={() => openPick(next.session.id)} style={({ pressed }) => [s.pickBtn, pressed && { opacity: 0.7 }]}>
             <Ionicons name="list" size={18} color={C.ink} />
-            <Text style={[T.bold, { fontSize: 15 }]}>בחירת תרגילים</Text>
+            <Text style={[T.bold, { fontSize: 15 }]}>{tr('בחירת תרגילים', 'Pick exercises')}</Text>
           </Pressable>
         )}
         <Text style={[T.muted, { fontSize: 13 }]}>{next.label}</Text>
       </Sheet>
 
-      <Sheet open={allOpen} onClose={() => setAllOpen(false)} title="כל האימונים">
+      <Sheet open={allOpen} onClose={() => setAllOpen(false)} title={tr("כל האימונים", 'All workouts')}>
         {Object.values(SESSIONS).map((session) => (
           <Pressable key={session.id} onPress={() => setOpen(open === session.id ? null : session.id)}>
             <Card>
               <View style={s.row}>
                 <Text style={[T.bold, s.text]}>{session.title}</Text>
-                <Text style={[T.muted, s.text]}>{session.minutes} דקות</Text>
+                <Text style={[T.muted, s.text]}>{session.minutes} {tr('דקות', 'minutes')}</Text>
               </View>
               {open === session.id && <ExerciseList list={session.exercises} onHow={openHow} loads={loads} />}
             </Card>
@@ -320,18 +320,18 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
         ))}
       </Sheet>
 
-      <Sheet open={minimum} onClose={() => setMinimum(false)} title="10 דקות בבית">
+      <Sheet open={minimum} onClose={() => setMinimum(false)} title={tr("10 דקות בבית", '10 minutes at home')}>
         <Card>
           <ExerciseList list={MINIMUM_WORKOUT} onHow={openHow} loads={loads} />
         </Card>
-        <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>עדיף 10 דקות מאפס. זה שומר על הרצף, והרצף הוא מה שבונה הרגל.</Text>
+        <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{tr('עדיף 10 דקות מאפס. זה שומר על הרצף, והרצף הוא מה שבונה הרגל.', '10 minutes beats zero. It keeps the streak going, and the streak is what builds a habit.')}</Text>
       </Sheet>
 
-      <Sheet open={tips} onClose={() => setTips(false)} title="איך להתאמן">
-        <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>שבועיים ראשונים: 60 עד 70 אחוז מהמשקל שהרמת בעבר.</Text>
-        <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>אם 2 החזרות האחרונות קלות, מוסיפים משקל בפעם הבאה.</Text>
-        <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>מנוחה של 60 עד 90 שניות בין סטים.</Text>
-        <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>בעיגולים של השבוע: מסגרת היא אימון מתוכנן, ומלא הוא אימון שהשעון רשם.</Text>
+      <Sheet open={tips} onClose={() => setTips(false)} title={tr("איך להתאמן", 'How to train')}>
+        <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>{tr('שבועיים ראשונים: 60 עד 70 אחוז מהמשקל שהרמת בעבר.', 'First two weeks: 60 to 70 percent of the weight you used to lift.')}</Text>
+        <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>{tr('אם 2 החזרות האחרונות קלות, מוסיפים משקל בפעם הבאה.', 'If the last 2 reps are easy, add weight next time.')}</Text>
+        <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>{tr('מנוחה של 60 עד 90 שניות בין סטים.', 'Rest 60 to 90 seconds between sets.')}</Text>
+        <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{tr('בעיגולים של השבוע: מסגרת היא אימון מתוכנן, ומלא הוא אימון שהשעון רשם.', 'In the week\'s circles: an outline is a planned workout, and filled is a workout the watch logged.')}</Text>
       </Sheet>
 
       <WeekPlanner
@@ -361,7 +361,7 @@ function RetimeRow({ workout, onSave }: { workout: PlannedWorkout; onSave: (time
   const [time, setTime] = useState(usual);
   return (
     <View style={{ gap: 8 }}>
-      <Text style={[T.bold, { fontSize: 15 }]}>שעה אחרת, באותו יום</Text>
+      <Text style={[T.bold, { fontSize: 15 }]}>{tr('שעה אחרת, באותו יום', 'Another time, same day')}</Text>
       <View style={{ flexDirection: ROW, alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <TimeStepper value={time} onChange={setTime} step={15} />
         <Pressable
@@ -369,7 +369,7 @@ function RetimeRow({ workout, onSave }: { workout: PlannedWorkout; onSave: (time
           onPress={() => onSave(time)}
           style={{ backgroundColor: time === usual ? C.track : C.ink, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 }}
         >
-          <Text style={[T.bold, { color: '#fff', fontSize: 14 }]}>שמור</Text>
+          <Text style={[T.bold, { color: '#fff', fontSize: 14 }]}>{tr('שמור', 'Save')}</Text>
         </Pressable>
       </View>
     </View>

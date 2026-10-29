@@ -22,8 +22,8 @@ import { checkMeal, loadMenu, menuMealOf } from '../diet/store';
 import Craving from './Craving';
 import { Sheet } from '../ui/Sheet';
 
-import { END, ROW } from '../i18n';
-const DAY_SHORT = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+import { END, ROW, t as tr } from '../i18n';
+const DAY_SHORT = [tr('א', 'S'), tr('ב', 'M'), tr('ג', 'T'), tr('ד', 'W'), tr('ה', 'T'), tr('ו', 'F'), tr('ש', 'S')];
 const POLL_MS = 15_000;
 const WAIT_LIMIT_MS = 5 * 60_000;
 
@@ -99,13 +99,13 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
     if (!waiting) return;
     if (meals.length > waiting.baseline) {
       const added = meals[meals.length - 1];
-      setNotice({ text: `נקלט: ${added.name}, ${fmt(added.kcal)} קלוריות`, ok: true });
+      setNotice({ text: tr(`נקלט: ${added.name}, ${fmt(added.kcal)} קלוריות`, `Logged: ${added.name}, ${fmt(added.kcal)} calories`), ok: true });
       setWaiting(null);
       return;
     }
     if (Date.now() - waiting.since > WAIT_LIMIT_MS) {
       setNotice({
-        text: `הארוחה עוד לא הגיעה מ ${app?.name ?? 'אפליקציית האוכל'}. פתח אותו לכמה שניות כדי שיסנכרן, ואז משוך למטה לרענון.`,
+        text: tr(`הארוחה עוד לא הגיעה מ ${app?.name ?? 'אפליקציית האוכל'}. פתח אותו לכמה שניות כדי שיסנכרן, ואז משוך למטה לרענון.`, `The meal has not arrived from ${app?.name ?? 'the food app'} yet. Open it for a few seconds so it syncs, then pull down to refresh.`),
         ok: false,
       });
       setWaiting(null);
@@ -122,11 +122,11 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
     await load();
     const added = mealsRef.current - before;
     const at = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-    const name = app?.name ?? 'אפליקציית האוכל';
+    const name = app?.name ?? tr('אפליקציית האוכל', 'the food app');
     setNotice(
       added > 0
-        ? { text: `עודכן ב${at}: ${added === 1 ? 'ארוחה חדשה נקלטה' : `${added} ארוחות חדשות נקלטו`}.`, ok: true }
-        : { text: `עודכן ב${at}: אין ארוחה חדשה מ ${name}. ${name} מעביר נתונים רק כשהוא מסנכרן; פתח אותו לכמה שניות וחזור לכאן.`, ok: false },
+        ? { text: tr(`עודכן ב${at}: ${added === 1 ? 'ארוחה חדשה נקלטה' : `${added} ארוחות חדשות נקלטו`}.`, `Updated at ${at}: ${added === 1 ? 'a new meal came in' : `${added} new meals came in`}.`), ok: true }
+        : { text: tr(`עודכן ב${at}: אין ארוחה חדשה מ ${name}. ${name} מעביר נתונים רק כשהוא מסנכרן; פתח אותו לכמה שניות וחזור לכאן.`, `Updated at ${at}: no new meal from ${name}. ${name} only passes data on when it syncs; open it for a few seconds and come back.`), ok: false },
     );
   };
 
@@ -135,7 +135,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
     if (!app) return;
     const opened = await openApp(app.pkg);
     if (opened) setWaiting({ since: Date.now(), baseline: mealsRef.current });
-    else setNotice({ text: `${app.name} לא מותקן. נפתח עמוד ההתקנה שלו.`, ok: false });
+    else setNotice({ text: tr(`${app.name} לא מותקן. נפתח עמוד ההתקנה שלו.`, `${app.name} is not installed. Opening its install page.`), ok: false });
   };
 
   // A meal deleted in the food app that Health Connect still holds: leave it out here,
@@ -143,7 +143,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
   const hide = async (m: Meal) => {
     setOpen(null);
     await hideMeal(m.id, Date.now(), m.key);
-    setNotice({ text: `${m.name} הוסתרה ולא נספרת יותר.`, ok: true, undo: m.id, undoKey: m.key });
+    setNotice({ text: tr(`${m.name} הוסתרה ולא נספרת יותר.`, `${m.name} is hidden and no longer counts.`), ok: true, undo: m.id, undoKey: m.key });
     load();
   };
   const undoHide = async (id: string, key?: string) => {
@@ -161,7 +161,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
   const fat = meals.reduce((a, m) => a + m.fat, 0);
 
   return (
-    <Screen title="תזונה" enter="food" refreshing={loading} onRefresh={refresh}>
+    <Screen title={tr("תזונה", 'Food')} enter="food" refreshing={loading} onRefresh={refresh}>
       {/* What is left today: one number, then the three macros */}
       {(() => {
         const left = target - kcal;
@@ -186,19 +186,19 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
               <View style={{ flex: 1, gap: 10 }}>
                 <View>
                   <Text style={[T.bold, { fontSize: 32, lineHeight: 38 }, left < 0 && { color: C.warn }]}><GrowNumber value={Math.abs(left)} format={(n) => fmt(Math.round(n))} /></Text>
-                  <Text style={[T.muted, { fontSize: 13 }]}>{left >= 0 ? 'קלוריות נשארו' : 'קלוריות מעל היעד'}</Text>
-                  <Text style={[T.muted, { fontSize: 12 }]}>מתוך {fmt(target)} להיום</Text>
+                  <Text style={[T.muted, { fontSize: 13 }]}>{left >= 0 ? tr('קלוריות נשארו', 'calories left') : tr('קלוריות מעל היעד', 'calories over the goal')}</Text>
+                  <Text style={[T.muted, { fontSize: 12 }]}>{tr('מתוך', 'of')} {fmt(target)} {tr('להיום', 'today')}</Text>
                 </View>
                 <View>
                   <Text style={[T.bold, { fontSize: 22, lineHeight: 28, color: C.protein }]}>
-                    {protein >= GOALS.proteinG ? 'ביעד' : <><GrowNumber value={GOALS.proteinG - protein} format={(n) => fmt(Math.round(n))} delay={180} /> ג'</>}
+                    {protein >= GOALS.proteinG ? tr('ביעד', 'On target') : <><GrowNumber value={GOALS.proteinG - protein} format={(n) => fmt(Math.round(n))} delay={180} /> {tr('ג\'', 'g')}</>}
                   </Text>
-                  <Text style={[T.muted, { fontSize: 13 }]}>{protein >= GOALS.proteinG ? `חלבון, ${fmt(protein)} ג'` : 'חלבון חסר'}</Text>
+                  <Text style={[T.muted, { fontSize: 13 }]}>{protein >= GOALS.proteinG ? tr(`חלבון, ${fmt(protein)} ג'`, `protein, ${fmt(protein)} g`) : tr('חלבון חסר', 'protein to go')}</Text>
                 </View>
               </View>
             </View>
             <Text style={[T.muted, { fontSize: 12 }]}>
-              פחמימות {fmt(carbs)} מתוך {fmt(carbT)} · שומן {fmt(fat)} מתוך {fmt(fatT)}
+              {tr('פחמימות', 'Carbs')} {fmt(carbs)} {tr('מתוך', 'of')} {fmt(carbT)} {tr('· שומן', '· Fat')} {fmt(fat)} {tr('מתוך', 'of')} {fmt(fatT)}
             </Text>
           </Card>
         );
@@ -208,27 +208,27 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
         {app && (
           <Pressable onPress={logInZepp} style={({ pressed }) => [s.actTile, { backgroundColor: C.ink }, pressed && { opacity: 0.85 }]}>
             <Ionicons name="camera-outline" size={24} color="#fff" />
-            <Text style={[T.bold, { color: '#fff', fontSize: 14, textAlign: 'center' }]}>{app.name === 'Zepp' ? 'צלם ב Zepp' : `רשום ב ${app.name}`}</Text>
+            <Text style={[T.bold, { color: '#fff', fontSize: 14, textAlign: 'center' }]}>{app.name === 'Zepp' ? tr('צלם ב Zepp', 'Snap in Zepp') : tr(`רשום ב ${app.name}`, `Log in ${app.name}`)}</Text>
           </Pressable>
         )}
         <Pressable onPress={() => setCraving((n) => n + 1)} style={({ pressed }) => [s.actTile, pressed && { opacity: 0.85 }]}>
           <Ionicons name="heart-outline" size={24} color={C.signal} />
-          <Text style={[T.bold, { fontSize: 14, textAlign: 'center' }]}>בא לי</Text>
+          <Text style={[T.bold, { fontSize: 14, textAlign: 'center' }]}>{tr('בא לי', 'Craving')}</Text>
         </Pressable>
         <Pressable onPress={() => setMenuOpen((v) => !v)} style={({ pressed }) => [s.actTile, menuOpen && { backgroundColor: C.ink }, pressed && { opacity: 0.85 }]}>
           <Ionicons name={menuOpen ? 'close' : 'restaurant-outline'} size={24} color={menuOpen ? '#fff' : C.kcal} />
-          <Text style={[T.bold, { fontSize: 14, textAlign: 'center', color: menuOpen ? '#fff' : C.ink }]}>{menuOpen ? 'סגור' : 'מסעדה'}</Text>
+          <Text style={[T.bold, { fontSize: 14, textAlign: 'center', color: menuOpen ? '#fff' : C.ink }]}>{menuOpen ? tr('סגור', 'Close') : tr('מסעדה', 'Restaurant')}</Text>
         </Pressable>
         <Pressable onPress={() => setDietOpen(true)} style={({ pressed }) => [s.actTile, pressed && { opacity: 0.85 }]}>
           <Ionicons name="document-text-outline" size={24} color={C.good} />
-          <Text style={[T.bold, { fontSize: 14, textAlign: 'center' }]}>התפריט שלי</Text>
+          <Text style={[T.bold, { fontSize: 14, textAlign: 'center' }]}>{tr('התפריט שלי', 'My menu')}</Text>
         </Pressable>
       </View>
       {menuOpen && <MenuAdvisor kcal={kcal} protein={protein} initialText={sharedDiet ? undefined : sharedMenu} />}
       {waiting && (
         <View style={s.waiting}>
           <ActivityIndicator color={C.accent} />
-          <Text style={[T.muted, { fontSize: 14, flex: 1 }]}>מחכה שהארוחה תגיע מ {app?.name ?? 'אפליקציית האוכל'}. זה לוקח בדרך כלל עד כמה דקות.</Text>
+          <Text style={[T.muted, { fontSize: 14, flex: 1 }]}>{tr('מחכה שהארוחה תגיע מ', 'Waiting for the meal to arrive from')} {app?.name ?? tr('אפליקציית האוכל', 'the food app')}{tr('. זה לוקח בדרך כלל עד כמה דקות.', '. This usually takes up to a few minutes.')}</Text>
         </View>
       )}
       {notice && (
@@ -236,7 +236,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
           <Text style={[T.bold, { fontSize: 14, flex: 1, color: notice.ok ? C.accent : C.warn }]}>{notice.text}</Text>
           {notice.undo && (
             <Pressable onPress={() => undoHide(notice.undo!, notice.undoKey)} hitSlop={8}>
-              <Text style={[T.bold, { fontSize: 14, color: C.ink, textDecorationLine: 'underline' }]}>בטל</Text>
+              <Text style={[T.bold, { fontSize: 14, color: C.ink, textDecorationLine: 'underline' }]}>{tr('בטל', 'Undo')}</Text>
             </Pressable>
           )}
         </View>
@@ -259,9 +259,9 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
               key={slot.id}
               first={idx === 0}
               title={inSlot.length ? `${slot.label} · ${fmt(slotKcal)}` : slot.label}
-              sub={inSlot.length ? `${at} · ${inSlot.map((m) => m.name).join(', ')}` : passed ? 'לא נרשמה' : 'בהמשך'}
+              sub={inSlot.length ? `${at} · ${inSlot.map((m) => m.name).join(', ')}` : passed ? tr('לא נרשמה', 'Not logged') : tr('בהמשך', 'Later')}
               dot={!inSlot.length && passed}
-              note={check ? `בתפריט: ${check.plan}` : undefined}
+              note={check ? tr(`בתפריט: ${check.plan}`, `Menu: ${check.plan}`) : undefined}
               right={
                 check ? (
                   <Text style={[T.bold, { fontSize: 12, color: check.tone === 'good' ? C.good : check.tone === 'off' ? C.warn : C.muted }]}>{check.chip}</Text>
@@ -274,17 +274,17 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
       </RowsCard>
 
       <RowsCard>
-        <OpenRow first title="חלבון ב 7 ימים" sub={`${daysOnTarget} ימים ביעד`} onPress={() => setWeekOpen(true)} />
+        <OpenRow first title={tr("חלבון ב 7 ימים", 'Protein over 7 days')} sub={tr(`${daysOnTarget} ימים ביעד`, `${daysOnTarget} days on target`)} onPress={() => setWeekOpen(true)} />
       </RowsCard>
 
-      <Sheet open={weekOpen} onClose={() => setWeekOpen(false)} title="חלבון ב 7 ימים">
+      <Sheet open={weekOpen} onClose={() => setWeekOpen(false)} title={tr("חלבון ב 7 ימים", 'Protein over 7 days')}>
         <MiniBars values={week.map((d) => d.protein)} labels={week.map((d) => DAY_SHORT[d.date.getDay()])} target={GOALS.proteinG} />
-        <Text style={[T.muted, { fontSize: 13 }]}>הקו הוא היעד, {GOALS.proteinG} גרם ביום.</Text>
+        <Text style={[T.muted, { fontSize: 13 }]}>{tr('הקו הוא היעד,', 'The line is the goal,')} {GOALS.proteinG} {tr('גרם ביום.', 'grams a day.')}</Text>
       </Sheet>
 
       <DietMenuScreen open={dietOpen} onClose={() => setDietOpen(false)} initialText={sharedDiet ? sharedMenu : undefined} onSaved={() => loadMenu().then(setDiet).catch(() => undefined)} />
 
-      <Sheet open={cravingOpen} onClose={() => setCravingOpen(false)} title="בא לי משהו">
+      <Sheet open={cravingOpen} onClose={() => setCravingOpen(false)} title={tr("בא לי משהו", 'I feel like something')}>
         {craving > 0 && <Craving key={craving} kcalLeft={target - kcal} proteinLeft={GOALS.proteinG - protein} bedTime={bedTime} />}
       </Sheet>
 
@@ -302,7 +302,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
                 {first && (
                   <View style={[s.row, { paddingTop: 10 }]}>
                     <Text style={[T.bold, { fontSize: 13, flex: 1 }]}>
-                      יחד, מנה אחת: {fmt(tot.kcal)} קלוריות · חלבון {fmt(tot.protein)}
+                      {tr('יחד, מנה אחת:', 'Together, as one meal:')} {fmt(tot.kcal)} {tr('קלוריות · חלבון', 'calories · protein')} {fmt(tot.protein)}
                     </Text>
                     <Text style={[s.chip, { color: v.good ? C.accent : C.signal, borderColor: v.good ? C.accent : C.signal }]}>{v.label}</Text>
                   </View>
@@ -322,7 +322,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
                   </View>
                   <View style={s.row}>
                     <Text style={[T.muted, { fontSize: 13 }]}>
-                      {m.time.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} · חלבון {fmt(m.protein)} · פחמ' {fmt(m.carbs)} · שומן {fmt(m.fat)}
+                      {m.time.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} {tr('· חלבון', '· protein')} {fmt(m.protein)} {tr('· פחמ\'', '· carbs')} {fmt(m.carbs)} {tr('· שומן', '· fat')} {fmt(m.fat)}
                     </Text>
                     {plate.length === 1 && (
                       <Text style={[s.chip, { color: v.good ? C.accent : C.signal, borderColor: v.good ? C.accent : C.signal }]}>{v.label}</Text>
@@ -344,30 +344,30 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
             <>
               <Card>
                 <View style={s.row}>
-                  <Text style={[T.bold, { fontSize: 22 }]}>{fmt(m.kcal)} קלוריות</Text>
+                  <Text style={[T.bold, { fontSize: 22 }]}>{fmt(m.kcal)} {tr('קלוריות', 'calories')}</Text>
                   <Text style={[s.chip, { color: v.good ? C.accent : C.signal, borderColor: v.good ? C.accent : C.signal }]}>{v.label}</Text>
                 </View>
                 <Text style={[T.muted, { fontSize: 14 }]}>
-                  חלבון {fmt(m.protein)} · פחמ' {fmt(m.carbs)} · שומן {fmt(m.fat)}
-                  {m.sugar != null ? ` · סוכר ${fmt(m.sugar)}` : ''}
+                  {tr('חלבון', 'protein')} {fmt(m.protein)} {tr('· פחמ\'', '· carbs')} {fmt(m.carbs)} {tr('· שומן', '· fat')} {fmt(m.fat)}
+                  {m.sugar != null ? tr(` · סוכר ${fmt(m.sugar)}`, ` · sugar ${fmt(m.sugar)}`) : ''}
                 </Text>
               </Card>
               {plate.length > 1 && (
                 <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>
-                  נאכל יחד עם {plate.filter((x) => x !== m).map((x) => x.name).join(', ')}, ולכן נבדק כמנה אחת.
+                  {tr('נאכל יחד עם', 'Eaten together with')} {plate.filter((x) => x !== m).map((x) => x.name).join(', ')}{tr(', ולכן נבדק כמנה אחת.', ', so it was judged as one meal.')}
                 </Text>
               )}
               <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>{v.message}</Text>
               <View style={s.removeBox}>
                 <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>
-                  מחקת את הארוחה ב {app?.name ?? 'אפליקציית האוכל'} והיא עדיין כאן? {app?.name ?? 'האפליקציה'} לא תמיד מעביר מחיקה ל Health Connect. אפשר להסתיר אותה כאן, או למחוק אותה ב Health Connect עצמו.
+                  {tr('מחקת את הארוחה ב', 'Deleted the meal in')} {app?.name ?? tr('אפליקציית האוכל', 'the food app')} {tr('והיא עדיין כאן?', 'and it is still here?')} {app?.name ?? tr('האפליקציה', 'The app')} {tr('לא תמיד מעביר מחיקה ל Health Connect. אפשר להסתיר אותה כאן, או למחוק אותה ב Health Connect עצמו.', 'does not always pass a deletion on to Health Connect. You can hide it here, or delete it in Health Connect itself.')}
                 </Text>
                 <View style={s.removeRow}>
                   <Pressable onPress={() => hide(m)} style={s.removeBtn}>
-                    <Text style={[T.bold, { fontSize: 14, color: C.warn, textAlign: 'center' }]}>הסתר מ Nudge</Text>
+                    <Text style={[T.bold, { fontSize: 14, color: C.warn, textAlign: 'center' }]}>{tr('הסתר מ Nudge', 'Hide in Nudge')}</Text>
                   </Pressable>
                   <Pressable onPress={() => openHealthConnectDataManagement()} style={s.removeBtn}>
-                    <Text style={[T.bold, { fontSize: 14, color: C.muted, textAlign: 'center' }]}>פתח Health Connect</Text>
+                    <Text style={[T.bold, { fontSize: 14, color: C.muted, textAlign: 'center' }]}>{tr('פתח Health Connect', 'Open Health Connect')}</Text>
                   </Pressable>
                 </View>
               </View>

@@ -8,7 +8,13 @@ import { appLang } from '../../modules/night-guard';
 
 export type Lang = 'he' | 'en';
 
-export const LANG: Lang = appLang() === 'en' ? 'en' : 'he';
+let chosen: string | null = null;
+try {
+  chosen = appLang();
+} catch {
+  // no native part (tests, an old build): Hebrew
+}
+export const LANG: Lang = chosen === 'en' ? 'en' : 'he';
 export const RTL = LANG === 'he';
 
 /** A row in reading order: right to left in Hebrew */

@@ -14,7 +14,7 @@ import ReportSettings from './ReportSettings';
 import VacationSettings from './VacationSettings';
 import { C, fmt, FONT, T } from '../ui/theme';
 
-import { LANG, Lang, ROW, SIDE_END, START } from '../i18n';
+import { LANG, Lang, ROW, SIDE_END, START, t } from '../i18n';
 export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditSchedule, onClose }: { onEditProfile: () => void; onOpenReadiness: () => void; onEditSchedule?: () => void; onClose?: () => void }) {
   const [settings, setSettings] = useState<ReminderSettings>(DEFAULT_SETTINGS);
   const [status, setStatus] = useState<string | null>(null);
@@ -46,27 +46,27 @@ export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditS
     setSettings(next);
     await saveSettings(next);
     const allowed = await ensurePermission();
-    if (!allowed) return setStatus('ההתראות חסומות. אפשר אותן בהגדרות הטלפון עבור Coach.');
+    if (!allowed) return setStatus(t('ההתראות חסומות. אפשר אותן בהגדרות הטלפון עבור Coach.', 'Notifications are blocked. Allow them for the app in the phone\'s settings.'));
     const count = await applyReminders(next);
-    setStatus(`${count} תזכורות מתוזמנות`);
+    setStatus(t(`${count} תזכורות מתוזמנות`, `${count} reminders scheduled`));
   };
 
   const test = async () => {
-    if (!(await ensurePermission())) return setStatus('ההתראות חסומות. אפשר אותן בהגדרות הטלפון עבור Coach.');
+    if (!(await ensurePermission())) return setStatus(t('ההתראות חסומות. אפשר אותן בהגדרות הטלפון עבור Coach.', 'Notifications are blocked. Allow them for the app in the phone\'s settings.'));
     await sendTestNotification();
-    setStatus('התראת בדיקה תגיע בעוד 5 שניות');
+    setStatus(t('התראת בדיקה תגיע בעוד 5 שניות', 'A test notification will arrive in 5 seconds'));
   };
 
   if (section === 'coach')
     return (
-      <Screen title="הגדרות המאמן" onBack={leave} focus={focus}>
+      <Screen title={t("הגדרות המאמן", 'Coach settings')} onBack={leave} focus={focus}>
         <CoachSettings />
       </Screen>
     );
 
   if (section === 'reminders')
     return (
-      <Screen title="תזכורות" onBack={leave}>
+      <Screen title={t("תזכורות", 'Reminders')} onBack={leave}>
         <Card>
           {(Object.keys(REMINDER_INFO) as ReminderKey[]).filter((key) => key !== 'weekly').map((key) => (
             <View key={key} style={s.toggleRow}>
@@ -78,58 +78,58 @@ export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditS
             </View>
           ))}
           {status && <Text style={[T.base, { fontSize: 14, color: C.accent }]}>{status}</Text>}
-          <PrimaryButton label="שלח התראת בדיקה" onPress={test} />
+          <PrimaryButton label={t("שלח התראת בדיקה", 'Send a test notification')} onPress={test} />
         </Card>
       </Screen>
     );
 
   if (section === 'learned')
     return (
-      <Screen title="מה המאמן למד" onBack={leave}>
+      <Screen title={t("מה המאמן למד", 'What the coach learned')} onBack={leave}>
         <Learned />
       </Screen>
     );
 
   if (section === 'vacation')
     return (
-      <Screen title="חופשה" onBack={leave}>
+      <Screen title={t("חופשה", 'Vacation')} onBack={leave}>
         <VacationSettings />
       </Screen>
     );
 
   if (section === 'reports')
     return (
-      <Screen title="דוחות" onBack={leave}>
+      <Screen title={t("דוחות", 'Reports')} onBack={leave}>
         <ReportSettings />
       </Screen>
     );
 
   if (section === 'plan')
     return (
-      <Screen title="יעדים ואימונים" onBack={leave}>
-        <Card title="יעדים">
-          <Row label="קלוריות ביום" value={fmt(GOALS.calories)} />
-          <Row label="חלבון ביום" value={`${GOALS.proteinG} ג'`} />
-          <Row label="צעדים ביום" value={fmt(GOALS.steps)} />
-          <Row label="שינה" value={`${GOALS.sleepHours} שעות`} />
+      <Screen title={t("יעדים ואימונים", 'Goals and workouts')} onBack={leave}>
+        <Card title={t("יעדים", 'Goals')}>
+          <Row label={t("קלוריות ביום", 'Calories a day')} value={fmt(GOALS.calories)} />
+          <Row label={t("חלבון ביום", 'Protein a day')} value={t(`${GOALS.proteinG} ג'`, `${GOALS.proteinG} g`)} />
+          <Row label={t("צעדים ביום", 'Steps a day')} value={fmt(GOALS.steps)} />
+          <Row label={t("שינה", 'Sleep')} value={t(`${GOALS.sleepHours} שעות`, `${GOALS.sleepHours} hours`)} />
         </Card>
-        <Card title="לוח אימונים">
+        <Card title={t("לוח אימונים", 'Workout plan')}>
           {WEEKLY_PLAN.map((w) => (
             <Row key={w.day} label={`${DAY_NAMES[w.day]} ${pad2(w.hour)}:${pad2(w.minute)}`} value={SESSIONS[w.session].title} />
           ))}
         </Card>
-        <Text style={[T.muted, { fontSize: 13 }]}>היעדים ולוח האימונים נגזרים מהתיק שלך. כדי לשנות, ערוך את התיק.</Text>
+        <Text style={[T.muted, { fontSize: 13 }]}>{t('היעדים ולוח האימונים נגזרים מהתיק שלך. כדי לשנות, ערוך את התיק.', 'The goals and the workout plan come from your file. To change them, edit your file.')}</Text>
       </Screen>
     );
 
   return (
-    <Screen title="הגדרות" onBack={onClose} backLabel="סגור">
+    <Screen title={t("הגדרות", 'Settings')} onBack={onClose} backLabel={t("סגור", 'Close')}>
       <View style={s.search}>
         <Ionicons name="search" size={18} color={C.muted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="חיפוש: אוכל, מים, שינה, רכב..."
+          placeholder={t("חיפוש: אוכל, מים, שינה, רכב...", 'Search: food, water, sleep, car...')}
           placeholderTextColor="#9C968D"
           style={s.searchInput}
           textAlign="right"
@@ -151,28 +151,28 @@ export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditS
               ))}
             </RowsCard>
           ) : (
-            <Text style={[T.muted, { fontSize: 14, textAlign: START }]}>לא מצאתי. נסה מילה אחרת, למשל "ארוחה" או "שינה".</Text>
+            <Text style={[T.muted, { fontSize: 14, textAlign: START }]}>{t('לא מצאתי. נסה מילה אחרת, למשל "ארוחה" או "שינה".', 'Nothing found. Try another word, like "meal" or "sleep".')}</Text>
           );
         })()
       ) : (
         <>
-          <Text style={s.group}>אני</Text>
+          <Text style={s.group}>{t('אני', 'Me')}</Text>
           <RowsCard>
-            <OpenRow first title="התיק שלי" sub="מטרה, בריאות, עבודה, שינה ואוכל" onPress={onEditProfile} />
-            {onEditSchedule && <OpenRow title="סוף שבוע וימי אימון" sub="כמו כל יום, רגיל או גמיש" onPress={onEditSchedule} />}
-            <OpenRow title="חופשה" sub="שקט או תחזוקה קלה, וימים שלא נספרים בדוחות" onPress={() => setSection('vacation')} />
+            <OpenRow first title={t("התיק שלי", 'My file')} sub={t("מטרה, בריאות, עבודה, שינה ואוכל", 'Goal, health, work, sleep and food')} onPress={onEditProfile} />
+            {onEditSchedule && <OpenRow title={t("סוף שבוע וימי אימון", 'Weekend and workout days')} sub={t("כמו כל יום, רגיל או גמיש", 'Like any day, regular or flexible')} onPress={onEditSchedule} />}
+            <OpenRow title={t("חופשה", 'Vacation')} sub={t("שקט או תחזוקה קלה, וימים שלא נספרים בדוחות", 'Quiet or light upkeep, and days the reports skip')} onPress={() => setSection('vacation')} />
           </RowsCard>
-          <Text style={s.group}>המאמן</Text>
+          <Text style={s.group}>{t('המאמן', 'The coach')}</Text>
           <RowsCard>
-            <OpenRow first title="הגדרות המאמן" sub="רמת הנדנוד, ארוחות, מים, מקומות, רכב" onPress={() => setSection('coach')} />
-            <OpenRow title="תזכורות" sub="אימון ושקילת בוקר" onPress={() => setSection('reminders')} />
-            <OpenRow title="דוחות" sub="מתי מגיע הדוח השבועי והחודשי" onPress={() => setSection('reports')} />
-            <OpenRow title="מה המאמן למד עליך" sub="השעות שלך, מה עובד עליך, והאם הוא רץ ברקע" onPress={() => setSection('learned')} />
+            <OpenRow first title={t("הגדרות המאמן", 'Coach settings')} sub={t("רמת הנדנוד, ארוחות, מים, מקומות, רכב", 'Nagging level, meals, water, places, car')} onPress={() => setSection('coach')} />
+            <OpenRow title={t("תזכורות", 'Reminders')} sub={t("אימון ושקילת בוקר", 'Workout and morning weigh-in')} onPress={() => setSection('reminders')} />
+            <OpenRow title={t("דוחות", 'Reports')} sub={t("מתי מגיע הדוח השבועי והחודשי", 'When the weekly and monthly reports arrive')} onPress={() => setSection('reports')} />
+            <OpenRow title={t("מה המאמן למד עליך", 'What the coach learned about you')} sub={t("השעות שלך, מה עובד עליך, והאם הוא רץ ברקע", 'Your hours, what works on you, and whether it runs in the background')} onPress={() => setSection('learned')} />
           </RowsCard>
-          <Text style={s.group}>מערכת</Text>
+          <Text style={s.group}>{t('מערכת', 'System')}</Text>
           <RowsCard>
-            <OpenRow first title="יעדים ולוח אימונים" sub={`${fmt(GOALS.calories)} קלוריות · ${GOALS.proteinG} ג' חלבון · ${WEEKLY_PLAN.length} אימונים`} onPress={() => setSection('plan')} />
-            <OpenRow title="בדיקת מוכנות וחיבורים" sub="שעון, אוכל, Health Connect" onPress={onOpenReadiness} />
+            <OpenRow first title={t("יעדים ולוח אימונים", 'Goals and workout plan')} sub={t(`${fmt(GOALS.calories)} קלוריות · ${GOALS.proteinG} ג' חלבון · ${WEEKLY_PLAN.length} אימונים`, `${fmt(GOALS.calories)} calories · ${GOALS.proteinG} g protein · ${WEEKLY_PLAN.length} workouts`)} onPress={() => setSection('plan')} />
+            <OpenRow title={t("בדיקת מוכנות וחיבורים", 'Readiness and connections')} sub={t("שעון, אוכל, Health Connect", 'Watch, food, Health Connect')} onPress={onOpenReadiness} />
           </RowsCard>
 
           <RowsCard>
@@ -182,7 +182,7 @@ export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditS
             {(
               [
                 ['he', 'עברית', ''],
-                ['en', 'English', 'בבנייה: חלק מהטקסטים עדיין בעברית'],
+                ['en', 'English', t('בבנייה: חלק מהטקסטים עדיין בעברית', 'In progress: some text is still in Hebrew')],
               ] as [Lang, string, string][]
             ).map(([k, label, note]) => {
               const on = (langPicked ?? LANG) === k;

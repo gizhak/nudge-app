@@ -1,5 +1,6 @@
 // Meal slots, classification by time, and a verdict on each meal.
 // Pure logic: used by the nutrition screen, the coach, and the tests.
+import { t } from '../i18n';
 
 export type SlotId = 'breakfast' | 'snack_am' | 'lunch' | 'snack_pm' | 'dinner' | 'night';
 
@@ -18,12 +19,12 @@ export interface Slot {
 const h = (hh: number, mm = 0) => hh * 60 + mm;
 
 export const SLOTS: Slot[] = [
-  { id: 'breakfast', label: 'ארוחת בוקר', from: h(4), to: h(10), remindAt: h(8, 30), share: 0.25 },
-  { id: 'snack_am', label: 'ביניים בבוקר', from: h(10), to: h(12), remindAt: h(10, 45), share: 0.1 },
-  { id: 'lunch', label: 'ארוחת צהריים', from: h(12), to: h(15, 30), remindAt: h(13, 30), share: 0.35 },
-  { id: 'snack_pm', label: 'ביניים אחר הצהריים', from: h(15, 30), to: h(18), remindAt: h(16, 45), share: 0.1 },
-  { id: 'dinner', label: 'ארוחת ערב', from: h(18), to: h(22), remindAt: h(20), share: 0.3 },
-  { id: 'night', label: 'ארוחת לילה', from: h(22), to: h(4), remindAt: h(22, 30), share: 0.08 },
+  { id: 'breakfast', label: t('ארוחת בוקר', 'Breakfast'), from: h(4), to: h(10), remindAt: h(8, 30), share: 0.25 },
+  { id: 'snack_am', label: t('ביניים בבוקר', 'Morning snack'), from: h(10), to: h(12), remindAt: h(10, 45), share: 0.1 },
+  { id: 'lunch', label: t('ארוחת צהריים', 'Lunch'), from: h(12), to: h(15, 30), remindAt: h(13, 30), share: 0.35 },
+  { id: 'snack_pm', label: t('ביניים אחר הצהריים', 'Afternoon snack'), from: h(15, 30), to: h(18), remindAt: h(16, 45), share: 0.1 },
+  { id: 'dinner', label: t('ארוחת ערב', 'Dinner'), from: h(18), to: h(22), remindAt: h(20), share: 0.3 },
+  { id: 'night', label: t('ארוחת לילה', 'Night meal'), from: h(22), to: h(4), remindAt: h(22, 30), share: 0.08 },
 ];
 
 export const SLOT_BY_ID = Object.fromEntries(SLOTS.map((s) => [s.id, s])) as Record<SlotId, Slot>;

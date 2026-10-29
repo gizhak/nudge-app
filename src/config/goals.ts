@@ -1,5 +1,6 @@
 // Starting targets from the spec (46, 177 cm, 81 kg, recomposition).
 // Recalibrate after 3 weeks of intake vs weight trend.
+import { LANG } from '../i18n';
 export const GOALS = {
   calories: 1925,
   proteinG: 140,
@@ -113,8 +114,8 @@ export function defaultWeekend(): number[] {
 /** The day the weekend starts: the weekend day whose day before is a work day. */
 export const weekendStart = (days = WEEKEND) => days.find((d) => !days.includes((d + 6) % 7)) ?? days[0];
 
-export const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-export const DAY_LETTERS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+export const DAY_NAMES = LANG === 'en' ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] : ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+export const DAY_LETTERS = LANG === 'en' ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
 
 export const pad2 = (n: number) => String(n).padStart(2, '0');
 
