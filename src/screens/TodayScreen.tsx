@@ -711,8 +711,8 @@ export default function TodayScreen({
                   setWhySeen(sig);
                   AsyncStorage.setItem(WHY_SEEN, sig).catch(() => undefined);
                 };
-                const down = !!why && why.headline.startsWith('ירדת');
-                const up = !!why && why.headline.startsWith('עלית');
+                const down = !!why && (why.dir ? why.dir === 'down' : why.headline.startsWith('ירדת'));
+                const up = !!why && (why.dir ? why.dir === 'up' : why.headline.startsWith('עלית'));
                 const tone = down ? C.good : up ? C.kcal : C.muted;
                 return (
                   <Pressable onPress={open} style={({ pressed }) => [s.weightCard, pressed && { opacity: 0.85 }]}>
@@ -776,7 +776,7 @@ export default function TodayScreen({
         </>
       )}
 
-      <Sheet open={sheet === 'weight'} onClose={() => setSheet(null)} title={week?.why ? (week.why.headline.startsWith('עלית') ? tr('למה זה כנראה עלה', 'Why it probably went up') : week.why.headline.startsWith('ירדת') ? tr('למה זה כנראה ירד', 'Why it probably went down') : tr('המשקל', 'Weight')) : tr('המשקל', 'Weight')}>
+      <Sheet open={sheet === 'weight'} onClose={() => setSheet(null)} title={week?.why ? ((week.why.dir ? week.why.dir === 'up' : week.why.headline.startsWith('עלית')) ? tr('למה זה כנראה עלה', 'Why it probably went up') : (week.why.dir ? week.why.dir === 'down' : week.why.headline.startsWith('ירדת')) ? tr('למה זה כנראה ירד', 'Why it probably went down') : tr('המשקל', 'Weight')) : tr('המשקל', 'Weight')}>
         {week?.why && (
           <View style={{ gap: 10 }}>
             <Text style={[T.bold, { fontSize: 18 }]}>{week.why.headline}</Text>
