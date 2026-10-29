@@ -1,6 +1,7 @@
 // Running: pure analysis of one run against the ones before it, the next target, and what
 // the coach says. No I/O, so every rule is tested with plain inputs.
 
+import { t } from '../i18n';
 export interface RoutePt {
   t: number;
   lat: number;
@@ -290,7 +291,7 @@ export function nextTarget(runs: Run[], prefs: RunPrefs, b: HrBounds, now: numbe
   const easy = atReserve(b, 0.7);
   if (!recent.length) {
     const km = Math.min(goalKm ?? 2, 2);
-    return { km, how: `קצב שמאפשר לדבר, דופק עד ${easy}. מותר לשלב הליכה.` };
+    return { km, how: t(`קצב שמאפשר לדבר, דופק עד ${easy}. מותר לשלב הליכה.`, `A pace you can talk at, heart rate up to ${easy}. Walking breaks are fine.`) };
   }
   const last = recent[0];
   const z = zones(last.hr, b);
@@ -301,16 +302,16 @@ export function nextTarget(runs: Run[], prefs: RunPrefs, b: HrBounds, now: numbe
   const push = style(runs) === 'push';
   const back = returning(last, runs);
   if (fixedRoute(runs) && !push) {
-    return { km: r1(last.km), how: hard ? `אותו מסלול, לאט יותר: דופק עד ${easy}. אם צריך, דקה הליכה באמצע.` : 'אותו מסלול, באותו מאמץ. השיפור יבוא מעצמו.' };
+    return { km: r1(last.km), how: hard ? t(`אותו מסלול, לאט יותר: דופק עד ${easy}. אם צריך, דקה הליכה באמצע.`, `Same route, slower: heart rate up to ${easy}. If needed, a minute of walking in the middle.`) : t('אותו מסלול, באותו מאמץ. השיפור יבוא מעצמו.', 'Same route, same effort. The improvement will come by itself.') };
   }
   let km = hard || back ? base : base * (push ? 1.15 : 1.1);
   if (goalKm) km = Math.min(km, goalKm);
   km = Math.max(1, half(km));
   if (prefs.goal?.kind === 'time' && goalKm && km >= goalKm) {
     const want = (prefs.goal.minutes * 60) / goalKm;
-    return { km, how: `קצב יעד ${paceText(want)} לק"מ. קילומטר אחד בקצב הזה, השאר נוח.` };
+    return { km, how: t(`קצב יעד ${paceText(want)} לק"מ. קילומטר אחד בקצב הזה, השאר נוח.`, `Target pace ${paceText(want)} per km. One kilometer at that pace, the rest easy.`) };
   }
-  return { km, how: hard ? `לאט, דופק עד ${easy}. אפשר לשלב הליכה.` : `קצב נוח, דופק עד ${easy}.` };
+  return { km, how: hard ? t(`לאט, דופק עד ${easy}. אפשר לשלב הליכה.`, `Slow, heart rate up to ${easy}. Walking breaks are fine.`) : t(`קצב נוח, דופק עד ${easy}.`, `An easy pace, heart rate up to ${easy}.`) };
 }
 
 // ---------- what the coach says ----------
@@ -333,9 +334,9 @@ export function talk(run: Run, before: Run[], prefs: RunPrefs, b: HrBounds, now:
 
   // Praise first, the facts that earned it
   const over = planned ? run.km / planned : 1;
-  if (planned && over >= 1.25) parts.push(`כל הכבוד, ${kmText(run.km)} ק"מ במקום ${targetText(planned)}.`);
-  else if (planned && over >= 0.9) parts.push(`עמדת ביעד: ${kmText(run.km)} ק"מ בקצב ${paceText(pace)}.`);
-  else parts.push(`${kmText(run.km)} ק"מ ב ${Math.round(minutesOf(run))} דקות, קצב ${paceText(pace)} לק"מ.`);
+  if (planned && over >= 1.25) parts.push(t(`כל הכבוד, ${kmText(run.km)} ק"מ במקום ${targetText(planned)}.`, `Well done, ${kmText(run.km)} km instead of ${targetText(planned)}.`));
+  else if (planned && over >= 0.9) parts.push(t(`עמדת ביעד: ${kmText(run.km)} ק"מ בקצב ${paceText(pace)}.`, `On target: ${kmText(run.km)} km at ${paceText(pace)} pace.`));
+  else parts.push(t(`${kmText(run.km)} ק"מ ב ${Math.round(minutesOf(run))} דקות, קצב ${paceText(pace)} לק"מ.`, `${kmText(run.km)} km in ${Math.round(minutesOf(run))} minutes, ${paceText(pace)} per km.`));
 
   // The comparison
   const cmp = compareWith(run, hist);
@@ -344,40 +345,40 @@ export function talk(run: Run, before: Run[], prefs: RunPrefs, b: HrBounds, now:
     const hrA = avgHr(run);
     const hrB = avgHr(cmp.run);
     const newRoute = cmp.how === 'distance' && !!run.route?.length && hist.some((r) => r.route?.length);
-    const where = cmp.how === 'route' ? 'באותו מסלול' : newRoute ? 'מסלול חדש. מול ריצה באורך דומה' : 'מול ריצה דומה';
-    const hrPart = hrA && hrB ? (Math.abs(hrA - hrB) <= 3 ? ' באותו דופק' : hrA < hrB ? ` ובדופק נמוך ב ${hrB - hrA}` : ` אבל בדופק גבוה ב ${hrA - hrB}`) : '';
-    if (Math.abs(d) < 5) parts.push(`${where}: אותו קצב${hrPart}.`);
-    else if (d > 0) parts.push(`${where}: מהר יותר ב ${Math.round(d)} שניות לק"מ${hrPart}.`);
-    else parts.push(`${where}: לאט יותר ב ${Math.round(-d)} שניות לק"מ${hrPart}.`);
-  } else if (run.route?.length && hist.some((r) => r.route?.length)) parts.push('מסלול חדש. נשווה אליו בפעם הבאה.');
+    const where = cmp.how === 'route' ? t('באותו מסלול', 'On the same route') : newRoute ? t('מסלול חדש. מול ריצה באורך דומה', 'A new route. Against a run of similar length') : t('מול ריצה דומה', 'Against a similar run');
+    const hrPart = hrA && hrB ? (Math.abs(hrA - hrB) <= 3 ? t(' באותו דופק', ' at the same heart rate') : hrA < hrB ? t(` ובדופק נמוך ב ${hrB - hrA}`, ` and a heart rate ${hrB - hrA} lower`) : t(` אבל בדופק גבוה ב ${hrA - hrB}`, ` but a heart rate ${hrA - hrB} higher`)) : '';
+    if (Math.abs(d) < 5) parts.push(t(`${where}: אותו קצב${hrPart}.`, `${where}: same pace${hrPart}.`));
+    else if (d > 0) parts.push(t(`${where}: מהר יותר ב ${Math.round(d)} שניות לק"מ${hrPart}.`, `${where}: ${Math.round(d)} seconds per km faster${hrPart}.`));
+    else parts.push(t(`${where}: לאט יותר ב ${Math.round(-d)} שניות לק"מ${hrPart}.`, `${where}: ${Math.round(-d)} seconds per km slower${hrPart}.`));
+  } else if (run.route?.length && hist.some((r) => r.route?.length)) parts.push(t('מסלול חדש. נשווה אליו בפעם הבאה.', 'A new route. We will compare to it next time.'));
 
   // The warnings
-  if (back && planned && over >= 1.25) parts.push('זו ריצה ראשונה אחרי הפסקה, וקפיצה כזו במרחק היא הסיבה הנפוצה לכאבי ברכיים ושוקיים, גם כשהריצה הרגישה טוב.');
-  else if (back) parts.push('ריצה ראשונה אחרי הפסקה. השבועיים הראשונים הם לבנות בסיס, לא לשבור שיאים.');
+  if (back && planned && over >= 1.25) parts.push(t('זו ריצה ראשונה אחרי הפסקה, וקפיצה כזו במרחק היא הסיבה הנפוצה לכאבי ברכיים ושוקיים, גם כשהריצה הרגישה טוב.', 'This is the first run after a break, and a jump like this in distance is the most common cause of knee and shin pain, even when the run felt good.'));
+  else if (back) parts.push(t('ריצה ראשונה אחרי הפסקה. השבועיים הראשונים הם לבנות בסיס, לא לשבור שיאים.', 'The first run after a break. The first two weeks are for building a base, not breaking records.'));
   if (hardShare > 0.4)
-    parts.push(`הדופק היה גבוה ${Math.round(hardShare * 100)}% מהזמן (מעל ${atReserve(b, 0.8)}). בבנייה, רוב הריצה צריכה להיות מתחת ל ${atReserve(b, 0.7)}.`);
+    parts.push(t(`הדופק היה גבוה ${Math.round(hardShare * 100)}% מהזמן (מעל ${atReserve(b, 0.8)}). בבנייה, רוב הריצה צריכה להיות מתחת ל ${atReserve(b, 0.7)}.`, `Your heart rate was high ${Math.round(hardShare * 100)}% of the time (above ${atReserve(b, 0.8)}). While building, most of the run should be below ${atReserve(b, 0.7)}.`));
 
   const next = nextTarget([...hist, run], prefs, b, now);
   const fixed = fixedRoute([...hist, run]);
-  parts.push(`בפעם הבאה: ${targetText(next.km)} ק"מ. ${next.how}`);
+  parts.push(t(`בפעם הבאה: ${targetText(next.km)} ק"מ. ${next.how}`, `Next time: ${targetText(next.km)} km. ${next.how}`));
 
   const easy = atReserve(b, 0.7);
-  const title = hardShare > 0.4 || (back && over >= 1.25) ? 'ריצה טובה, עם הערה' : 'ריצה טובה';
+  const title = hardShare > 0.4 || (back && over >= 1.25) ? t('ריצה טובה, עם הערה', 'A good run, with a note') : t('ריצה טובה', 'A good run');
   return {
     title,
     body: parts.join(' '),
     answers: [
       {
         key: 'same',
-        label: fixed ? 'אותו מסלול, לאט יותר' : 'כמו שהצעת',
-        reply: fixed ? `סגור. אותו מסלול, דופק עד ${easy}. נראה את ההבדל בהשוואה.` : `סגור. ${targetText(next.km)} ק"מ, דופק עד ${easy}.`,
+        label: fixed ? t('אותו מסלול, לאט יותר', 'Same route, slower') : t('כמו שהצעת', 'As you suggested'),
+        reply: fixed ? t(`סגור. אותו מסלול, דופק עד ${easy}. נראה את ההבדל בהשוואה.`, `Done. Same route, heart rate up to ${easy}. We will see the difference in the comparison.`) : t(`סגור. ${targetText(next.km)} ק"מ, דופק עד ${easy}.`, `Done. ${targetText(next.km)} km, heart rate up to ${easy}.`),
       },
       {
         key: 'push',
-        label: 'אני רוצה להתקדם',
-        reply: `בסדר, מתקדמים. אבל רק בדבר אחד כל פעם: או מרחק או קצב, לא שניהם. ואם מחר יש כאב בברכיים או בשוקיים, מורידים הילוך.`,
+        label: t('אני רוצה להתקדם', 'I want to progress'),
+        reply: t(`בסדר, מתקדמים. אבל רק בדבר אחד כל פעם: או מרחק או קצב, לא שניהם. ואם מחר יש כאב בברכיים או בשוקיים, מורידים הילוך.`, `\`OK, we progress. But one thing at a time: distance or pace, not both. And if your knees or shins hurt tomorrow, ease off.\``),
       },
-      { key: 'auto', label: 'תחליט אתה', reply: 'אני אחליט לפי הדופק וההתקדמות שלך, ואגיד לפני כל ריצה.' },
+      { key: 'auto', label: t('תחליט אתה', 'You decide'), reply: t('אני אחליט לפי הדופק וההתקדמות שלך, ואגיד לפני כל ריצה.', 'I will decide by your heart rate and progress, and tell you before each run.') },
     ],
   };
 }
@@ -391,14 +392,14 @@ export function goalLine(runs: Run[], prefs: RunPrefs, now: number): string | nu
     sunday.setHours(0, 0, 0, 0);
     sunday.setDate(sunday.getDate() - sunday.getDay());
     const n = runs.filter((r) => r.start >= sunday.getTime()).length;
-    return `יעד: ${g.perWeek === 1 ? 'ריצה אחת' : `${g.perWeek} ריצות`} בשבוע · השבוע ${n === 0 ? 'עוד לא' : n === 1 ? 'ריצה אחת' : `${n} ריצות`}`;
+    return t(`יעד: ${g.perWeek === 1 ? 'ריצה אחת' : `${g.perWeek} ריצות`} בשבוע · השבוע ${n === 0 ? 'עוד לא' : n === 1 ? 'ריצה אחת' : `${n} ריצות`}`, `Goal: ${g.perWeek === 1 ? 'one run' : `${g.perWeek} runs`} a week · this week ${n === 0 ? 'none yet' : n === 1 ? 'one run' : `${n} runs`}`);
   }
   const best = Math.max(0, ...runs.map((r) => r.km));
-  if (g.kind === 'distance') return best >= g.km ? `יעד: ${g.km} ק"מ ברצף · הושג` : `יעד: ${g.km} ק"מ ברצף · הכי רחוק עד עכשיו ${kmText(best)}`;
+  if (g.kind === 'distance') return best >= g.km ? t(`יעד: ${g.km} ק"מ ברצף · הושג`, `Goal: ${g.km} km in one go · done`) : t(`יעד: ${g.km} ק"מ ברצף · הכי רחוק עד עכשיו ${kmText(best)}`, `Goal: ${g.km} km in one go · farthest so far ${kmText(best)}`);
   const want = (g.minutes * 60) / g.km;
   const atDist = runs.filter((r) => r.km >= g.km * 0.97);
   const bestPace = atDist.length ? Math.min(...atDist.map(paceOf)) : undefined;
   return bestPace
-    ? `יעד: ${g.km} ק"מ ב ${g.minutes} דקות (${paceText(want)} לק"מ) · הכי טוב ${paceText(bestPace)}`
-    : `יעד: ${g.km} ק"מ ב ${g.minutes} דקות · עוד לא רצת ${g.km} ק"מ`;
+    ? t(`יעד: ${g.km} ק"מ ב ${g.minutes} דקות (${paceText(want)} לק"מ) · הכי טוב ${paceText(bestPace)}`, `Goal: ${g.km} km in ${g.minutes} minutes (${paceText(want)} per km) · best ${paceText(bestPace)}`)
+    : t(`יעד: ${g.km} ק"מ ב ${g.minutes} דקות · עוד לא רצת ${g.km} ק"מ`, `Goal: ${g.km} km in ${g.minutes} minutes · you have not run ${g.km} km yet`);
 }

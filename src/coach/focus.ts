@@ -9,6 +9,7 @@ import { DayData, isLogged, metrics, Targets } from '../report/compute';
 import { context } from '../report/run';
 import { safeGoal } from '../profile/safety';
 
+import { t as tr } from '../i18n';
 const KEY = 'coach.focus.v1';
 const DAY = 86400000;
 
@@ -52,20 +53,20 @@ export function dayHit(key: FocusKey, d: DayData, t: Targets): boolean | null {
   }
 }
 
-function titleOf(key: FocusKey, t: Targets): string {
+export function titleOf(key: FocusKey, t: Targets): string {
   switch (key) {
     case 'kcal':
-      return `קלוריות ביעד, סביב ${Math.round(t.calories / 50) * 50} ביום`;
+      return tr(`קלוריות ביעד, סביב ${Math.round(t.calories / 50) * 50} ביום`, `Calories on target, about ${Math.round(t.calories / 50) * 50} a day`);
     case 'protein':
-      return `${t.proteinG} גרם חלבון ביום`;
+      return tr(`${t.proteinG} גרם חלבון ביום`, `${t.proteinG} grams of protein a day`);
     case 'sleep':
-      return `${t.sleepHours} שעות שינה בלילה`;
+      return tr(`${t.sleepHours} שעות שינה בלילה`, `${t.sleepHours} hours of sleep a night`);
     case 'steps':
-      return `${t.steps.toLocaleString('en-US')} צעדים ביום`;
+      return tr(`${t.steps.toLocaleString('en-US')} צעדים ביום`, `${t.steps.toLocaleString('en-US')} steps a day`);
     case 'logging':
-      return 'לרשום כל ארוחה, כל יום';
+      return tr('לרשום כל ארוחה, כל יום', 'Log every meal, every day');
     case 'workouts':
-      return `${t.workoutsPerWeek} אימונים השבוע`;
+      return tr(`${t.workoutsPerWeek} אימונים השבוע`, `${t.workoutsPerWeek} workouts this week`);
   }
 }
 
@@ -81,13 +82,13 @@ const NEED: Record<FocusKey, (t: Targets) => number> = {
 /** The focus for a week from the two weeks before it; null when everything is on target */
 export function chooseFocus(last: DayData[], before: DayData[], t: Targets, goal: string): { key: FocusKey; why: string } | null {
   const m = metrics(last, before, t, 'week');
-  if (m.logged < 4) return { key: 'logging', why: `רק ${m.logged} מתוך 7 ימים נרשמו במלואם. בלי רישום אי אפשר לדעת מה עובד, אז זה בא קודם.` };
+  if (m.logged < 4) return { key: 'logging', why: tr(`רק ${m.logged} מתוך 7 ימים נרשמו במלואם. בלי רישום אי אפשר לדעת מה עובד, אז זה בא קודם.`, `Only ${m.logged} of 7 days were fully logged. Without logging there is no telling what works, so this comes first.`) };
   const order: FocusKey[] = goal === 'recomp' || goal === 'gain' ? ['protein', 'workouts', 'kcal', 'sleep', 'steps'] : ['kcal', 'protein', 'workouts', 'sleep', 'steps'];
   const get = (k: FocusKey) => m.list.find((x) => x.key === k);
   const pick = order.find((k) => get(k)?.status === 'bad') ?? order.find((k) => get(k)?.status === 'ok');
   if (!pick) return null;
   const x = get(pick)!;
-  return { key: pick, why: `בשבוע שעבר: ${x.value}. ${x.detail}.` };
+  return { key: pick, why: tr(`בשבוע שעבר: ${x.value}. ${x.detail}.`, `Last week: ${x.value}. ${x.detail}.`) };
 }
 
 export async function loadFocus(): Promise<Focus | null> {
@@ -141,14 +142,14 @@ export async function focusProgress(f: Focus, now = new Date()): Promise<{ days:
   return { days: out, hit: out.filter((x) => x === true).length, rows, targets };
 }
 
-const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const DAY_NAMES = [tr('ראשון', 'Sunday'), tr('שני', 'Monday'), tr('שלישי', 'Tuesday'), tr('רביעי', 'Wednesday'), tr('חמישי', 'Thursday'), tr('שישי', 'Friday'), tr('שבת', 'Saturday')];
 const n = (x: number) => Math.round(x).toLocaleString('en-US');
 const hm = (min: number) => {
   const h = Math.floor(min / 60);
   const m = Math.round(min % 60);
-  if (!h) return `${m} דקות`;
-  const hs = h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : `${h} שעות`;
-  return m ? `${hs} ו ${m} דקות` : hs;
+  if (!h) return tr(`${m} דקות`, `${m} minutes`);
+  const hs = h === 1 ? tr('שעה', 'an hour') : h === 2 ? tr('שעתיים', 'two hours') : tr(`${h} שעות`, `${h} hours`);
+  return m ? tr(`${hs} ו ${m} דקות`, `${hs} and ${m} minutes`) : hs;
 };
 
 /** One day of the focus, in a line or two: what happened and how far from the target */
@@ -157,35 +158,35 @@ export function dayLine(key: FocusKey, i: number, d: DayData | null, t: Targets,
   // A night is named by the morning it ends: Monday's circle is the night from Sunday to Monday
   const title =
     key === 'sleep'
-      ? `הלילה שבין ${DAY_NAMES[(i + 6) % 7]} ל${DAY_NAMES[i]}${i === today ? ', הלילה האחרון' : ''}`
-      : `יום ${DAY_NAMES[i]}${i === today ? ', היום' : ''}`;
-  if (i > today) return { title, body: 'עוד לא הגיע.' };
-  const open = i === today && key !== 'sleep' ? ' היום עוד לא נגמר.' : '';
-  if (!d) return { title, body: 'אין נתונים ליום הזה.' };
+      ? tr(`הלילה שבין ${DAY_NAMES[(i + 6) % 7]} ל${DAY_NAMES[i]}${i === today ? ', הלילה האחרון' : ''}`, `The night from ${DAY_NAMES[(i + 6) % 7]} to ${DAY_NAMES[i]}${i === today ? ', last night' : ''}`)
+      : tr(`יום ${DAY_NAMES[i]}${i === today ? ', היום' : ''}`, `${DAY_NAMES[i]}${i === today ? ', today' : ''}`);
+  if (i > today) return { title, body: tr('עוד לא הגיע.', 'Not here yet.') };
+  const open = i === today && key !== 'sleep' ? tr(' היום עוד לא נגמר.', ' Today is not over yet.') : '';
+  if (!d) return { title, body: tr('אין נתונים ליום הזה.', 'No data for this day.') };
   const kcal = t.dayCalories?.[i] ?? t.calories;
   switch (key) {
     case 'sleep': {
-      if (d.sleepMin == null) return { title, body: 'אין נתון. השעון לא רשם את הלילה, אז הוא לא נספר כפספוס. אם לא ענדת, אפשר להכניס אותו ידנית.' };
+      if (d.sleepMin == null) return { title, body: tr('אין נתון. השעון לא רשם את הלילה, אז הוא לא נספר כפספוס. אם לא ענדת, אפשר להכניס אותו ידנית.', 'No data. The watch did not log the night, so it does not count as a miss. If you did not wear it, you can enter it by hand.') };
       const goal = t.sleepHours * 60;
       const gap = goal - d.sleepMin;
-      return { title, body: `ישנת ${hm(d.sleepMin)}${d.sleepManual ? ' (הזנה ידנית)' : ''}. ${gap <= 30 ? 'ביעד.' : `חסרות ${hm(gap)} ליעד של ${t.sleepHours} שעות.`}` };
+      return { title, body: tr(`ישנת ${hm(d.sleepMin)}${d.sleepManual ? ' (הזנה ידנית)' : ''}. ${gap <= 30 ? 'ביעד.' : `חסרות ${hm(gap)} ליעד של ${t.sleepHours} שעות.`}`, `You slept ${hm(d.sleepMin)}${d.sleepManual ? ' (entered by hand)' : ''}. ${gap <= 30 ? 'On target.' : `${hm(gap)} short of the ${t.sleepHours} hour goal.`}`) };
     }
     case 'protein':
-      if (!d.meals) return { title, body: `לא נרשמו ארוחות.${open}` };
-      return { title, body: `${n(d.protein)} גרם חלבון מתוך ${t.proteinG}.${d.protein >= t.proteinG * 0.9 ? ' ביעד.' : ` חסרים ${n(t.proteinG - d.protein)} גרם.`}${open}` };
+      if (!d.meals) return { title, body: tr(`לא נרשמו ארוחות.${open}`, `No meals logged.${open}`) };
+      return { title, body: tr(`${n(d.protein)} גרם חלבון מתוך ${t.proteinG}.${d.protein >= t.proteinG * 0.9 ? ' ביעד.' : ` חסרים ${n(t.proteinG - d.protein)} גרם.`}${open}`, `${n(d.protein)} grams of protein of ${t.proteinG}.${d.protein >= t.proteinG * 0.9 ? ' On target.' : ` ${n(t.proteinG - d.protein)} grams short.`}${open}`) };
     case 'kcal':
-      if (!isLogged(d, t)) return { title, body: `היום לא נרשם במלואו (${n(d.kcal)} קלוריות ב ${d.meals} ארוחות), אז אי אפשר לדעת.${open}` };
+      if (!isLogged(d, t)) return { title, body: tr(`היום לא נרשם במלואו (${n(d.kcal)} קלוריות ב ${d.meals} ארוחות), אז אי אפשר לדעת.${open}`, `The day was not fully logged (${n(d.kcal)} calories in ${d.meals} meals), so there is no telling.${open}`) };
       return {
         title,
-        body: `${n(d.kcal)} קלוריות מול יעד ${n(kcal)}.${d.kcal > kcal * 1.1 ? ` ${n(d.kcal - kcal)} מעל.` : d.kcal < kcal * 0.7 ? ' נמוך מדי, זה לא עוזר.' : ' ביעד.'}${open}`,
+        body: tr(`${n(d.kcal)} קלוריות מול יעד ${n(kcal)}.${d.kcal > kcal * 1.1 ? ` ${n(d.kcal - kcal)} מעל.` : d.kcal < kcal * 0.7 ? ' נמוך מדי, זה לא עוזר.' : ' ביעד.'}${open}`, `${n(d.kcal)} calories against a goal of ${n(kcal)}.${d.kcal > kcal * 1.1 ? ` ${n(d.kcal - kcal)} over.` : d.kcal < kcal * 0.7 ? ' Too low, that does not help.' : ' On target.'}${open}`),
       };
     case 'steps':
-      if (d.steps == null) return { title, body: 'אין נתון צעדים מהשעון.' };
-      return { title, body: `${n(d.steps)} צעדים מתוך ${n(t.steps)}.${d.steps >= t.steps ? ' ביעד.' : ` חסרים ${n(t.steps - d.steps)}.`}${open}` };
+      if (d.steps == null) return { title, body: tr('אין נתון צעדים מהשעון.', 'No step data from the watch.') };
+      return { title, body: tr(`${n(d.steps)} צעדים מתוך ${n(t.steps)}.${d.steps >= t.steps ? ' ביעד.' : ` חסרים ${n(t.steps - d.steps)}.`}${open}`, `${n(d.steps)} steps of ${n(t.steps)}.${d.steps >= t.steps ? ' On target.' : ` ${n(t.steps - d.steps)} short.`}${open}`) };
     case 'logging':
-      return { title, body: isLogged(d, t) ? `נרשם במלואו: ${d.meals} ארוחות, ${n(d.kcal)} קלוריות.` : `נרשמו ${d.meals} ארוחות, ${n(d.kcal)} קלוריות. זה לא מספיק כדי לדעת מה אכלת.${open}` };
+      return { title, body: isLogged(d, t) ? tr(`נרשם במלואו: ${d.meals} ארוחות, ${n(d.kcal)} קלוריות.`, `Fully logged: ${d.meals} meals, ${n(d.kcal)} calories.`) : tr(`נרשמו ${d.meals} ארוחות, ${n(d.kcal)} קלוריות. זה לא מספיק כדי לדעת מה אכלת.${open}`, `${d.meals} meals logged, ${n(d.kcal)} calories. Not enough to know what you ate.${open}`) };
     case 'workouts':
-      return { title, body: d.workout ? 'היה אימון.' : `לא היה אימון.${open}` };
+      return { title, body: d.workout ? tr('היה אימון.', 'There was a workout.') : tr(`לא היה אימון.${open}`, `No workout.${open}`) };
   }
 }
 

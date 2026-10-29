@@ -5,12 +5,13 @@ import { aggregateRecord, readRecords, requestExerciseRoute } from 'react-native
 import { HrBounds, hrBounds, HrPt, nextTarget, Run, RoutePt, thin, trackKm } from './analyze';
 import { loadRunPrefs, loadRuns, saveRuns, updateRun } from './store';
 
+import { t as tr } from '../i18n';
 export const RUN_TYPES = [56, 57];
 // Never a run, whatever the pace: walking, hiking, cycling, swimming, wheelchair
 const NOT_RUN = [79, 37, 8, 9, 73, 74, 82];
 const SKIPS = 'run.skips.v1';
-const TYPE_NAME: Record<number, string> = { 0: 'אימון אחר', 56: 'ריצה', 57: 'הליכון', 79: 'הליכה', 37: 'טיול רגלי', 8: 'אופניים', 9: 'אופני כושר', 25: 'אליפטיקל', 35: 'אינטרוולים', 36: 'HIIT' };
-export const typeName = (t?: number) => (t == null ? 'לא ידוע' : TYPE_NAME[t] ?? `סוג ${t}`);
+const TYPE_NAME: Record<number, string> = { 0: tr('אימון אחר', 'Other workout'), 56: tr('ריצה', 'Run'), 57: tr('הליכון', 'Treadmill'), 79: tr('הליכה', 'Walk'), 37: tr('טיול רגלי', 'Hike'), 8: tr('אופניים', 'Cycling'), 9: tr('אופני כושר', 'Exercise bike'), 25: tr('אליפטיקל', 'Elliptical'), 35: tr('אינטרוולים', 'Intervals'), 36: 'HIIT' };
+export const typeName = (t?: number) => (t == null ? tr('לא ידוע', 'Unknown') : TYPE_NAME[t] ?? tr(`סוג ${t}`, `type ${t}`));
 
 /** A session that did not become a run, and why: shown under the run card so a missing run explains itself */
 export interface RunSkip {
@@ -164,11 +165,11 @@ export async function askRoute(id: string): Promise<{ ok: true } | { error: stri
   try {
     const pts: any[] = (await Promise.race([
       requestExerciseRoute(id),
-      new Promise((_, no) => setTimeout(() => no(new Error('אין תשובה מ Android')), 60000)),
+      new Promise((_, no) => setTimeout(() => no(new Error(tr('אין תשובה מ Android', 'No answer from Android'))), 60000)),
     ])) as any;
     if (!pts?.length) {
       await updateRun(id, { routeState: 'NO_DATA' });
-      return { error: 'המסלול ריק' };
+      return { error: tr('המסלול ריק', 'The route is empty') };
     }
     await updateRun(id, { route: toRoute(pts), routeState: 'DATA' });
     return { ok: true };

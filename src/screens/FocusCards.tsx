@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DAY_LETTERS, weekStartKey } from '../config/goals';
-import { dayLine, Focus, focusProgress, isRealFocus, loadFocus } from '../coach/focus';
+import { dayLine, titleOf, Focus, focusProgress, isRealFocus, loadFocus } from '../coach/focus';
 import type { DayData, Targets } from '../report/compute';
 import { answerProposal, loadProposal, Proposal } from '../coach/proposals';
 import { ackTopic } from '../coach/followupStore';
@@ -11,7 +11,7 @@ import { Sheet } from '../ui/Sheet';
 import SleepEntry from './SleepEntry';
 import { C, FONT, T } from '../ui/theme';
 
-import { ROW, t } from '../i18n';
+import { ROW, t, LANG } from '../i18n';
 export default function FocusCards({ tick = 0 }: { tick?: number }) {
   const [focus, setFocus] = useState<Focus | null>(null);
   const [days, setDays] = useState<(boolean | null)[]>([]);
@@ -64,7 +64,7 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
               {hit} {t('מתוך', 'of')} {focus.need}
             </Text>
           </View>
-          <Text style={[T.bold, { fontSize: 17, fontFamily: FONT.black }]}>{focus.title}</Text>
+          <Text style={[T.bold, { fontSize: 17, fontFamily: FONT.black }]}>{LANG === 'en' && targets ? titleOf(focus.key, targets) : focus.title}</Text>
           <View style={s.days}>
             {DAY_LETTERS.map((l, i) => {
               const v = days[i];
@@ -106,7 +106,7 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
       <Sheet open={open} onClose={() => setOpen(false)} title={t("המיקוד של השבוע", 'This week\'s focus')}>
         {focus && (
           <>
-            <Text style={[T.bold, { fontSize: 20, fontFamily: FONT.black }]}>{focus.title}</Text>
+            <Text style={[T.bold, { fontSize: 20, fontFamily: FONT.black }]}>{LANG === 'en' && targets ? titleOf(focus.key, targets) : focus.title}</Text>
             <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>{t('למה דווקא זה:', 'Why this one:')} {focus.why}</Text>
             <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>
               {t('המטרה:', 'The goal:')} {focus.need} {t('ימים מתוך 7. עד עכשיו', 'days out of 7. So far')} {hit}.
@@ -140,7 +140,7 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
                 <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>{t('להכניס ידנית', 'Enter by hand')}</Text>
               </Pressable>
             )}
-            <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{t('המיקוד:', 'The focus:')} {focus.title}</Text>
+            <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{t('המיקוד:', 'The focus:')} {LANG === 'en' && targets ? titleOf(focus.key, targets) : focus.title}</Text>
           </>
         )}
       </Sheet>

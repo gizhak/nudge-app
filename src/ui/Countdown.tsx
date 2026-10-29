@@ -19,13 +19,13 @@ export function countdownText(ms: number): { big: string; small: string } {
   const mins = Math.floor(ms / 60_000);
   if (mins >= 24 * 60) {
     const days = Math.round(mins / (24 * 60));
-    return { big: String(days), small: days === 1 ? tr('יום לאימון', 'day to workout') : tr('ימים לאימון', 'days to workout') };
+    return { big: String(days), small: days === 1 ? tr('יום לאימון', 'day left') : tr('ימים לאימון', 'days left') };
   }
   // Hours as a number of hours: "12:52" reads like a clock time
-  if (mins >= 3 * 60) return { big: String(Math.round(mins / 60)), small: tr('שעות לאימון', 'hours to workout') };
-  if (mins >= 60) return { big: `${Math.floor(mins / 60)}:${two(mins % 60)}`, small: tr('שעות לאימון', 'hours to workout') };
+  if (mins >= 3 * 60) return { big: String(Math.round(mins / 60)), small: tr('שעות לאימון', 'hours left') };
+  if (mins >= 60) return { big: `${Math.floor(mins / 60)}:${two(mins % 60)}`, small: tr('שעות לאימון', 'hours left') };
   const secs = Math.floor(ms / 1000);
-  return { big: `${Math.floor(secs / 60)}:${two(secs % 60)}`, small: tr('דקות לאימון', 'minutes to workout') };
+  return { big: `${Math.floor(secs / 60)}:${two(secs % 60)}`, small: tr('דקות לאימון', 'minutes left') };
 }
 
 export default function Countdown({ at }: { at: Date }) {

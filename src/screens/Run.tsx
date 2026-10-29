@@ -231,7 +231,7 @@ function RunDetail({ run, runs, prefs, b, onChanged }: { run: Run; runs: Run[]; 
         {avgHr(run) ? <Stat value={String(avgHr(run))} label={tr(`דופק (מקס ${maxHr(run)})`, `Heart rate (max ${maxHr(run)})`)} /> : null}
       </View>
 
-      <View style={[s.talk, (t.title.includes('הערה')) && { borderColor: ORANGE }]}>
+      <View style={[s.talk, (t.title.includes('הערה') || t.title.includes('note')) && { borderColor: ORANGE }]}>
         <Text style={[T.bold, { fontSize: 15 }]}>{tr('המאמן', 'The coach')}</Text>
         <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>{t.body}</Text>
         {answer ? (
