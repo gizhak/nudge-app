@@ -89,9 +89,9 @@ function OutingCard({
     return (
       <Card>
         <Text style={[T.bold, { fontSize: 16 }]}>
-          {tr('יוצא ב', 'Going out at')}{hhmmO(plan.leaveAt)}: {OUTING_LABEL[plan.kind]}
+          {tr('יוצא ב', 'Going out at ')}{hhmmO(plan.leaveAt)}: {OUTING_LABEL[plan.kind]}
         </Text>
-        <Text style={[T.muted, { fontSize: 13 }]}>{tr('חוזר בערך ב', 'Back around')}{hhmmO(plan.returnAt)}{tr('. לא אציק על שינה עד', '. I won\'t nag about sleep until')} {hhmmO(graceEnd(plan) % 1440)}.</Text>
+        <Text style={[T.muted, { fontSize: 13 }]}>{tr('חוזר בערך ב', 'Back around ')}{hhmmO(plan.returnAt)}{tr('. לא אציק על שינה עד', '. I won\'t nag about sleep until')} {hhmmO(graceEnd(plan) % 1440)}.</Text>
         <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>{OUTING_TIP[plan.kind]}</Text>
         <View style={s.outRow}>
           {plan.kind === 'restaurant' && (
@@ -155,11 +155,11 @@ function OutingCard({
       <Text style={[T.bold, { fontSize: 16 }]}>{tr('מה מתוכנן?', 'What\'s the plan?')}</Text>
       <Choice options={OUTING_KINDS} value={draft.kind} onChange={(kind) => setDraft({ ...draft, kind })} />
       <View style={s.outTime}>
-        <Text style={[T.bold, { fontSize: 15 }]}>{tr('יוצא ב', 'Going out at')}</Text>
+        <Text style={[T.bold, { fontSize: 15 }]}>{tr('יוצא ב', 'Going out at ')}</Text>
         <TimeStepper value={draft.leaveAt} onChange={(leaveAt) => setDraft({ ...draft, leaveAt })} />
       </View>
       <View style={s.outTime}>
-        <Text style={[T.bold, { fontSize: 15 }]}>{tr('חוזר בערך ב', 'Back around')}</Text>
+        <Text style={[T.bold, { fontSize: 15 }]}>{tr('חוזר בערך ב', 'Back around ')}</Text>
         <TimeStepper value={draft.returnAt} onChange={(returnAt) => setDraft({ ...draft, returnAt })} />
       </View>
       <View style={s.outRow}>

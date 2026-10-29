@@ -9,12 +9,12 @@ import { PrimaryButton } from '../ui/components';
 import { Sheet } from '../ui/Sheet';
 import { C, FONT, fmt, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, t as tr } from '../i18n';
 export type LogKind = 'weight' | 'waist';
 
 const HOW: Record<LogKind, string> = {
-  weight: 'בבוקר, אחרי השירותים ולפני אוכל ושתייה.',
-  waist: 'בגובה הטבור, בבוקר אחרי השקילה, אחרי נשיפה רגילה. הסרט צמוד ולא לוחץ. כל פעם באותה צורה.',
+  weight: tr('בבוקר, אחרי השירותים ולפני אוכל ושתייה.', 'In the morning, after the toilet and before food and drink.'),
+  waist: tr('בגובה הטבור, בבוקר אחרי השקילה, אחרי נשיפה רגילה. הסרט צמוד ולא לוחץ. כל פעם באותה צורה.', 'At the navel, in the morning after weighing, after a normal breath out. The tape snug, not tight. The same way every time.'),
 };
 
 const LogSheet = forwardRef<
@@ -31,29 +31,29 @@ const LogSheet = forwardRef<
   const save = async () => {
     const n = Number(input.replace(',', '.'));
     if (kind === 'weight') {
-      if (!Number.isFinite(n) || n < 30 || n > 250) return setMsg({ text: 'משקל בקילוגרמים, למשל 80.6', ok: false });
+      if (!Number.isFinite(n) || n < 30 || n > 250) return setMsg({ text: tr('משקל בקילוגרמים, למשל 80.6', 'Weight in kilograms, e.g. 80.6'), ok: false });
       try {
         await saveWeight(n);
         await didIt(['weigh']).catch(() => undefined);
       } catch {
-        return setMsg({ text: 'השמירה נכשלה. בדוק הרשאת כתיבת משקל ב Health Connect.', ok: false });
+        return setMsg({ text: tr('השמירה נכשלה. בדוק הרשאת כתיבת משקל ב Health Connect.', 'Saving failed. Check the weight write permission in Health Connect.'), ok: false });
       }
     } else {
-      if (!Number.isFinite(n) || n < 50 || n > 180) return setMsg({ text: 'היקף בסנטימטרים, למשל 92.5', ok: false });
+      if (!Number.isFinite(n) || n < 50 || n > 180) return setMsg({ text: tr('היקף בסנטימטרים, למשל 92.5', 'Waist in centimeters, e.g. 92.5'), ok: false });
       await saveWaist(n);
     }
     Keyboard.dismiss();
     setInput('');
-    setMsg({ text: `נשמר: ${fmt(n, 1)} ${kind === 'weight' ? 'ק"ג' : 'ס"מ'}`, ok: true });
+    setMsg({ text: tr(`נשמר: ${fmt(n, 1)} ${kind === 'weight' ? 'ק"ג' : 'ס"מ'}`, `Saved: ${fmt(n, 1)} ${kind === 'weight' ? 'kg' : 'cm'}`), ok: true });
     onSaved(kind);
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="רישום ידני">
+    <Sheet open={open} onClose={onClose} title={tr("רישום ידני", 'Manual entry')}>
       <View style={s.toggle}>
         {(['weight', 'waist'] as LogKind[]).map((k) => (
           <Pressable key={k} onPress={() => onKind(k)} style={[s.opt, kind === k && s.optOn]}>
-            <Text style={[T.bold, { fontSize: 14, color: kind === k ? '#fff' : C.ink }]}>{k === 'weight' ? 'משקל' : 'היקף מותן'}</Text>
+            <Text style={[T.bold, { fontSize: 14, color: kind === k ? '#fff' : C.ink }]}>{k === 'weight' ? tr('משקל', 'Weight') : tr('היקף מותן', 'Waist')}</Text>
           </Pressable>
         ))}
       </View>
@@ -71,9 +71,9 @@ const LogSheet = forwardRef<
           style={s.input}
           placeholderTextColor={C.muted}
         />
-        <Text style={[T.muted, { fontSize: 14 }]}>{kind === 'weight' ? 'ק"ג' : 'ס"מ'}</Text>
+        <Text style={[T.muted, { fontSize: 14 }]}>{kind === 'weight' ? tr('ק"ג', 'kg') : tr('ס"מ', 'cm')}</Text>
         <View style={{ flex: 1 }}>
-          <PrimaryButton label="שמור" onPress={save} />
+          <PrimaryButton label={tr("שמור", 'Save')} onPress={save} />
         </View>
       </View>
       {msg && <Text style={[T.bold, { fontSize: 14, color: msg.ok ? C.good : C.bad }]}>{msg.text}</Text>}

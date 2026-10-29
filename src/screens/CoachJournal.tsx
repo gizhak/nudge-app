@@ -8,25 +8,25 @@ import { dayKey, loadLog, loadSnoozes, SentMessage } from '../coach/store';
 import { Card } from '../ui/components';
 import { C, T } from '../ui/theme';
 
-import { ROW, SIDE_START, LOCALE } from '../i18n';
+import { ROW, SIDE_START, LOCALE, t } from '../i18n';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 /** Each topic's mark: an icon in its color, the only color in the bubble. */
 export function topicLook(key: string): { icon: IconName; color: string; label: string } {
   const k = key.toLowerCase();
-  if (k.startsWith('focus')) return { icon: 'locate', color: C.signal, label: 'המיקוד של השבוע' };
-  if (k.startsWith('proposal')) return { icon: 'git-compare-outline', color: C.signal, label: 'שינוי בתוכנית' };
-  if (k.startsWith('workout_feel')) return { icon: 'barbell', color: '#F2A58E', label: 'משקלים' };
-  if (k.startsWith('sleep_missing')) return { icon: 'moon-outline', color: '#8E9BD8', label: 'שינה' };
-  if (k.startsWith('water')) return { icon: 'water', color: C.water, label: 'מים' };
-  if (k.startsWith('weigh') || k.startsWith('weight')) return { icon: 'scale-outline', color: C.good, label: 'משקל' };
-  if (/^(go_to_sleep|short_sleep|sleep|night)/.test(k)) return { icon: 'moon', color: C.sleep, label: 'שינה' };
-  if (/^(steps|sync_steps)/.test(k)) return { icon: 'footsteps', color: C.good, label: 'צעדים' };
-  if (/^(run)/.test(k)) return { icon: 'walk', color: C.signal, label: 'ריצה' };
-  if (/^(workout|missed_workout|week_behind|long_break|gym|home_before_workout|outing_workout)/.test(k)) return { icon: 'barbell', color: C.signal, label: 'אימון' };
-  if (/^(meal|food|protein|evening|leave_office|pre_workout|weekend_guard|craving|outing_prep)/.test(k)) return { icon: 'restaurant', color: C.kcal, label: 'אוכל' };
-  if (k.startsWith('day_summary')) return { icon: 'reader-outline', color: C.ink, label: 'סיכום היום' };
-  if (k.startsWith('checkin')) return { icon: 'pulse', color: C.ink, label: 'בדיקה' };
-  return { icon: 'chatbubble-ellipses', color: C.muted, label: 'המאמן' };
+  if (k.startsWith('focus')) return { icon: 'locate', color: C.signal, label: t('המיקוד של השבוע', 'This week\'s focus') };
+  if (k.startsWith('proposal')) return { icon: 'git-compare-outline', color: C.signal, label: t('שינוי בתוכנית', 'Plan change') };
+  if (k.startsWith('workout_feel')) return { icon: 'barbell', color: '#F2A58E', label: t('משקלים', 'Weights') };
+  if (k.startsWith('sleep_missing')) return { icon: 'moon-outline', color: '#8E9BD8', label: t('שינה', 'Sleep') };
+  if (k.startsWith('water')) return { icon: 'water', color: C.water, label: t('מים', 'Water') };
+  if (k.startsWith('weigh') || k.startsWith('weight')) return { icon: 'scale-outline', color: C.good, label: t('משקל', 'Weight') };
+  if (/^(go_to_sleep|short_sleep|sleep|night)/.test(k)) return { icon: 'moon', color: C.sleep, label: t('שינה', 'Sleep') };
+  if (/^(steps|sync_steps)/.test(k)) return { icon: 'footsteps', color: C.good, label: t('צעדים', 'Steps') };
+  if (/^(run)/.test(k)) return { icon: 'walk', color: C.signal, label: t('ריצה', 'Run') };
+  if (/^(workout|missed_workout|week_behind|long_break|gym|home_before_workout|outing_workout)/.test(k)) return { icon: 'barbell', color: C.signal, label: t('אימון', 'Workout') };
+  if (/^(meal|food|protein|evening|leave_office|pre_workout|weekend_guard|craving|outing_prep)/.test(k)) return { icon: 'restaurant', color: C.kcal, label: t('אוכל', 'Food') };
+  if (k.startsWith('day_summary')) return { icon: 'reader-outline', color: C.ink, label: t('סיכום היום', 'Day summary') };
+  if (k.startsWith('checkin')) return { icon: 'pulse', color: C.ink, label: t('בדיקה', 'Check') };
+  return { icon: 'chatbubble-ellipses', color: C.muted, label: t('המאמן', 'The coach') };
 }
 
 const time = (at: number) => new Date(at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
@@ -68,8 +68,8 @@ export default function CoachJournal({ limit, onMore, tick = 0 }: { limit?: numb
 
   return (
     <View style={{ gap: 10 }}>
-      <Text style={[T.muted, { fontSize: 13 }]}>{log.length === 1 ? 'הודעה אחת היום' : `${log.length} הודעות היום`}</Text>
-      {waiting.length > 0 && <Text style={[T.bold, s.section]}>מחכה לך</Text>}
+      <Text style={[T.muted, { fontSize: 13 }]}>{log.length === 1 ? t('הודעה אחת היום', 'One message today') : t(`${log.length} הודעות היום`, `${log.length} messages today`)}</Text>
+      {waiting.length > 0 && <Text style={[T.bold, s.section]}>{t('מחכה לך', 'Waiting for you')}</Text>}
       {waiting.map((e) => {
         const st = stateOf(e);
         return (
@@ -86,10 +86,10 @@ export default function CoachJournal({ limit, onMore, tick = 0 }: { limit?: numb
           />
         );
       })}
-      {shownRest.length > 0 && <Text style={[T.bold, s.section, waiting.length > 0 && { marginTop: 8 }]}>מה היה היום</Text>}
+      {shownRest.length > 0 && <Text style={[T.bold, s.section, waiting.length > 0 && { marginTop: 8 }]}>{t('מה היה היום', 'What happened today')}</Text>}
       {shownRest.map((e) => {
         const st = stateOf(e);
-        const status = st.done ? 'בוצע' : st.acked ? 'הבנתי' : e.count > 1 ? `${e.count} פעמים` : '';
+        const status = st.done ? t('בוצע', 'Done') : st.acked ? t('הבנתי', 'Got it') : e.count > 1 ? t(`${e.count} פעמים`, `${e.count} times`) : '';
         const isOpen = open === e.key;
         const look = topicLook(e.key);
         return (
@@ -118,7 +118,7 @@ export default function CoachJournal({ limit, onMore, tick = 0 }: { limit?: numb
       })}
       {limit && entries.length > limit && onMore && (
         <Pressable onPress={onMore} hitSlop={8}>
-          <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>עוד {entries.length - limit} נושאים בלשונית מאמן</Text>
+          <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>{t('עוד', 'More')} {entries.length - limit} {t('נושאים בלשונית מאמן', 'topics in the coach tab')}</Text>
         </Pressable>
       )}
     </View>
@@ -158,19 +158,19 @@ function Entry({
         <Text style={[T.bold, { fontSize: 16, lineHeight: 22, flex: 1 }]} numberOfLines={2}>
           {e.title}
         </Text>
-        {e.count > 1 && !e.items && <Text style={[T.muted, s.badge]}>{e.count} פעמים</Text>}
-        {done && <Text style={[T.bold, { fontSize: 12, color: C.muted }]}>בוצע</Text>}
+        {e.count > 1 && !e.items && <Text style={[T.muted, s.badge]}>{e.count} {t('פעמים', 'times')}</Text>}
+        {done && <Text style={[T.bold, { fontSize: 12, color: C.muted }]}>{t('בוצע', 'Done')}</Text>}
         {onGotIt &&
           !done &&
           (overdue ? (
             <Pressable onPress={onGotIt} hitSlop={8} style={[s.gotIt, { backgroundColor: C.signal }]}>
-              <Text style={[T.bold, { fontSize: 12, color: '#fff' }]}>הבנתי</Text>
+              <Text style={[T.bold, { fontSize: 12, color: '#fff' }]}>{t('הבנתי', 'Got it')}</Text>
             </Pressable>
           ) : acked ? (
-            <Text style={[T.muted, s.acked]}>הבנתי</Text>
+            <Text style={[T.muted, s.acked]}>{t('הבנתי', 'Got it')}</Text>
           ) : (
             <Pressable onPress={onGotIt} hitSlop={8} style={s.gotIt}>
-              <Text style={[T.bold, { fontSize: 12, color: '#fff' }]}>הבנתי</Text>
+              <Text style={[T.bold, { fontSize: 12, color: '#fff' }]}>{t('הבנתי', 'Got it')}</Text>
             </Pressable>
           ))}
       </View>
@@ -182,11 +182,11 @@ function Entry({
       {follow && !done && (
         <Text style={[T.bold, { fontSize: 12, color: overdue ? C.signal : C.muted }]}>
           {overdue
-            ? `הבנתי ב${time(follow.ackAt)}, אבל לא בוצע${follow.count > 1 ? ` (${follow.count} פעמים)` : ''}`
-            : `הבנתי ב${time(follow.ackAt)}. אבדוק שוב ב${time(follow.dueAt)}`}
+            ? t(`הבנתי ב${time(follow.ackAt)}, אבל לא בוצע${follow.count > 1 ? ` (${follow.count} פעמים)` : ''}`, `Got it at ${time(follow.ackAt)}, but not done${follow.count > 1 ? ` (${follow.count} times)` : ''}`)
+            : t(`הבנתי ב${time(follow.ackAt)}. אבדוק שוב ב${time(follow.dueAt)}`, `Got it at ${time(follow.ackAt)}. I will check again at ${time(follow.dueAt)}`)}
         </Text>
       )}
-      {expandable && !open && <Text style={[T.bold, { fontSize: 12, color: C.muted }]}>הצג הכל</Text>}
+      {expandable && !open && <Text style={[T.bold, { fontSize: 12, color: C.muted }]}>{t('הצג הכל', 'Show all')}</Text>}
       {open &&
         e.items!.map((m) => (
           <View key={m.id + m.at} style={s.item}>

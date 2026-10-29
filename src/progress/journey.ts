@@ -1,6 +1,7 @@
 // Pure: the progress journey. A checkpoint every four weeks: photos, waist, and the numbers
 // the app already knows. The scale alone hides recomposition; photos and waist show it.
 
+import { t as tr } from '../i18n';
 export const CHECKPOINT_DAYS = 28;
 /** Comparing earlier than this mostly shows noise and discourages */
 export const COMPARE_MIN_DAYS = 28;
@@ -96,11 +97,11 @@ export const signed = (n: number, unit: string) => `${n > 0 ? '+' : n < 0 ? '−
 export function verdict(d: Diff): string {
   const sig = muscleSignal(d);
   if (sig) return sig;
-  if (d.waist != null && d.waist <= -1 && (d.weight == null || d.weight > -0.5)) return 'המשקל כמעט לא זז, אבל המותן ירדה. זה בדיוק איך שבניית שריר וירידה בשומן נראות.';
-  if (d.waist != null && d.waist <= -1) return 'המותן יורדת. השומן הולך, תמשיך בדיוק ככה.';
-  if (d.waist != null && d.waist >= 1) return 'המותן עלתה. נבדוק יחד קלוריות ושינה בחודש הקרוב.';
-  if (d.weight != null && d.weight <= -1) return 'ירידה יפה במשקל. שמור על החלבון כדי שזה יהיה שומן ולא שריר.';
-  return 'יציב. תסתכל על התמונות, לא רק על המספרים.';
+  if (d.waist != null && d.waist <= -1 && (d.weight == null || d.weight > -0.5)) return tr('המשקל כמעט לא זז, אבל המותן ירדה. זה בדיוק איך שבניית שריר וירידה בשומן נראות.', 'The weight barely moved, but the waist went down. That is exactly what building muscle and losing fat look like.');
+  if (d.waist != null && d.waist <= -1) return tr('המותן יורדת. השומן הולך, תמשיך בדיוק ככה.', 'The waist is going down. The fat is going, keep doing exactly this.');
+  if (d.waist != null && d.waist >= 1) return tr('המותן עלתה. נבדוק יחד קלוריות ושינה בחודש הקרוב.', 'The waist went up. We will look at calories and sleep together this coming month.');
+  if (d.weight != null && d.weight <= -1) return tr('ירידה יפה במשקל. שמור על החלבון כדי שזה יהיה שומן ולא שריר.', 'A nice drop in weight. Keep the protein up so it is fat and not muscle.');
+  return tr('יציב. תסתכל על התמונות, לא רק על המספרים.', 'Steady. Look at the photos, not just the numbers.');
 }
 
 /**
@@ -113,7 +114,7 @@ export function muscleSignal(d: { waist?: number; chest?: number; arm?: number; 
   if (!limbs.length) return null;
   const grew = (d.arm ?? 0) >= 0.5 || (d.chest ?? 0) >= 1 || (d.thigh ?? 0) >= 1;
   const shrank = (d.arm ?? 0) <= -1 || (d.chest ?? 0) <= -2 || (d.thigh ?? 0) <= -2;
-  if (grew && !shrank) return 'סימן לבניית שריר: המותן ירדה בזמן שהזרוע, החזה או הירך גדלו. זה בדיוק חיטוב.';
-  if (shrank) return 'המותן ירדה, אבל גם הזרוע או החזה. ייתכן שחלק מהירידה היא שריר: הקפד על חלבון ועל אימוני כוח.';
-  return 'המותן ירדה והזרוע, החזה והירך נשמרו. הירידה היא בעיקר שומן.';
+  if (grew && !shrank) return tr('סימן לבניית שריר: המותן ירדה בזמן שהזרוע, החזה או הירך גדלו. זה בדיוק חיטוב.', 'A sign of muscle building: the waist went down while the arm, chest or thigh grew. That is exactly toning.');
+  if (shrank) return tr('המותן ירדה, אבל גם הזרוע או החזה. ייתכן שחלק מהירידה היא שריר: הקפד על חלבון ועל אימוני כוח.', 'The waist went down, but so did the arm or chest. Part of the loss may be muscle: keep up protein and strength training.');
+  return tr('המותן ירדה והזרוע, החזה והירך נשמרו. הירידה היא בעיקר שומן.', 'The waist went down and the arm, chest and thigh held. The loss is mostly fat.');
 }

@@ -1,4 +1,5 @@
 import { muscleSignal } from '../progress/journey';
+import { t as tr } from '../i18n';
 // Pure: the weekly and monthly reports. No storage, no React, no Health Connect, so every
 // number and every sentence can be tested. The coach's verdict, what drove it, and one action.
 
@@ -128,8 +129,8 @@ export interface Report {
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined);
 const r1 = (n: number) => Math.round(n * 10) / 10;
 export const num = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-const kg = (n: number) => `${r1(Math.abs(n)).toFixed(1)} ק"ג`;
-const signedKg = (n: number) => (Math.abs(n) < 0.05 ? 'ללא שינוי' : `${n < 0 ? 'ירידה של' : 'עלייה של'} ${kg(n)}`);
+const kg = (n: number) => tr(`${r1(Math.abs(n)).toFixed(1)} ק"ג`, `${r1(Math.abs(n)).toFixed(1)} kg`);
+const signedKg = (n: number) => (Math.abs(n) < 0.05 ? tr('ללא שינוי', 'no change') : tr(`${n < 0 ? 'ירידה של' : 'עלייה של'} ${kg(n)}`, `${n < 0 ? 'a loss of' : 'a gain of'} ${kg(n)}`));
 const startOfDay = (t: number) => {
   const d = new Date(t);
   d.setHours(0, 0, 0, 0);
@@ -139,7 +140,7 @@ const dm = (t: number) => {
   const d = new Date(t);
   return `${d.getDate()}.${d.getMonth() + 1}`;
 };
-const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+const MONTHS = [tr('ינואר', 'January'), tr('פברואר', 'February'), tr('מרץ', 'March'), tr('אפריל', 'April'), tr('מאי', 'May'), tr('יוני', 'June'), tr('יולי', 'July'), tr('אוגוסט', 'August'), tr('ספטמבר', 'September'), tr('אוקטובר', 'October'), tr('נובמבר', 'November'), tr('דצמבר', 'December')];
 const monthName = (t: number) => {
   const d = new Date(t);
   return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
@@ -174,7 +175,7 @@ export function cleanBody(points: BodyPoint[]): CleanBody {
   for (const g of groups) {
     const ws = g.map((p) => p.weight).filter((w): w is number => w != null);
     if (ws.length >= 2 && Math.max(...ws) - Math.min(...ws) > 0.8) {
-      flags.push(`${dm(g[0].time)}: שתי שקילות בהפרש של דקות עם פער של ${kg(Math.max(...ws) - Math.min(...ws))}. אחת מהן שגויה; נלקחה האחרונה.`);
+      flags.push(tr(`${dm(g[0].time)}: שתי שקילות בהפרש של דקות עם פער של ${kg(Math.max(...ws) - Math.min(...ws))}. אחת מהן שגויה; נלקחה האחרונה.`, `${dm(g[0].time)}: two weigh-ins minutes apart, ${kg(Math.max(...ws) - Math.min(...ws))} apart. One of them is wrong; the last was taken.`));
     }
     // The last value of each kind within the group
     const m: BodyPoint = { time: g[g.length - 1].time };
@@ -204,7 +205,7 @@ export function cleanBody(points: BodyPoint[]): CleanBody {
     if (a.weight == null || b.weight == null) continue;
     const gap = Math.round((b.day - a.day) / DAY);
     if (gap <= 2 && Math.abs(b.weight - a.weight) > 1.5) {
-      flags.push(`${dm(b.day)}: ${b.weight > a.weight ? 'קפיצה' : 'צניחה'} של ${kg(b.weight - a.weight)} ב${gap === 1 ? 'יום' : 'יומיים'}. זה מים ומלח, לא שומן; הממוצע מנטרל את זה.`);
+      flags.push(tr(`${dm(b.day)}: ${b.weight > a.weight ? 'קפיצה' : 'צניחה'} של ${kg(b.weight - a.weight)} ב${gap === 1 ? 'יום' : 'יומיים'}. זה מים ומלח, לא שומן; הממוצע מנטרל את זה.`, `${dm(b.day)}: a ${b.weight > a.weight ? 'jump' : 'drop'} of ${kg(b.weight - a.weight)} in ${gap === 1 ? 'a day' : 'two days'}. That is water and salt, not fat; the average evens it out.`));
     }
   }
   return { daily, flags };
@@ -242,7 +243,7 @@ function statusOf(share: number, good: number, ok: number): Status {
 
 export function metrics(days: DayData[], prev: DayData[], t: Targets, kind: ReportKind) {
   const weeks = days.length / 7;
-  const word = kind === 'week' ? 'בשבוע הקודם' : 'בחודש הקודם';
+  const word = kind === 'week' ? tr('בשבוע הקודם', 'than last week') : tr('בחודש הקודם', 'than last month');
   const logged = days.filter((d) => isLogged(d, t));
   const prevLogged = prev.filter((d) => isLogged(d, t));
   const out: Metric[] = [];
@@ -254,9 +255,9 @@ export function metrics(days: DayData[], prev: DayData[], t: Targets, kind: Repo
   const kPrev = avg(prevLogged.map((d) => d.kcal));
   out.push({
     key: 'kcal',
-    title: 'קלוריות',
-    value: logged.length ? `${kIn} מתוך ${logged.length} ימים ביעד` : 'אין ימים רשומים',
-    detail: kAvg != null ? `ממוצע ${num(kAvg)} מול יעד ${num(t.calories)}` : 'צריך לפחות 3 ימים רשומים במלואם',
+    title: tr('קלוריות', 'Calories'),
+    value: logged.length ? tr(`${kIn} מתוך ${logged.length} ימים ביעד`, `${kIn} of ${logged.length} days on target`) : tr('אין ימים רשומים', 'No logged days'),
+    detail: kAvg != null ? tr(`ממוצע ${num(kAvg)} מול יעד ${num(t.calories)}`, `Average ${num(kAvg)} against a goal of ${num(t.calories)}`) : tr('צריך לפחות 3 ימים רשומים במלואם', 'Needs at least 3 fully logged days'),
     status: logged.length < 3 ? 'none' : statusOf(kIn / logged.length, 0.7, 0.5),
     trend: kAvg != null && kPrev != null ? `${num(kPrev)} ${word}` : undefined,
   });
@@ -266,11 +267,11 @@ export function metrics(days: DayData[], prev: DayData[], t: Targets, kind: Repo
   const pPrev = avg(prevLogged.map((d) => d.protein));
   out.push({
     key: 'protein',
-    title: 'חלבון',
-    value: logged.length ? `${pIn} מתוך ${logged.length} ימים ביעד` : 'אין ימים רשומים',
-    detail: pAvg != null ? `ממוצע ${num(pAvg)} ג' מול יעד ${num(t.proteinG)}` : 'צריך לפחות 3 ימים רשומים במלואם',
+    title: tr('חלבון', 'Protein'),
+    value: logged.length ? tr(`${pIn} מתוך ${logged.length} ימים ביעד`, `${pIn} of ${logged.length} days on target`) : tr('אין ימים רשומים', 'No logged days'),
+    detail: pAvg != null ? tr(`ממוצע ${num(pAvg)} ג' מול יעד ${num(t.proteinG)}`, `Average ${num(pAvg)} g against a goal of ${num(t.proteinG)}`) : tr('צריך לפחות 3 ימים רשומים במלואם', 'Needs at least 3 fully logged days'),
     status: logged.length < 3 ? 'none' : statusOf(pIn / logged.length, 0.7, 0.5),
-    trend: pAvg != null && pPrev != null ? `${num(pPrev)} ג' ${word}` : undefined,
+    trend: pAvg != null && pPrev != null ? tr(`${num(pPrev)} ג' ${word}`, `${num(pPrev)} g ${word}`) : undefined,
   });
 
   const planned = Math.round(t.workoutsPerWeek * weeks);
@@ -278,9 +279,9 @@ export function metrics(days: DayData[], prev: DayData[], t: Targets, kind: Repo
   const donePrev = prev.filter((d) => d.workout).length;
   out.push({
     key: 'workouts',
-    title: 'אימונים',
-    value: `${done} מתוך ${planned}`,
-    detail: planned ? (done >= planned ? 'עמדת בתוכנית' : `חסרו ${planned - done}`) : 'אין אימונים בתוכנית',
+    title: tr('אימונים', 'Workouts'),
+    value: tr(`${done} מתוך ${planned}`, `${done} of ${planned}`),
+    detail: planned ? (done >= planned ? tr('עמדת בתוכנית', 'You kept to the plan') : tr(`חסרו ${planned - done}`, `${planned - done} missed`)) : tr('אין אימונים בתוכנית', 'No workouts planned'),
     status: planned === 0 ? 'none' : done >= planned ? 'good' : done >= (kind === 'week' ? planned - 1 : planned * 0.75) ? 'ok' : 'bad',
     trend: prev.length ? `${donePrev} ${word}` : undefined,
   });
@@ -290,9 +291,9 @@ export function metrics(days: DayData[], prev: DayData[], t: Targets, kind: Repo
   const sPrev = avg(prev.map((d) => d.sleepMin).filter((m): m is number => m != null && m > 60));
   out.push({
     key: 'sleep',
-    title: 'שינה',
-    value: sAvg != null ? `${r1(sAvg / 60).toFixed(1)} שעות בממוצע` : 'אין נתונים',
-    detail: sAvg != null ? `${nights.filter((m) => m >= t.sleepHours * 60 - 30).length} מתוך ${nights.length} לילות סביב היעד (${t.sleepHours} שעות)` : 'השעון לא העביר שינה',
+    title: tr('שינה', 'Sleep'),
+    value: sAvg != null ? tr(`${r1(sAvg / 60).toFixed(1)} שעות בממוצע`, `${r1(sAvg / 60).toFixed(1)} hours on average`) : tr('אין נתונים', 'No data'),
+    detail: sAvg != null ? tr(`${nights.filter((m) => m >= t.sleepHours * 60 - 30).length} מתוך ${nights.length} לילות סביב היעד (${t.sleepHours} שעות)`, `${nights.filter((m) => m >= t.sleepHours * 60 - 30).length} of ${nights.length} nights around the goal (${t.sleepHours} hours)`) : tr('השעון לא העביר שינה', 'The watch did not send sleep'),
     status: nights.length < 3 || sAvg == null ? 'none' : sAvg >= t.sleepHours * 60 - 15 ? 'good' : sAvg >= t.sleepHours * 60 - 45 ? 'ok' : 'bad',
     trend: sAvg != null && sPrev != null ? `${r1(sPrev / 60).toFixed(1)} ${word}` : undefined,
   });
@@ -302,9 +303,9 @@ export function metrics(days: DayData[], prev: DayData[], t: Targets, kind: Repo
   const stPrev = avg(prev.map((d) => d.steps).filter((s): s is number => s != null && s > 0));
   out.push({
     key: 'steps',
-    title: 'צעדים',
-    value: stAvg != null ? `${num(stAvg)} בממוצע` : 'אין נתונים',
-    detail: stAvg != null ? `${steps.filter((s) => s >= t.steps).length} מתוך ${steps.length} ימים מעל ${num(t.steps)}` : 'השעון לא העביר צעדים',
+    title: tr('צעדים', 'Steps'),
+    value: stAvg != null ? tr(`${num(stAvg)} בממוצע`, `${num(stAvg)} on average`) : tr('אין נתונים', 'No data'),
+    detail: stAvg != null ? tr(`${steps.filter((s) => s >= t.steps).length} מתוך ${steps.length} ימים מעל ${num(t.steps)}`, `${steps.filter((s) => s >= t.steps).length} of ${steps.length} days over ${num(t.steps)}`) : tr('השעון לא העביר צעדים', 'The watch did not send steps'),
     status: steps.length < 3 || stAvg == null ? 'none' : statusOf(stAvg / t.steps, 0.95, 0.75),
     trend: stAvg != null && stPrev != null ? `${num(stPrev)} ${word}` : undefined,
   });
@@ -342,12 +343,12 @@ function decide(goal: Goal, change: number | undefined, fatDelta: number | undef
 }
 
 export const VERDICT_LABEL: Record<Verdict, string> = {
-  on_track: 'בדרך הנכונה',
-  stuck: 'המשקל עומד',
-  drifting: 'המשקל עלה',
-  water: 'ההרגלים במקום, המשקל עוד לא',
-  too_fast: 'מהר מדי',
-  unknown: 'אין מספיק נתונים',
+  on_track: tr('בדרך הנכונה', 'On track'),
+  stuck: tr('המשקל עומד', 'The weight is stuck'),
+  drifting: tr('המשקל עלה', 'The weight went up'),
+  water: tr('ההרגלים במקום, המשקל עוד לא', 'Habits on track, the weight not yet'),
+  too_fast: tr('מהר מדי', 'Too fast'),
+  unknown: tr('אין מספיק נתונים', 'Not enough data'),
 };
 
 // ---------- patterns ----------
@@ -362,23 +363,23 @@ export function findPatterns(days: DayData[], t: Targets, weekendDays: number[] 
   if (weekend.length >= 3 && weekday.length >= 6) {
     const kw = avg(weekend.map((d) => d.kcal))!;
     const kd = avg(weekday.map((d) => d.kcal))!;
-    if (kw - kd >= 250) out.push(`בסוף השבוע אכלת בממוצע ${num(kw - kd)} קלוריות יותר מבימי חול (${weekend.length} מול ${weekday.length} ימים).`);
-    else if (kd - kw >= 250) out.push(`בימי חול אכלת בממוצע ${num(kd - kw)} קלוריות יותר מבסוף השבוע.`);
+    if (kw - kd >= 250) out.push(tr(`בסוף השבוע אכלת בממוצע ${num(kw - kd)} קלוריות יותר מבימי חול (${weekend.length} מול ${weekday.length} ימים).`, `On the weekend you ate ${num(kw - kd)} calories more on average than on weekdays (${weekend.length} vs ${weekday.length} days).`));
+    else if (kd - kw >= 250) out.push(tr(`בימי חול אכלת בממוצע ${num(kd - kw)} קלוריות יותר מבסוף השבוע.`, `On weekdays you ate ${num(kd - kw)} calories more on average than on the weekend.`));
     const pw = avg(weekend.map((d) => d.protein))!;
     const pd = avg(weekday.map((d) => d.protein))!;
-    if (pd > 0 && pw < pd * 0.8) out.push(`בסוף השבוע החלבון יורד ב${Math.round((1 - pw / pd) * 100)}% (${num(pw)} ג' מול ${num(pd)} ג' בימי חול).`);
+    if (pd > 0 && pw < pd * 0.8) out.push(tr(`בסוף השבוע החלבון יורד ב${Math.round((1 - pw / pd) * 100)}% (${num(pw)} ג' מול ${num(pd)} ג' בימי חול).`, `On the weekend protein drops by ${Math.round((1 - pw / pd) * 100)}% (${num(pw)} g vs ${num(pd)} g on weekdays).`));
   }
   const short = logged.filter((d) => d.sleepMin != null && d.sleepMin < 6 * 60);
   const rested = logged.filter((d) => d.sleepMin != null && d.sleepMin >= 7 * 60);
   if (short.length >= 4 && rested.length >= 4) {
     const diff = avg(short.map((d) => d.kcal))! - avg(rested.map((d) => d.kcal))!;
-    if (diff >= 200) out.push(`ביום שאחרי לילה של פחות מ 6 שעות אכלת בממוצע ${num(diff)} קלוריות יותר מאשר אחרי לילה של 7 שעות (${short.length} מול ${rested.length} ימים).`);
+    if (diff >= 200) out.push(tr(`ביום שאחרי לילה של פחות מ 6 שעות אכלת בממוצע ${num(diff)} קלוריות יותר מאשר אחרי לילה של 7 שעות (${short.length} מול ${rested.length} ימים).`, `The day after a night under 6 hours you ate ${num(diff)} calories more on average than after a 7 hour night (${short.length} vs ${rested.length} days).`));
   }
   const trained = days.filter((d) => d.workout && d.steps != null);
   const rest = days.filter((d) => !d.workout && d.steps != null);
   if (trained.length >= 4 && rest.length >= 8) {
     const a = avg(rest.map((d) => d.steps!))!;
-    if (a < 5000) out.push(`בימים בלי אימון הלכת בממוצע רק ${num(a)} צעדים. שם נמצא הפער הקל ביותר לסגור.`);
+    if (a < 5000) out.push(tr(`בימים בלי אימון הלכת בממוצע רק ${num(a)} צעדים. שם נמצא הפער הקל ביותר לסגור.`, `On days without a workout you walked only ${num(a)} steps on average. That is the easiest gap to close.`));
   }
   return out.slice(0, 3);
 }
@@ -391,11 +392,11 @@ export function buildReport(input: ReportInput, now = Date.now()): Report {
   const vacDays = input.days.filter(isVac).length;
   const r = buildCore({ ...input, days: input.days.filter((d) => !isVac(d)), prevDays: input.prevDays.filter((d) => !isVac(d)) }, now);
   if (!vacDays) return r;
-  r.completeness.text += ` · ${vacDays} ימי חופשה לא נספרו`;
+  r.completeness.text += tr(` · ${vacDays} ימי חופשה לא נספרו`, ` · ${vacDays} vacation days not counted`);
   if (vacDays * 2 >= input.days.length) {
     r.verdict = 'unknown';
-    r.headline = `חופשה: ${vacDays} מתוך ${input.days.length} ימים. על תקופה כזו לא נותנים ציון.`;
-    r.action = 'שבוע חזרה: שקילה בבוקר הראשון, אימון קצר, וחזרה לרישום האוכל. המספרים מתייצבים תוך שבוע.';
+    r.headline = tr(`חופשה: ${vacDays} מתוך ${input.days.length} ימים. על תקופה כזו לא נותנים ציון.`, `Vacation: ${vacDays} of ${input.days.length} days. A period like this gets no grade.`);
+    r.action = tr('שבוע חזרה: שקילה בבוקר הראשון, אימון קצר, וחזרה לרישום האוכל. המספרים מתייצבים תוך שבוע.', 'A week back: a weigh-in on the first morning, a short workout, and back to logging food. The numbers settle within a week.');
   }
   return r;
 }
@@ -443,7 +444,7 @@ function buildCore(inp: ReportInput, now: number): Report {
       body.waistChange = r1(lastM.waistCm! - prevM.waistCm);
       const wDelta = lastM.weightAvg != null && prevM.weightAvg != null ? Math.abs(lastM.weightAvg - prevM.weightAvg) : undefined;
       if (Math.abs(body.waistChange) >= 3 && wDelta != null && wDelta < 1) {
-        flags.push(`המותן ${body.waistChange < 0 ? 'ירדה' : 'עלתה'} ${Math.abs(body.waistChange)} ס"מ בזמן שהמשקל כמעט לא זז. זה חשוד; כדאי למדוד שוב, באותה נקודה ובאותה שעה.`);
+        flags.push(tr(`המותן ${body.waistChange < 0 ? 'ירדה' : 'עלתה'} ${Math.abs(body.waistChange)} ס"מ בזמן שהמשקל כמעט לא זז. זה חשוד; כדאי למדוד שוב, באותה נקודה ובאותה שעה.`, `The waist ${body.waistChange < 0 ? 'went down' : 'went up'} ${Math.abs(body.waistChange)} cm while the weight barely moved. That is suspicious; measure again, at the same spot and the same time.`));
       }
     }
     if (inp.heightCm) body.whtr = Math.round((lastM.waistCm! / inp.heightCm) * 100) / 100;
@@ -455,10 +456,10 @@ function buildCore(inp: ReportInput, now: number): Report {
     const lastF = full[full.length - 1];
     const prevF = full[full.length - 2];
     const parts: [string, 'chestCm' | 'armCm' | 'thighCm' | 'neckCm'][] = [
-      ['חזה', 'chestCm'],
-      ['זרוע', 'armCm'],
-      ['ירך', 'thighCm'],
-      ['צוואר', 'neckCm'],
+      [tr('חזה', 'Chest'), 'chestCm'],
+      [tr('זרוע', 'Arm'), 'armCm'],
+      [tr('ירך', 'Thigh'), 'thighCm'],
+      [tr('צוואר', 'Neck'), 'neckCm'],
     ];
     const tape = lastF
       ? parts
@@ -474,34 +475,34 @@ function buildCore(inp: ReportInput, now: number): Report {
 
   const m = metrics(inp.days, inp.prevDays, t, inp.kind);
   const verdict = decide(inp.goal, change, fatDelta, m.list);
-  const period = inp.kind === 'week' ? 'השבוע' : 'החודש';
-  const changeText = change != null ? (inp.kind === 'week' ? signedKg(change) : `${signedKg(change)} בשבוע בממוצע`) : '';
+  const period = inp.kind === 'week' ? tr('השבוע', 'this week') : tr('החודש', 'this month');
+  const changeText = change != null ? (inp.kind === 'week' ? signedKg(change) : tr(`${signedKg(change)} בשבוע בממוצע`, `${signedKg(change)} a week on average`)) : '';
   const headline =
     verdict === 'unknown'
       ? body.weighDays < 2
-        ? `אין מספיק שקילות כדי לקבוע מגמה (${body.weighDays} ${period}).`
-        : 'אין מספיק נתונים כדי לקבוע מגמה.'
+        ? tr(`אין מספיק שקילות כדי לקבוע מגמה (${body.weighDays} ${period}).`, `Not enough weigh-ins to tell a trend (${body.weighDays} ${period}).`)
+        : tr('אין מספיק נתונים כדי לקבוע מגמה.', 'Not enough data to tell a trend.')
       : verdict === 'on_track'
         ? inp.goal === 'recomp' && fatDelta != null && fatDelta <= -0.3
-          ? `בדרך הנכונה: אחוז השומן ירד ב${r1(-fatDelta).toFixed(1)} נקודות ${period}.`
+          ? tr(`בדרך הנכונה: אחוז השומן ירד ב${r1(-fatDelta).toFixed(1)} נקודות ${period}.`, `On track: body fat went down ${r1(-fatDelta).toFixed(1)} points ${period}.`)
           : inp.goal === 'recomp'
-            ? `בדרך הנכונה: החלבון והאימונים במקום${changeText ? `, משקל ${changeText}` : ''}.`
-            : `בדרך הנכונה: ${changeText} ${period}.`
+            ? tr(`בדרך הנכונה: החלבון והאימונים במקום${changeText ? `, משקל ${changeText}` : ''}.`, `On track: protein and workouts are in place${changeText ? `, weight ${changeText}` : ''}.`)
+            : tr(`בדרך הנכונה: ${changeText} ${period}.`, `On track: ${changeText} ${period}.`)
         : verdict === 'too_fast'
-          ? `מהר מדי: ${changeText}. בקצב הזה יש סיכון לאבד שריר.`
+          ? tr(`מהר מדי: ${changeText}. בקצב הזה יש סיכון לאבד שריר.`, `Too fast: ${changeText}. At this pace there is a risk of losing muscle.`)
           : verdict === 'water'
-            ? `ההרגלים במקום, המשקל עוד לא: ${changeText} ${period}. האוכל והאימונים היו ביעד, אז זה מים ולא שומן. אם זה ימשיך עוד שבוע, נבדוק.`
+            ? tr(`ההרגלים במקום, המשקל עוד לא: ${changeText} ${period}. האוכל והאימונים היו ביעד, אז זה מים ולא שומן. אם זה ימשיך עוד שבוע, נבדוק.`, `Habits on track, the weight not yet: ${changeText} ${period}. Food and workouts were on target, so it is water, not fat. If it goes on another week, we will check.`)
             : verdict === 'drifting'
-              ? `${inp.goal === 'gain' ? 'המשקל ירד' : 'המשקל עלה'}: ${changeText || 'ההרגלים לא במקום'} ${period}.`
-              : `המשקל עומד: ${changeText ? `${changeText} ${period}` : 'אין שינוי ברור'}.`;
+              ? tr(`${inp.goal === 'gain' ? 'המשקל ירד' : 'המשקל עלה'}: ${changeText || 'ההרגלים לא במקום'} ${period}.`, `${inp.goal === 'gain' ? 'The weight went down' : 'The weight went up'}: ${changeText || 'habits not in place'} ${period}.`)
+              : tr(`המשקל עומד: ${changeText ? `${changeText} ${period}` : 'אין שינוי ברור'}.`, `The weight is stuck: ${changeText ? `${changeText} ${period}` : 'no clear change'}.`);
 
   const latest = [...clean.daily].reverse().find((d) => d.weight != null && d.day < inp.end);
   const cur = body.weightAvg ?? latest?.weight;
   const sub =
     inp.targetWeightKg && cur != null
       ? Math.abs(cur - inp.targetWeightKg) < 0.3
-        ? `אתה ביעד (${inp.targetWeightKg} ק"ג).`
-        : `נשארו ${kg(cur - inp.targetWeightKg)} עד היעד (${inp.targetWeightKg} ק"ג).`
+        ? tr(`אתה ביעד (${inp.targetWeightKg} ק"ג).`, `You are at your goal (${inp.targetWeightKg} kg).`)
+        : tr(`נשארו ${kg(cur - inp.targetWeightKg)} עד היעד (${inp.targetWeightKg} ק"ג).`, `${kg(cur - inp.targetWeightKg)} left to the goal (${inp.targetWeightKg} kg).`)
       : undefined;
 
   // Forecast: monthly only, from the trend line, as a range of months
@@ -509,14 +510,14 @@ function buildCore(inp: ReportInput, now: number): Report {
   if (inp.kind === 'month' && inp.targetWeightKg && cur != null) {
     const s = slopePerWeek(clean.daily.filter((d) => d.day >= inp.end - 28 * DAY && d.day < inp.end));
     const away = cur - inp.targetWeightKg;
-    if (Math.abs(away) < 0.3) forecast = 'הגעת ליעד. עכשיו המטרה היא להישאר בו.';
-    else if (s == null || w(inP).length < 8) forecast = 'לתחזית צריך לפחות 8 שקילות בחודש.';
-    else if (Math.sign(s) !== Math.sign(-away) || Math.abs(s) < 0.05) forecast = 'בקצב של החודש האחרון המשקל לא מתקרב ליעד.';
+    if (Math.abs(away) < 0.3) forecast = tr('הגעת ליעד. עכשיו המטרה היא להישאר בו.', 'You reached the goal. Now the aim is to stay there.');
+    else if (s == null || w(inP).length < 8) forecast = tr('לתחזית צריך לפחות 8 שקילות בחודש.', 'A forecast needs at least 8 weigh-ins in a month.');
+    else if (Math.sign(s) !== Math.sign(-away) || Math.abs(s) < 0.05) forecast = tr('בקצב של החודש האחרון המשקל לא מתקרב ליעד.', 'At last month\'s pace the weight is not getting closer to the goal.');
     else {
       const weeks = Math.abs(away / s);
       const lo = monthName(inp.end + weeks * 0.8 * 7 * DAY);
       const hi = monthName(inp.end + weeks * 1.3 * 7 * DAY);
-      forecast = `בקצב הנוכחי תגיע ל ${inp.targetWeightKg} ק"ג ${lo === hi ? `בערך ב${lo}` : `בין ${lo} ל${hi}`}. זו הערכה; הקצב משתנה.`;
+      forecast = tr(`בקצב הנוכחי תגיע ל ${inp.targetWeightKg} ק"ג ${lo === hi ? `בערך ב${lo}` : `בין ${lo} ל${hi}`}. זו הערכה; הקצב משתנה.`, `At the current pace you will reach ${inp.targetWeightKg} kg ${lo === hi ? `around ${lo}` : `between ${lo} and ${hi}`}. An estimate; the pace changes.`);
     }
   }
 
@@ -526,23 +527,23 @@ function buildCore(inp: ReportInput, now: number): Report {
     logged: m.logged,
     days: daysN,
     weighDays: body.weighDays,
-    text: `${m.logged} מתוך ${daysN} ימים עם אוכל רשום במלואו · ${body.weighDays} שקילות`,
+    text: tr(`${m.logged} מתוך ${daysN} ימים עם אוכל רשום במלואו · ${body.weighDays} שקילות`, `${m.logged} of ${daysN} days with food fully logged · ${body.weighDays} weigh-ins`),
   };
 
   const st = (k: Metric['key']) => m.list.find((x) => x.key === k)!;
   const pick = (): string => {
     if (m.logged < daysN * 0.5)
-      return `רישום: רק ${m.logged} מתוך ${daysN} ימים נרשמו במלואם, אז הקלוריות כאן הן ניחוש. ${inp.kind === 'week' ? 'השבוע' : 'החודש'} המטרה היא לרשום כל ארוחה, גם קטנה.`;
-    if (body.weighDays < weighNeed) return `שקילה: ${body.weighDays} שקילות לא מספיקות כדי לראות מגמה. עלה על המשקל כל בוקר, אחרי השירותים ולפני שתייה.`;
-    if (verdict === 'too_fast') return 'הוסף כ 200 קלוריות ביום, רובן מחלבון. ירידה מהירה מדי לוקחת גם שריר.';
+      return tr(`רישום: רק ${m.logged} מתוך ${daysN} ימים נרשמו במלואם, אז הקלוריות כאן הן ניחוש. ${inp.kind === 'week' ? 'השבוע' : 'החודש'} המטרה היא לרשום כל ארוחה, גם קטנה.`, `Logging: only ${m.logged} of ${daysN} days were fully logged, so the calories here are a guess. ${inp.kind === 'week' ? 'This week' : 'This month'} the aim is to log every meal, even a small one.`);
+    if (body.weighDays < weighNeed) return tr(`שקילה: ${body.weighDays} שקילות לא מספיקות כדי לראות מגמה. עלה על המשקל כל בוקר, אחרי השירותים ולפני שתייה.`, `Weighing: ${body.weighDays} weigh-ins are not enough to see a trend. Step on the scale every morning, after the toilet and before drinking.`);
+    if (verdict === 'too_fast') return tr('הוסף כ 200 קלוריות ביום, רובן מחלבון. ירידה מהירה מדי לוקחת גם שריר.', 'Add about 200 calories a day, mostly protein. Losing too fast takes muscle too.');
     const order: Metric['key'][] = inp.goal === 'recomp' || inp.goal === 'gain' ? ['protein', 'workouts', 'kcal', 'sleep', 'steps'] : ['kcal', 'protein', 'workouts', 'sleep', 'steps'];
     const bad = order.map(st).find((x) => x.status === 'bad') ?? order.map(st).find((x) => x.status === 'ok');
-    if (bad?.key === 'kcal') return `קלוריות: ${bad.value}. בחר ארוחה אחת קבועה שבה אתה חורג, ותכנן אותה מראש.`;
-    if (bad?.key === 'protein') return `חלבון: ${bad.value}. הוסף מנת חלבון לארוחת הבוקר, כמו קוטג' או יוגורט חלבון, וזה כבר סוגר חצי מהפער.`;
-    if (bad?.key === 'workouts') return `אימונים: ${bad.value}. קבע עכשיו ביומן את האימונים של השבוע הבא, כמו פגישה.`;
-    if (bad?.key === 'sleep') return `שינה: ${bad.value}. הקדם את השינה ב 30 דקות. שינה קצרה מגדילה רעב למחרת.`;
-    if (bad?.key === 'steps') return `צעדים: ${bad.value}. הליכה של 20 דקות אחרי ארוחת הצהריים סוגרת את רוב הפער.`;
-    return 'המשך בדיוק כך. אל תשנה דבר שעובד.';
+    if (bad?.key === 'kcal') return tr(`קלוריות: ${bad.value}. בחר ארוחה אחת קבועה שבה אתה חורג, ותכנן אותה מראש.`, `Calories: ${bad.value}. Pick one regular meal where you go over, and plan it ahead.`);
+    if (bad?.key === 'protein') return tr(`חלבון: ${bad.value}. הוסף מנת חלבון לארוחת הבוקר, כמו קוטג' או יוגורט חלבון, וזה כבר סוגר חצי מהפער.`, `Protein: ${bad.value}. Add a protein portion to breakfast, like cottage cheese or protein yogurt, and that already closes half the gap.`);
+    if (bad?.key === 'workouts') return tr(`אימונים: ${bad.value}. קבע עכשיו ביומן את האימונים של השבוע הבא, כמו פגישה.`, `Workouts: ${bad.value}. Put next week's workouts in your calendar now, like meetings.`);
+    if (bad?.key === 'sleep') return tr(`שינה: ${bad.value}. הקדם את השינה ב 30 דקות. שינה קצרה מגדילה רעב למחרת.`, `Sleep: ${bad.value}. Go to bed 30 minutes earlier. Short sleep makes you hungrier the next day.`);
+    if (bad?.key === 'steps') return tr(`צעדים: ${bad.value}. הליכה של 20 דקות אחרי ארוחת הצהריים סוגרת את רוב הפער.`, `Steps: ${bad.value}. A 20 minute walk after lunch closes most of the gap.`);
+    return tr('המשך בדיוק כך. אל תשנה דבר שעובד.', 'Keep doing exactly this. Do not change what works.');
   };
 
   const startKey = new Date(inp.start);
@@ -554,7 +555,7 @@ function buildCore(inp: ReportInput, now: number): Report {
     createdAt: now,
     verdict,
     headline,
-    sub: inp.noNewMeasure ? [sub, 'לא נעשתה ביקורת חדשה, אז המדידות כאן ישנות.'].filter(Boolean).join(' ') : sub,
+    sub: inp.noNewMeasure ? [sub, tr('לא נעשתה ביקורת חדשה, אז המדידות כאן ישנות.', 'No new check-in was done, so the measurements here are old.')].filter(Boolean).join(' ') : sub,
     completeness,
     body,
     metrics: m.list,
@@ -619,11 +620,11 @@ export function progressOf(now: number, weekDay: number, hour: number, curDays: 
   const unlogged = past.filter((d) => !isLogged(d, t));
   const missing: string[] = [];
   if (unlogged.length) {
-    const names = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-    missing.push(`${unlogged.length === 1 ? 'יום' : 'ימים'} ${unlogged.map((d) => names[new Date(d.day).getDay()]).join(', ')} בלי אוכל רשום במלואו`);
+    const names = [tr('ראשון', 'Sunday'), tr('שני', 'Monday'), tr('שלישי', 'Tuesday'), tr('רביעי', 'Wednesday'), tr('חמישי', 'Thursday'), tr('שישי', 'Friday'), tr('שבת', 'Saturday')];
+    missing.push(tr(`${unlogged.length === 1 ? 'יום' : 'ימים'} ${unlogged.map((d) => names[new Date(d.day).getDay()]).join(', ')} בלי אוכל רשום במלואו`, `${unlogged.length === 1 ? 'a day' : 'days'} ${unlogged.map((d) => names[new Date(d.day).getDay()]).join(', ')} without food fully logged`));
   }
   const wantWeigh = Math.min(day, 4);
-  if (weighDays < Math.min(wantWeigh, 3)) missing.push(`${weighDays} שקילות עד עכשיו; צריך לפחות 3 בשבוע`);
+  if (weighDays < Math.min(wantWeigh, 3)) missing.push(tr(`${weighDays} שקילות עד עכשיו; צריך לפחות 3 בשבוע`, `${weighDays} weigh-ins so far; at least 3 a week are needed`));
   const cps = [...checkpointTimes].sort((a, b) => a - b);
   const last = cps[cps.length - 1];
   const month = last != null ? { day: Math.min(28, Math.floor((startOfDay(now) - startOfDay(last)) / DAY) + 1), of: 28 } : null;

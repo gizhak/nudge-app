@@ -8,20 +8,20 @@ import { Bar, Card } from '../ui/components';
 import { Sheet } from '../ui/Sheet';
 import { C, fmt, T } from '../ui/theme';
 
-import { CHEVRON_BACK, CHEVRON_ON, ROW } from '../i18n';
+import { CHEVRON_BACK, CHEVRON_ON, ROW, t as tr } from '../i18n';
 const dm = (t: number) => {
   const d = new Date(t);
   return `${d.getDate()}.${d.getMonth() + 1}`;
 };
-const period = (r: Report) => `${dm(r.start)} עד ${dm(r.end - 1)}`;
-const kindName = (r: Report) => (r.kind === 'week' ? 'שבועי' : 'חודשי');
+const period = (r: Report) => tr(`${dm(r.start)} עד ${dm(r.end - 1)}`, `${dm(r.start)} to ${dm(r.end - 1)}`);
+const kindName = (r: Report) => (r.kind === 'week' ? tr('שבועי', 'weekly') : tr('חודשי', 'monthly'));
 
 const VERDICT_COLOR: Record<Verdict, string> = { on_track: C.ink, stuck: C.warn, drifting: C.bad, water: C.ink, too_fast: C.warn, unknown: C.muted };
 const STATUS: Record<Status, { label: string; color: string }> = {
-  good: { label: 'ביעד', color: C.ink },
-  ok: { label: 'כמעט', color: C.warn },
-  bad: { label: 'רחוק', color: C.bad },
-  none: { label: 'אין נתונים', color: C.muted },
+  good: { label: tr('ביעד', 'On target'), color: C.ink },
+  ok: { label: tr('כמעט', 'Close'), color: C.warn },
+  bad: { label: tr('רחוק', 'Far'), color: C.bad },
+  none: { label: tr('אין נתונים', 'No data'), color: C.muted },
 };
 
 function Chip({ text, color }: { text: string; color: string }) {
@@ -58,12 +58,12 @@ function MetricRow({ m }: { m: Metric }) {
 }
 
 const diffText = (a?: number, b?: number, unit = '', digits = 1) =>
-  a != null && b != null ? ` (${a - b > 0 ? '+' : a - b < 0 ? '−' : ''}${fmt(Math.abs(a - b), digits)}${unit} מהקודם)` : '';
+  a != null && b != null ? tr(` (${a - b > 0 ? '+' : a - b < 0 ? '−' : ''}${fmt(Math.abs(a - b), digits)}${unit} מהקודם)`, ` (${a - b > 0 ? '+' : a - b < 0 ? '−' : ''}${fmt(Math.abs(a - b), digits)}${unit} vs last)`) : '';
 
 /** The report itself: verdict, body, what drove it, patterns, forecast and one action. */
 export function ReportView({ r }: { r: Report }) {
   const b = r.body;
-  const next = r.kind === 'week' ? 'לשבוע הקרוב' : 'לחודש הקרוב';
+  const next = r.kind === 'week' ? tr('לשבוע הקרוב', 'For the coming week') : tr('לחודש הקרוב', 'For the coming month');
   return (
     <View style={{ gap: 14 }}>
       <View style={{ gap: 6 }}>
@@ -77,36 +77,36 @@ export function ReportView({ r }: { r: Report }) {
       </View>
 
       <View style={s.action}>
-        <Text style={[T.bold, { fontSize: 13, color: '#BDB8B0' }]}>הפעולה {next}</Text>
+        <Text style={[T.bold, { fontSize: 13, color: '#BDB8B0' }]}>{tr('הפעולה', 'The action')} {next}</Text>
         <Text style={[T.bold, { fontSize: 15, lineHeight: 22, color: '#fff' }]}>{r.action}</Text>
       </View>
 
       <View style={{ gap: 2 }}>
-        <Text style={[T.bold, s.h]}>גוף</Text>
+        <Text style={[T.bold, s.h]}>{tr('גוף', 'Body')}</Text>
         {b.weightAvg != null ? (
-          <Line label="משקל, ממוצע" value={`${fmt(b.weightAvg, 1)} ק"ג`} note={`${b.weighDays} שקילות${diffText(b.weightAvg, b.weightPrevAvg, ' ק"ג')}${b.rate != null && r.kind === 'month' ? ` · קצב ${b.rate < 0 ? '−' : '+'}${fmt(Math.abs(b.rate), 2)} ק"ג בשבוע` : ''}`} />
+          <Line label={tr("משקל, ממוצע", 'Weight, average')} value={tr(`${fmt(b.weightAvg, 1)} ק"ג`, `${fmt(b.weightAvg, 1)} kg`)} note={tr(`${b.weighDays} שקילות${diffText(b.weightAvg, b.weightPrevAvg, ' ק"ג')}${b.rate != null && r.kind === 'month' ? ` · קצב ${b.rate < 0 ? '−' : '+'}${fmt(Math.abs(b.rate), 2)} ק"ג בשבוע` : ''}`, `${b.weighDays} weigh-ins${diffText(b.weightAvg, b.weightPrevAvg, ' kg')}${b.rate != null && r.kind === 'month' ? ` · pace ${b.rate < 0 ? '−' : '+'}${fmt(Math.abs(b.rate), 2)} kg a week` : ''}`)} />
         ) : (
-          <Line label="משקל" value="פחות מ 2 שקילות" />
+          <Line label={tr("משקל", 'Weight')} value={tr("פחות מ 2 שקילות", 'Fewer than 2 weigh-ins')} />
         )}
-        {b.fatAvg != null && <Line label="אחוז שומן, מהמשקל החכם" value={`${fmt(b.fatAvg, 1)}%`} note={`הערכה, רגישה למים. חשובה המגמה${diffText(b.fatAvg, b.fatPrevAvg, '')}`} />}
-        {b.leanAvg != null && <Line label="מסה רזה" value={`${fmt(b.leanAvg, 1)} ק"ג`} note={`שריר, עצם ומים${diffText(b.leanAvg, b.leanPrevAvg, ' ק"ג')}`} />}
+        {b.fatAvg != null && <Line label={tr("אחוז שומן, מהמשקל החכם", 'Body fat, from the smart scale')} value={`${fmt(b.fatAvg, 1)}%`} note={tr(`הערכה, רגישה למים. חשובה המגמה${diffText(b.fatAvg, b.fatPrevAvg, '')}`, `An estimate, sensitive to water. The trend is what matters${diffText(b.fatAvg, b.fatPrevAvg, '')}`)} />}
+        {b.leanAvg != null && <Line label={tr("מסה רזה", 'Lean mass')} value={tr(`${fmt(b.leanAvg, 1)} ק"ג`, `${fmt(b.leanAvg, 1)} kg`)} note={tr(`שריר, עצם ומים${diffText(b.leanAvg, b.leanPrevAvg, ' ק"ג')}`, `Muscle, bone and water${diffText(b.leanAvg, b.leanPrevAvg, ' kg')}`)} />}
         {b.waistCm != null && (
           <Line
-            label="היקף מותן"
-            value={`${fmt(b.waistCm, 1)} ס"מ`}
-            note={`${b.waistDaysAgo === 0 ? 'נמדד היום' : `נמדד לפני ${b.waistDaysAgo} ימים`}${b.waistChange != null ? ` · ${b.waistChange > 0 ? '+' : b.waistChange < 0 ? '−' : ''}${fmt(Math.abs(b.waistChange), 1)} ס"מ מהמדידה הקודמת` : ''}`}
+            label={tr("היקף מותן", 'Waist')}
+            value={tr(`${fmt(b.waistCm, 1)} ס"מ`, `${fmt(b.waistCm, 1)} cm`)}
+            note={tr(`${b.waistDaysAgo === 0 ? 'נמדד היום' : `נמדד לפני ${b.waistDaysAgo} ימים`}${b.waistChange != null ? ` · ${b.waistChange > 0 ? '+' : b.waistChange < 0 ? '−' : ''}${fmt(Math.abs(b.waistChange), 1)} ס"מ מהמדידה הקודמת` : ''}`, `${b.waistDaysAgo === 0 ? 'Measured today' : `Measured ${b.waistDaysAgo} days ago`}${b.waistChange != null ? ` · ${b.waistChange > 0 ? '+' : b.waistChange < 0 ? '−' : ''}${fmt(Math.abs(b.waistChange), 1)} cm since the last measurement` : ''}`)}
           />
         )}
         {b.tape?.map((t) => (
-          <Line key={t.title} label={`היקף ${t.title}`} value={`${fmt(t.cm, 1)} ס"מ`} note={t.change != null ? `${t.change > 0 ? '+' : t.change < 0 ? '−' : ''}${fmt(Math.abs(t.change), 1)} ס"מ מהמדידה הקודמת` : undefined} />
+          <Line key={t.title} label={tr(`היקף ${t.title}`, `${t.title}`)} value={tr(`${fmt(t.cm, 1)} ס"מ`, `${fmt(t.cm, 1)} cm`)} note={t.change != null ? tr(`${t.change > 0 ? '+' : t.change < 0 ? '−' : ''}${fmt(Math.abs(t.change), 1)} ס"מ מהמדידה הקודמת`, `${t.change > 0 ? '+' : t.change < 0 ? '−' : ''}${fmt(Math.abs(t.change), 1)} cm since the last measurement`) : undefined} />
         ))}
         {b.muscle ? <Text style={[T.bold, { fontSize: 14, lineHeight: 21, paddingVertical: 6 }]}>{b.muscle}</Text> : null}
-        {b.whtr != null && <Line label="יחס מותן לגובה" value={fmt(b.whtr, 2)} note={b.whtr < 0.5 ? 'תקין: מתחת ל 0.5' : 'היעד: מתחת ל 0.5. זה המדד הכי פשוט לשומן בטני.'} />}
-        {b.navyFat != null && <Line label="אחוז שומן משוער, ממדידות סרט" value={`${fmt(b.navyFat - 3.5, 0)}% עד ${fmt(b.navyFat + 3.5, 0)}%`} note="נוסחת מותן, צוואר וגובה. השוואה לאחוז של המשקל מראה אם שתיהן נעות יחד." />}
+        {b.whtr != null && <Line label={tr("יחס מותן לגובה", 'Waist to height ratio')} value={fmt(b.whtr, 2)} note={b.whtr < 0.5 ? tr('תקין: מתחת ל 0.5', 'Healthy: under 0.5') : tr('היעד: מתחת ל 0.5. זה המדד הכי פשוט לשומן בטני.', 'The goal: under 0.5. The simplest measure of belly fat.')} />}
+        {b.navyFat != null && <Line label={tr("אחוז שומן משוער, ממדידות סרט", 'Estimated body fat, from tape measurements')} value={tr(`${fmt(b.navyFat - 3.5, 0)}% עד ${fmt(b.navyFat + 3.5, 0)}%`, `${fmt(b.navyFat - 3.5, 0)}% to ${fmt(b.navyFat + 3.5, 0)}%`)} note={tr("נוסחת מותן, צוואר וגובה. השוואה לאחוז של המשקל מראה אם שתיהן נעות יחד.", 'A waist, neck and height formula. Comparing it with the scale\'s number shows if both move together.')} />}
       </View>
 
       <View style={{ gap: 2 }}>
-        <Text style={[T.bold, s.h]}>מה השפיע</Text>
+        <Text style={[T.bold, s.h]}>{tr('מה השפיע', 'What had an effect')}</Text>
         {r.metrics.map((m) => (
           <MetricRow key={m.key} m={m} />
         ))}
@@ -114,26 +114,26 @@ export function ReportView({ r }: { r: Report }) {
 
       {r.patterns.length > 0 && (
         <View style={{ gap: 6 }}>
-          <Text style={[T.bold, s.h]}>דפוסים שלך</Text>
+          <Text style={[T.bold, s.h]}>{tr('דפוסים שלך', 'Your patterns')}</Text>
           {r.patterns.map((p) => (
             <Text key={p} style={[T.base, { fontSize: 14, lineHeight: 21 }]}>
               {p}
             </Text>
           ))}
-          <Text style={[T.muted, { fontSize: 12 }]}>אלה התאמות בנתונים שלך, לא בהכרח סיבה ותוצאה.</Text>
+          <Text style={[T.muted, { fontSize: 12 }]}>{tr('אלה התאמות בנתונים שלך, לא בהכרח סיבה ותוצאה.', 'These are matches in your data, not necessarily cause and effect.')}</Text>
         </View>
       )}
 
       {r.forecast && (
         <View style={{ gap: 4 }}>
-          <Text style={[T.bold, s.h]}>תחזית</Text>
+          <Text style={[T.bold, s.h]}>{tr('תחזית', 'Forecast')}</Text>
           <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>{r.forecast}</Text>
         </View>
       )}
 
       {r.flags.length > 0 && (
         <View style={{ gap: 4 }}>
-          <Text style={[T.bold, s.h]}>שים לב</Text>
+          <Text style={[T.bold, s.h]}>{tr('שים לב', 'Note')}</Text>
           {r.flags.map((f) => (
             <Text key={f} style={[T.base, { fontSize: 13, lineHeight: 19, color: C.warn }]}>
               {f}
@@ -178,29 +178,29 @@ export function ReportsCard({
     if (openId) setList(false);
   }, [openId]);
 
-  const nextWhen = progress ? `${DAY_NAMES[new Date(progress.week.next).getDay()]} ב${pad2(new Date(progress.week.next).getHours())}:00` : '';
+  const nextWhen = progress ? tr(`${DAY_NAMES[new Date(progress.week.next).getDay()]} ב${pad2(new Date(progress.week.next).getHours())}:00`, `${DAY_NAMES[new Date(progress.week.next).getDay()]} at ${pad2(new Date(progress.week.next).getHours())}:00`) : '';
 
   return (
     <>
       {fresh && (
         <Pressable onPress={() => onOpen(fresh.id)} style={s.fresh}>
-          <Text style={[T.bold, { fontSize: 13, color: C.signal }]}>יש דוח {kindName(fresh)} חדש · {period(fresh)}</Text>
+          <Text style={[T.bold, { fontSize: 13, color: C.signal }]}>{tr('יש דוח', 'A new')} {kindName(fresh)} {tr('חדש ·', 'report ·')} {period(fresh)}</Text>
           <Text style={[T.bold, { fontSize: 17, lineHeight: 25, color: '#fff' }]}>{fresh.headline}</Text>
-          <Text style={[T.bold, { fontSize: 14, color: '#BDB8B0' }]}>פתח את הדוח</Text>
+          <Text style={[T.bold, { fontSize: 14, color: '#BDB8B0' }]}>{tr('פתח את הדוח', 'Open the report')}</Text>
         </Pressable>
       )}
 
-      <Card title="הדוחות">
+      <Card title={tr("הדוחות", 'Reports')}>
         {prefs.weekly && progress && (
           <View style={{ gap: 6 }}>
             <View style={s.lineTop}>
-              <Text style={[T.bold, { fontSize: 14, flex: 1 }]}>דוח שבועי: יום {progress.week.day} מתוך 7</Text>
-              <Text style={[T.muted, { fontSize: 13 }]}>מוכן ב{nextWhen}</Text>
+              <Text style={[T.bold, { fontSize: 14, flex: 1 }]}>{tr('דוח שבועי: יום', 'Weekly report: day')} {progress.week.day} {tr('מתוך 7', 'of 7')}</Text>
+              <Text style={[T.muted, { fontSize: 13 }]}>{tr('מוכן ב', 'Ready on ')}{nextWhen}</Text>
             </View>
             <Bar value={progress.week.day} max={7} height={6} />
             {progress.week.missing.map((m) => (
               <Text key={m} style={[T.base, { fontSize: 13, color: C.warn }]}>
-                חסר: {m}
+                {tr('חסר:', 'Missing:')} {m}
               </Text>
             ))}
           </View>
@@ -210,30 +210,30 @@ export function ReportsCard({
             {progress?.month ? (
               <>
                 <View style={s.lineTop}>
-                  <Text style={[T.bold, { fontSize: 14, flex: 1 }]}>דוח חודשי: יום {progress.month.day} מתוך 28</Text>
-                  <Text style={[T.muted, { fontSize: 13 }]}>ביום הביקורת</Text>
+                  <Text style={[T.bold, { fontSize: 14, flex: 1 }]}>{tr('דוח חודשי: יום', 'Monthly report: day')} {progress.month.day} {tr('מתוך 28', 'of 28')}</Text>
+                  <Text style={[T.muted, { fontSize: 13 }]}>{tr('ביום הביקורת', 'On check-in day')}</Text>
                 </View>
                 <Bar value={progress.month.day} max={28} height={6} color={C.data} />
               </>
             ) : (
-              <Text style={[T.muted, { fontSize: 13 }]}>הדוח החודשי מתחיל מנקודת ההתחלה במסע שלך, ויוצא בכל ביקורת.</Text>
+              <Text style={[T.muted, { fontSize: 13 }]}>{tr('הדוח החודשי מתחיל מנקודת ההתחלה במסע שלך, ויוצא בכל ביקורת.', 'The monthly report starts from your journey\'s starting point, and comes out at every check-in.')}</Text>
             )}
           </View>
         )}
-        {!prefs.weekly && !prefs.monthly && <Text style={[T.muted, { fontSize: 13 }]}>הדוחות כבויים. אפשר להפעיל אותם בהגדרות.</Text>}
+        {!prefs.weekly && !prefs.monthly && <Text style={[T.muted, { fontSize: 13 }]}>{tr('הדוחות כבויים. אפשר להפעיל אותם בהגדרות.', 'Reports are off. You can turn them on in settings.')}</Text>}
         {reports.length > 0 && (
           <View style={s.links}>
             <Pressable onPress={() => onOpen(reports[0].id)} hitSlop={6}>
-              <Text style={[T.bold, s.link]}>הדוח האחרון</Text>
+              <Text style={[T.bold, s.link]}>{tr('הדוח האחרון', 'The last report')}</Text>
             </Pressable>
             <Pressable onPress={() => setList(true)} hitSlop={6}>
-              <Text style={[T.bold, s.link]}>כל הדוחות ({reports.length})</Text>
+              <Text style={[T.bold, s.link]}>{tr('כל הדוחות (', 'All reports (')}{reports.length})</Text>
             </Pressable>
           </View>
         )}
       </Card>
 
-      <Sheet open={list} onClose={() => setList(false)} title="כל הדוחות">
+      <Sheet open={list} onClose={() => setList(false)} title={tr("כל הדוחות", 'All reports')}>
         {reports.map((r) => (
           <Pressable key={r.id} onPress={() => onOpen(r.id)} style={s.line}>
             <View style={s.lineTop}>
@@ -249,7 +249,7 @@ export function ReportsCard({
         ))}
       </Sheet>
 
-      <Sheet open={!!open} onClose={onClose} title={view ? `דוח ${kindName(view)} · ${period(view)}` : undefined}>
+      <Sheet open={!!open} onClose={onClose} title={view ? tr(`דוח ${kindName(view)} · ${period(view)}`, `${kindName(view)} report · ${period(view)}`) : undefined}>
         {view && (
           <>
             <ReportView r={view} />
@@ -259,7 +259,7 @@ export function ReportsCard({
                 <Pressable onPress={() => onOpen(older.id)} style={({ pressed }) => [s.navBtn, pressed && { opacity: 0.7 }]}>
                   <Ionicons name={CHEVRON_BACK} size={16} color={C.ink} />
                   <View>
-                    <Text style={[T.bold, { fontSize: 13 }]}>{view.kind === 'month' ? 'חודש קודם' : 'שבוע קודם'}</Text>
+                    <Text style={[T.bold, { fontSize: 13 }]}>{view.kind === 'month' ? tr('חודש קודם', 'Previous month') : tr('שבוע קודם', 'Previous week')}</Text>
                     <Text style={[T.muted, { fontSize: 12 }]}>{period(older)}</Text>
                   </View>
                 </Pressable>
@@ -270,7 +270,7 @@ export function ReportsCard({
                 <Pressable onPress={() => onOpen(newer.id)} style={({ pressed }) => [s.navBtn, { flexDirection: 'row' }, pressed && { opacity: 0.7 }]}>
                   <Ionicons name={CHEVRON_ON} size={16} color={C.ink} />
                   <View>
-                    <Text style={[T.bold, { fontSize: 13 }]}>{view.kind === 'month' ? 'חודש אחרי' : 'שבוע אחרי'}</Text>
+                    <Text style={[T.bold, { fontSize: 13 }]}>{view.kind === 'month' ? tr('חודש אחרי', 'Next month') : tr('שבוע אחרי', 'Next week')}</Text>
                     <Text style={[T.muted, { fontSize: 12 }]}>{period(newer)}</Text>
                   </View>
                 </Pressable>

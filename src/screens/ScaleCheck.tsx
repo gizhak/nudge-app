@@ -6,17 +6,17 @@ import { sourceLabel } from '../config/sources';
 import { Sheet } from '../ui/Sheet';
 import { C, fmt, T } from '../ui/theme';
 
-import { ROW, LOCALE } from '../i18n';
+import { ROW, LOCALE, t as tr } from '../i18n';
 const when = (d: Date) =>
   `${d.toLocaleDateString(LOCALE, { day: 'numeric', month: 'numeric' })} ${d.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}`;
 
 function Row({ w }: { w: WeighIn }) {
   const parts = [
-    w.weight != null && `${fmt(w.weight, 1)} ק"ג`,
-    w.fatPct != null && `שומן ${fmt(w.fatPct, 1)}%`,
-    w.leanKg != null && `רזה ${fmt(w.leanKg, 1)}`,
-    w.waterKg != null && `מים ${fmt(w.waterKg, 1)}`,
-    w.boneKg != null && `עצם ${fmt(w.boneKg, 1)}`,
+    w.weight != null && tr(`${fmt(w.weight, 1)} ק"ג`, `${fmt(w.weight, 1)} kg`),
+    w.fatPct != null && tr(`שומן ${fmt(w.fatPct, 1)}%`, `fat ${fmt(w.fatPct, 1)}%`),
+    w.leanKg != null && tr(`רזה ${fmt(w.leanKg, 1)}`, `lean ${fmt(w.leanKg, 1)}`),
+    w.waterKg != null && tr(`מים ${fmt(w.waterKg, 1)}`, `water ${fmt(w.waterKg, 1)}`),
+    w.boneKg != null && tr(`עצם ${fmt(w.boneKg, 1)}`, `bone ${fmt(w.boneKg, 1)}`),
     w.bmr != null && `BMR ${fmt(w.bmr)}`,
   ].filter(Boolean);
   return (
@@ -52,7 +52,7 @@ export function ScaleCheckSheet({ open, onClose }: { open: boolean; onClose: () 
   const issues = fromScale.filter((w) => w.issues.length).length;
 
   return (
-    <Sheet open={open} onClose={onClose} title="בדיקת המשקל החכם">
+    <Sheet open={open} onClose={onClose} title={tr("בדיקת המשקל החכם", 'Smart scale check')}>
       {!data ? (
         <ActivityIndicator color={C.accent} />
       ) : (
@@ -65,7 +65,7 @@ export function ScaleCheckSheet({ open, onClose }: { open: boolean; onClose: () 
                 <View key={t} style={s.status}>
                   <Text style={[T.base, { fontSize: 14, flex: 1 }]}>{BODY_TITLES[t]}</Text>
                   <Text style={[T.bold, { fontSize: 13, color: ok ? C.accent : st === 'denied' ? C.warn : C.muted }]}>
-                    {ok ? `מגיע (${st} ב 30 יום)` : st === 'denied' ? 'אין הרשאה' : 'לא מגיע'}
+                    {ok ? tr(`מגיע (${st} ב 30 יום)`, `Arriving (${st} in 30 days)`) : st === 'denied' ? tr('אין הרשאה', 'No permission') : tr('לא מגיע', 'Not arriving')}
                   </Text>
                 </View>
               );
@@ -74,9 +74,9 @@ export function ScaleCheckSheet({ open, onClose }: { open: boolean; onClose: () 
 
           <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>
             {arriving.length <= 1
-              ? 'מהמשקל מגיע רק המשקל עצמו. אחוז השומן ושאר הנתונים נשארים ב Zepp ולא עוברים ל Health Connect, ולכן המאמן יעריך אותם ממדידות סרט.'
-              : `מגיעים ${arriving.length} סוגי נתונים. השווה את השורות למטה עם אותן שקילות ב Zepp: אם המספרים זהים, החיבור תקין.`}
-            {issues ? ` ${issues} שקילות עם ערכים שלא מסתדרים, מסומנות בכתום.` : ''}
+              ? tr('מהמשקל מגיע רק המשקל עצמו. אחוז השומן ושאר הנתונים נשארים ב Zepp ולא עוברים ל Health Connect, ולכן המאמן יעריך אותם ממדידות סרט.', 'Only the weight itself comes from the scale. Body fat and the other numbers stay in Zepp and do not reach Health Connect, so the coach will estimate them from tape measurements.')
+              : tr(`מגיעים ${arriving.length} סוגי נתונים. השווה את השורות למטה עם אותן שקילות ב Zepp: אם המספרים זהים, החיבור תקין.`, `${arriving.length} kinds of data arrive. Compare the rows below with the same weigh-ins in Zepp: if the numbers match, the connection is fine.`)}
+            {issues ? tr(` ${issues} שקילות עם ערכים שלא מסתדרים, מסומנות בכתום.`, ` ${issues} weigh-ins with values that do not add up, marked in orange.`) : ''}
           </Text>
 
           {denied.length > 0 && (
@@ -87,19 +87,19 @@ export function ScaleCheckSheet({ open, onClose }: { open: boolean; onClose: () 
               }}
               style={s.btn}
             >
-              <Text style={[T.bold, { fontSize: 14, textAlign: 'center' }]}>אשר גישה ל{denied.map((t) => BODY_TITLES[t]).join(', ')}</Text>
+              <Text style={[T.bold, { fontSize: 14, textAlign: 'center' }]}>{tr('אשר גישה ל', 'Allow access to ')}{denied.map((t) => BODY_TITLES[t]).join(', ')}</Text>
             </Pressable>
           )}
 
           {fromScale.length ? (
             <View style={{ gap: 8 }}>
-              <Text style={[T.bold, { fontSize: 15 }]}>שקילות אחרונות</Text>
+              <Text style={[T.bold, { fontSize: 15 }]}>{tr('שקילות אחרונות', 'Recent weigh-ins')}</Text>
               {fromScale.slice(0, 8).map((w) => (
                 <Row key={w.time.getTime()} w={w} />
               ))}
             </View>
           ) : (
-            <Text style={[T.muted, { fontSize: 14 }]}>אין שקילות מהמשקל ב 30 הימים האחרונים.</Text>
+            <Text style={[T.muted, { fontSize: 14 }]}>{tr('אין שקילות מהמשקל ב 30 הימים האחרונים.', 'No weigh-ins from the scale in the last 30 days.')}</Text>
           )}
         </>
       )}

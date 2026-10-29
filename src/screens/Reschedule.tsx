@@ -102,7 +102,7 @@ export default function Reschedule({ workout, onDone, compact = false }: { worko
         </Pressable>
       </View>
       <Pressable onPress={onDone}>
-        <Text style={[T.muted, { fontSize: 13 }]}>{tr('סגור, אני כן מתאמן ב', 'Fine, I am training at')}{pad2(workout.hour)}:{pad2(workout.minute)}</Text>
+        <Text style={[T.muted, { fontSize: 13 }]}>{tr('סגור, אני כן מתאמן ב', 'Fine, I am training at ')}{pad2(workout.hour)}:{pad2(workout.minute)}</Text>
       </Pressable>
     </Card>
   );

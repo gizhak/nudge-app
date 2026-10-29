@@ -24,7 +24,7 @@ import WeightWhyCard, { dayLine } from './WeightWhyCard';
 import LogSheet, { LogKind } from './LogSheet';
 import { loadWaist } from '../progress/waist';
 
-import { ROW, LOCALE } from '../i18n';
+import { ROW, LOCALE, t as tr } from '../i18n';
 const dayStart = (d: Date) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -192,7 +192,7 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
   }
 
   return (
-    <Screen title="התקדמות" enter="progress" refreshing={loading} onRefresh={() => (load(), loadWaistPoints())}>
+    <Screen title={tr("התקדמות", 'Progress')} enter="progress" refreshing={loading} onRefresh={() => (load(), loadWaistPoints())}>
       {(() => {
         // The week against the week before, from the last 14 days of weigh-ins
         const now = Date.now();
@@ -211,9 +211,9 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
         const lead = avg != null && fresh.length ? fresh.reduce((a, p) => a + p.kg, 0) / fresh.length - avg : 0;
         const leadText =
           lead <= -0.4 && !down
-            ? `השקילות האחרונות נמוכות מהממוצע ב ${fmt(Math.abs(lead), 1)} ק"ג: אתה בירידה, והממוצע ידביק בימים הקרובים.`
+            ? tr(`השקילות האחרונות נמוכות מהממוצע ב ${fmt(Math.abs(lead), 1)} ק"ג: אתה בירידה, והממוצע ידביק בימים הקרובים.`, `Your latest weigh-ins are ${fmt(Math.abs(lead), 1)} kg below the average: you are going down, and the average will catch up in the coming days.`)
             : lead >= 0.4 && !up
-              ? `השקילות האחרונות גבוהות מהממוצע ב ${fmt(lead, 1)} ק"ג. יום או יומיים זה בעיקר מים; אם זה נמשך, הממוצע יעלה.`
+              ? tr(`השקילות האחרונות גבוהות מהממוצע ב ${fmt(lead, 1)} ק"ג. יום או יומיים זה בעיקר מים; אם זה נמשך, הממוצע יעלה.`, `Your latest weigh-ins are ${fmt(lead, 1)} kg above the average. A day or two is mostly water; if it continues, the average will rise.`)
               : null;
         // Waist beside the weight: the latest, against about a month ago (one measure is noise)
         const wLast = waist[waist.length - 1];
@@ -227,38 +227,38 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
           <View style={s.hero}>
             <View style={s.cols}>
               <View style={{ flex: 1.3, gap: 2 }}>
-                <Text style={[T.base, { fontSize: 13, color: '#B9B2A8' }]}>משקל · ממוצע שבועי</Text>
+                <Text style={[T.base, { fontSize: 13, color: '#B9B2A8' }]}>{tr('משקל · ממוצע שבועי', 'Weight · weekly average')}</Text>
                 {avg !== null ? (
                   <View style={{ flexDirection: ROW, alignItems: 'baseline', gap: 6 }}>
                     <Text style={{ fontFamily: FONT.black, fontSize: 40, color: '#fff' }}><GrowNumber value={avg} from={a0 ?? avg} format={(n) => fmt(n, 1)} delay={150} /></Text>
-                    <Text style={[T.base, { fontSize: 14, color: '#B9B2A8' }]}>ק"ג</Text>
+                    <Text style={[T.base, { fontSize: 14, color: '#B9B2A8' }]}>{tr('ק"ג', 'kg')}</Text>
                   </View>
                 ) : (
-                  <Text style={[T.bold, { fontSize: 16, color: '#fff' }]}>{last ? 'אין שקילה בשבוע האחרון' : 'עוד אין שקילות'}</Text>
+                  <Text style={[T.bold, { fontSize: 16, color: '#fff' }]}>{last ? tr('אין שקילה בשבוע האחרון', 'No weigh-in in the last week') : tr('עוד אין שקילות', 'No weigh-ins yet')}</Text>
                 )}
                 {delta != null && (
                   <Text style={[T.bold, { fontSize: 13, color: down ? '#8FC7A0' : up ? '#E9B872' : '#B9B2A8' }]}>
-                    {down ? `${fmt(Math.abs(delta), 1)} פחות מהשבוע שעבר` : up ? `${fmt(delta, 1)} יותר מהשבוע שעבר` : 'כמו בשבוע שעבר'}
+                    {down ? tr(`${fmt(Math.abs(delta), 1)} פחות מהשבוע שעבר`, `${fmt(Math.abs(delta), 1)} less than last week`) : up ? tr(`${fmt(delta, 1)} יותר מהשבוע שעבר`, `${fmt(delta, 1)} more than last week`) : tr('כמו בשבוע שעבר', 'Same as last week')}
                   </Text>
                 )}
               </View>
               <View style={s.colSep} />
               <Pressable onPress={openWaist} style={{ flex: 1, gap: 2 }} hitSlop={6}>
-                <Text style={[T.base, { fontSize: 13, color: '#B9B2A8' }]}>היקף מותן</Text>
+                <Text style={[T.base, { fontSize: 13, color: '#B9B2A8' }]}>{tr('היקף מותן', 'Waist')}</Text>
                 {wLast ? (
                   <>
                     <View style={{ flexDirection: ROW, alignItems: 'baseline', gap: 6 }}>
                       <Text style={{ fontFamily: FONT.black, fontSize: 40, color: '#fff' }}>{fmt(wLast.cm, 1)}</Text>
-                      <Text style={[T.base, { fontSize: 14, color: '#B9B2A8' }]}>ס"מ</Text>
+                      <Text style={[T.base, { fontSize: 14, color: '#B9B2A8' }]}>{tr('ס"מ', 'cm')}</Text>
                     </View>
                     <Text style={[T.bold, { fontSize: 13, color: wDelta == null ? '#B9B2A8' : wDelta < -0.4 ? '#8FC7A0' : wDelta > 0.4 ? '#E9B872' : '#B9B2A8' }]}>
-                      {wDelta == null ? `נמדד ${new Date(wLast.at).getDate()}.${new Date(wLast.at).getMonth() + 1}` : wDelta === 0 ? 'כמו לפני חודש' : `${wDelta < 0 ? '−' : '+'}${fmt(Math.abs(wDelta), 1)} בחודש`}
+                      {wDelta == null ? tr(`נמדד ${new Date(wLast.at).getDate()}.${new Date(wLast.at).getMonth() + 1}`, `Measured ${new Date(wLast.at).getMonth() + 1}/${new Date(wLast.at).getDate()}`) : wDelta === 0 ? tr('כמו לפני חודש', 'Same as a month ago') : tr(`${wDelta < 0 ? '−' : '+'}${fmt(Math.abs(wDelta), 1)} בחודש`, `${wDelta < 0 ? '−' : '+'}${fmt(Math.abs(wDelta), 1)} in a month`)}
                     </Text>
                   </>
                 ) : (
                   <>
-                    <Text style={[T.bold, { fontSize: 16, color: '#fff', marginTop: 8 }]}>עוד לא נמדד</Text>
-                    <Text style={[T.bold, { fontSize: 13, color: C.signal }]}>למדוד</Text>
+                    <Text style={[T.bold, { fontSize: 16, color: '#fff', marginTop: 8 }]}>{tr('עוד לא נמדד', 'Not measured yet')}</Text>
+                    <Text style={[T.bold, { fontSize: 13, color: C.signal }]}>{tr('למדוד', 'Measure')}</Text>
                   </>
                 )}
               </Pressable>
@@ -282,21 +282,21 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
             )}
             {(() => {
               const row = pickedDay != null ? story?.rows.find((r) => r.day === pickedDay) : undefined;
-              if (pickedDay == null) return last14.length >= 2 ? <Text style={[T.base, { fontSize: 11, color: '#6F6A63' }]}>לחץ על נקודה בגרף לפרטי היום</Text> : null;
+              if (pickedDay == null) return last14.length >= 2 ? <Text style={[T.base, { fontSize: 11, color: '#6F6A63' }]}>{tr('לחץ על נקודה בגרף לפרטי היום', 'Tap a point on the chart for that day\'s details')}</Text> : null;
               return (
                 <Text style={[T.bold, { fontSize: 13, lineHeight: 19, color: '#fff' }]}>
-                  {row ? dayLine(row, story!.target) : `${new Date(pickedDay).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'numeric' })} · אין נתוני אוכל ושינה ליום הזה`}
+                  {row ? dayLine(row, story!.target) : tr(`${new Date(pickedDay).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'numeric' })} · אין נתוני אוכל ושינה ליום הזה`, `${new Date(pickedDay).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'numeric' })} · no food or sleep data for this day`)}
                 </Text>
               );
             })()}
             {last && (
               <Text style={[T.base, { fontSize: 12, color: '#8A847B' }]}>
-                אחרונה {fmt(last.kg, 1)} · {last.date.toDateString() === new Date().toDateString() ? 'היום' : last.date.toLocaleDateString(LOCALE, { day: 'numeric', month: 'numeric' })} · {sourceLabel(last.source)}
+                {tr('אחרונה', 'Latest')} {fmt(last.kg, 1)} · {last.date.toDateString() === new Date().toDateString() ? tr('היום', 'today') : last.date.toLocaleDateString(LOCALE, { day: 'numeric', month: 'numeric' })} · {sourceLabel(last.source)}
               </Text>
             )}
             {jump && (
               <Text style={[T.base, { fontSize: 12, lineHeight: 18, color: '#E9B872' }]}>
-                {`הקפיצה מהשקילה הקודמת היא כנראה הבדל בין משקלים: הקודמת מ ${sourceLabel(prev.source)}.`}
+                {tr(`הקפיצה מהשקילה הקודמת היא כנראה הבדל בין משקלים: הקודמת מ ${sourceLabel(prev.source)}.`, `The jump from the previous weigh-in is probably a difference between scales: the previous one is from ${sourceLabel(prev.source)}.`)}
               </Text>
             )}
           </View>
@@ -309,19 +309,19 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
       <RowsCard>
         <OpenRow
           first
-          title="רישום משקל או מותן"
-          sub="בלי משקל חכם, או המדידה השבועית של המותן"
+          title={tr("רישום משקל או מותן", 'Log weight or waist')}
+          sub={tr("בלי משקל חכם, או המדידה השבועית של המותן", 'Without a smart scale, or the weekly waist measurement')}
           onPress={() => {
             setLogKind(waistDue(waist) ? 'waist' : 'weight');
             setLogOpen(true);
           }}
         />
         <OpenRow
-          title="אימונים בשבוע"
-          sub={weeks.length ? `השבוע ${weeks[weeks.length - 1].count} מתוך ${GOALS.workoutsPerWeek}` : undefined}
+          title={tr("אימונים בשבוע", 'Workouts a week')}
+          sub={weeks.length ? tr(`השבוע ${weeks[weeks.length - 1].count} מתוך ${GOALS.workoutsPerWeek}`, `This week ${weeks[weeks.length - 1].count} of ${GOALS.workoutsPerWeek}`) : undefined}
           onPress={() => setWorkoutsOpen(true)}
         />
-        <OpenRow title="בדיקת המשקל החכם" sub="מה מגיע ממנו, ואם המספרים תקינים" onPress={() => setScaleOpen(true)} />
+        <OpenRow title={tr("בדיקת המשקל החכם", 'Smart scale check')} sub={tr("מה מגיע ממנו, ואם המספרים תקינים", 'What comes from it, and whether the numbers are right')} onPress={() => setScaleOpen(true)} />
       </RowsCard>
       <ScaleCheckSheet open={scaleOpen} onClose={() => setScaleOpen(false)} />
 
@@ -335,16 +335,16 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
         onSaved={(k) => (k === 'weight' ? load() : loadWaistPoints())}
       />
 
-      <Sheet open={workoutsOpen} onClose={() => setWorkoutsOpen(false)} title={`אימונים בשבוע · יעד ${GOALS.workoutsPerWeek}`}>
+      <Sheet open={workoutsOpen} onClose={() => setWorkoutsOpen(false)} title={tr(`אימונים בשבוע · יעד ${GOALS.workoutsPerWeek}`, `Workouts a week · goal ${GOALS.workoutsPerWeek}`)}>
         <MiniBars
           values={weeks.map((w) => w.count)}
-          labels={weeks.map((w, i) => (i === weeks.length - 1 ? 'השבוע' : `${w.weekStart.getDate()}/${w.weekStart.getMonth() + 1}`))}
+          labels={weeks.map((w, i) => (i === weeks.length - 1 ? tr('השבוע', 'This week') : `${w.weekStart.getDate()}/${w.weekStart.getMonth() + 1}`))}
           target={GOALS.workoutsPerWeek}
           max={GOALS.workoutsPerWeek}
           color={C.warn}
           height={70}
         />
-        <Text style={[T.muted, { fontSize: 13 }]}>נספר לפי אימונים שהשעון רשם, ביקורים בחדר הכושר ו"התאמנתי".</Text>
+        <Text style={[T.muted, { fontSize: 13 }]}>{tr('נספר לפי אימונים שהשעון רשם, ביקורים בחדר הכושר ו"התאמנתי".', 'Counted by workouts the watch logged, gym visits and "I trained".')}</Text>
       </Sheet>
     </Screen>
   );

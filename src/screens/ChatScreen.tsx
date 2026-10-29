@@ -27,24 +27,24 @@ import SleepEntry, { hoursText } from './SleepEntry';
 import WorkoutFeel from '../train/WorkoutFeel';
 import { SLEEP_MISSING, SLEEP_MISSING2 } from '../sleep/ask';
 
-import { ROW, SIDE_END, SIDE_START, START, LOCALE } from '../i18n';
+import { ROW, SIDE_END, SIDE_START, START, LOCALE, t as tr } from '../i18n';
 const WATCH_CHANGED =
-  'ככה מחברים שעון חדש:\n1. באפליקציה של השעון החדש (ל Bip Max זו Zepp) מפעילים סנכרון ל Health Connect.\n2. ב Health Connect, בהרשאות של אותה אפליקציה, מאשרים לה לכתוב שינה, צעדים, דופק ואימונים.\n3. ב Nudge, בהגדרות, מעדכנים את סוג השעון.\nמהלילה הבא הנתונים אמורים להגיע.';
+  tr('ככה מחברים שעון חדש:\n1. באפליקציה של השעון החדש (ל Bip Max זו Zepp) מפעילים סנכרון ל Health Connect.\n2. ב Health Connect, בהרשאות של אותה אפליקציה, מאשרים לה לכתוב שינה, צעדים, דופק ואימונים.\n3. ב Nudge, בהגדרות, מעדכנים את סוג השעון.\nמהלילה הבא הנתונים אמורים להגיע.', 'This is how to connect a new watch:\n1. In the new watch\'s app (for the Bip Max it is Zepp), turn on sync to Health Connect.\n2. In Health Connect, in that app\'s permissions, allow it to write sleep, steps, heart rate and workouts.\n3. In Nudge, in settings, update the watch type.\nFrom tonight the data should arrive.');
 const NOTHING_CHANGED =
-  'אז כנראה הסנכרון נתקע.\n1. פתח את אפליקציית השעון ותן לה דקה לסנכרן מהשעון.\n2. ב Health Connect, בדוק שהיא עדיין מורשית לכתוב שינה.\nאם מחר בבוקר עדיין אין נתון, תגיד לי.';
+  tr('אז כנראה הסנכרון נתקע.\n1. פתח את אפליקציית השעון ותן לה דקה לסנכרן מהשעון.\n2. ב Health Connect, בדוק שהיא עדיין מורשית לכתוב שינה.\nאם מחר בבוקר עדיין אין נתון, תגיד לי.', 'Then the sync is probably stuck.\n1. Open the watch app and give it a minute to sync from the watch.\n2. In Health Connect, check it is still allowed to write sleep.\nIf there is still no data tomorrow morning, tell me.');
 
 type Mine = { at: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; text: string; sub?: string; water?: boolean; reply?: string };
 
 const drankText = (ml: number, container: number) =>
   container === 30
     ? Math.round(ml / 30) === 1
-      ? 'לגימה אחת'
-      : `${Math.round(ml / 30)} לגימות`
+      ? tr('לגימה אחת', 'one sip')
+      : tr(`${Math.round(ml / 30)} לגימות`, `${Math.round(ml / 30)} sips`)
     : container === 250
       ? ml <= 250
-        ? 'כוס'
-        : `${Math.round((ml / 250) * 10) / 10} כוסות`
-      : `${Math.round(ml / 100) / 10} ליטר`;
+        ? tr('כוס', 'a glass')
+        : tr(`${Math.round((ml / 250) * 10) / 10} כוסות`, `${Math.round((ml / 250) * 10) / 10} glasses`)
+      : tr(`${Math.round(ml / 100) / 10} ליטר`, `${Math.round(ml / 100) / 10} liters`);
 
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 
@@ -58,12 +58,12 @@ async function readDoings(): Promise<Mine[]> {
   ]);
   for (const plate of plates(meals)) {
     const p = plateMeal(plate);
-    out.push({ at: plate[0].time.getTime(), icon: 'restaurant', color: '#E3B26B', text: `אכלתי: ${p.name}`, sub: `${fmt(p.kcal)} קלוריות · ${fmt(p.protein)} ג' חלבון` });
+    out.push({ at: plate[0].time.getTime(), icon: 'restaurant', color: '#E3B26B', text: tr(`אכלתי: ${p.name}`, `I ate: ${p.name}`), sub: tr(`${fmt(p.kcal)} קלוריות · ${fmt(p.protein)} ג' חלבון`, `${fmt(p.kcal)} calories · ${fmt(p.protein)} g protein`) });
   }
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  for (const w of weights) if (w.date.getTime() >= today.getTime()) out.push({ at: w.date.getTime(), icon: 'scale-outline', color: '#9FD3B0', text: `נשקלתי: ${w.kg.toFixed(1)} ק"ג` });
-  for (const x of hf?.workouts ?? []) out.push({ at: x.end, icon: x.run ? 'walk' : 'barbell', color: '#F2A58E', text: `${x.run ? 'רצתי' : 'התאמנתי'} ${x.minutes} דקות` });
+  for (const w of weights) if (w.date.getTime() >= today.getTime()) out.push({ at: w.date.getTime(), icon: 'scale-outline', color: '#9FD3B0', text: tr(`נשקלתי: ${w.kg.toFixed(1)} ק"ג`, `I weighed in: ${w.kg.toFixed(1)} kg`) });
+  for (const x of hf?.workouts ?? []) out.push({ at: x.end, icon: x.run ? 'walk' : 'barbell', color: '#F2A58E', text: tr(`${x.run ? 'רצתי' : 'התאמנתי'} ${x.minutes} דקות`, `${x.run ? 'I ran' : 'I trained'} ${x.minutes} minutes`) });
   return out;
 }
 
@@ -74,21 +74,21 @@ const keyOf = (id: string) => (/^meal_\d+$/.test(id) ? 'food' : /^status_\d+$/.t
 /** What the button inside a message does, by topic. */
 function actionOf(m: SentMessage, container = 250): { label: string; kind: 'water' | 'route' | 'gym' | 'proposal' | 'sleep' | 'sleep2'; ml?: number } | null {
   const k = baseOf(m.id);
-  if (k === 'proposal') return { label: 'כן, לעדכן', kind: 'proposal' };
-  if (k === SLEEP_MISSING) return { label: 'לא ענדתי', kind: 'sleep' };
-  if (k === SLEEP_MISSING2) return { label: 'החלפתי שעון', kind: 'sleep2' };
-  if (k === 'wifi_guess') return { label: 'כן, זה חדר הכושר', kind: 'gym' };
+  if (k === 'proposal') return { label: tr('כן, לעדכן', 'Yes, update'), kind: 'proposal' };
+  if (k === SLEEP_MISSING) return { label: tr('לא ענדתי', 'I didn\'t wear it'), kind: 'sleep' };
+  if (k === SLEEP_MISSING2) return { label: tr('החלפתי שעון', 'I changed watches'), kind: 'sleep2' };
+  if (k === 'wifi_guess') return { label: tr('כן, זה חדר הכושר', 'Yes, that\'s the gym'), kind: 'gym' };
   if (k === 'water' || k === 'water_morning') {
-    if (container === 30) return { label: '10 לגימות', kind: 'water', ml: 300 };
-    if (container > 250) return { label: 'חצי בקבוק', kind: 'water', ml: container / 2 };
-    return { label: 'שתיתי כוס', kind: 'water', ml: 250 };
+    if (container === 30) return { label: tr('10 לגימות', '10 sips'), kind: 'water', ml: 300 };
+    if (container > 250) return { label: tr('חצי בקבוק', 'Half a bottle'), kind: 'water', ml: container / 2 };
+    return { label: tr('שתיתי כוס', 'I drank a glass'), kind: 'water', ml: 250 };
   }
-  if (/^(weigh_in|weigh_reminder)/.test(k)) return { label: 'לשקילה', kind: 'route' };
+  if (/^(weigh_in|weigh_reminder)/.test(k)) return { label: tr('לשקילה', 'To weigh-in'), kind: 'route' };
   if (k === 'workout_done') return null;
-  if (/^(workout_|missed_workout|week_behind|long_break|home_before_workout)/.test(k)) return { label: 'לאימון', kind: 'route' };
-  if (/^(food_none|protein_evening|leave_office_protein|pre_workout_snack|meal_reminder)/.test(k)) return { label: 'לתזונה', kind: 'route' };
-  if (k === 'run') return { label: 'לריצה', kind: 'route' };
-  if (k === 'craving_evening') return { label: 'בא לי משהו', kind: 'route' };
+  if (/^(workout_|missed_workout|week_behind|long_break|home_before_workout)/.test(k)) return { label: tr('לאימון', 'To the workout'), kind: 'route' };
+  if (/^(food_none|protein_evening|leave_office_protein|pre_workout_snack|meal_reminder)/.test(k)) return { label: tr('לתזונה', 'To food'), kind: 'route' };
+  if (k === 'run') return { label: tr('לריצה', 'To the run'), kind: 'route' };
+  if (k === 'craving_evening') return { label: tr('בא לי משהו', 'I feel like something'), kind: 'route' };
   return null;
 }
 
@@ -165,9 +165,9 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
         await addWater(a.ml);
         await didIt(['water']);
         const total = await readWaterToday().catch(() => null);
-        setNote({ text: `נרשם: ${a.label}.${total != null ? ` היום ${waterText(total, container as Container)}.` : ''}` });
+        setNote({ text: tr(`נרשם: ${a.label}.${total != null ? ` היום ${waterText(total, container as Container)}.` : ''}`, `Logged: ${a.label}.${total != null ? ` Today ${waterText(total, container as Container)}.` : ''}`) });
       } catch (e: any) {
-        setNote({ text: `לא נשמר: ${String(e?.message ?? e)}. בדוק את הרשאת המים בבדיקת מוכנות.`, bad: true });
+        setNote({ text: tr(`לא נשמר: ${String(e?.message ?? e)}. בדוק את הרשאת המים בבדיקת מוכנות.`, `Not saved: ${String(e?.message ?? e)}. Check the water permission in Readiness.`), bad: true });
       }
       setTimeout(() => setNote(null), 4000);
       return load();
@@ -183,11 +183,11 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
       setSleepFor(m);
       return;
     }
-    if (a.kind === 'sleep2') return say(m, 'החלפתי שעון', WATCH_CHANGED);
+    if (a.kind === 'sleep2') return say(m, tr('החלפתי שעון', 'I changed watches'), WATCH_CHANGED);
     if (a.kind === 'gym') {
       const ok = await acceptGuess().catch(() => false);
       await ackTopic('wifi_guess').catch(() => undefined);
-      setNote(ok ? { text: 'שמרתי. מעכשיו אזהה את חדר הכושר לפי הרשת.' } : { text: 'הרשת כבר לא נראית. אפשר להגדיר אותה בהגדרות, תחת Wi-Fi.', bad: true });
+      setNote(ok ? { text: tr('שמרתי. מעכשיו אזהה את חדר הכושר לפי הרשת.', 'Saved. From now I will recognize the gym by its network.') } : { text: tr('הרשת כבר לא נראית. אפשר להגדיר אותה בהגדרות, תחת Wi-Fi.', 'The network is no longer in range. You can set it in settings, under Wi-Fi.'), bad: true });
       setTimeout(() => setNote(null), 4000);
       if (ok) {
         const arrived = await wifiCheck().catch(() => null);
@@ -215,8 +215,8 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
           <View style={s.avatarDot} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[T.bold, { fontSize: 22 }]}>המאמן</Text>
-          <Text style={[T.muted, { fontSize: 13 }]}>{log.length ? `${log.length} הודעות היום` : 'עוד לא היו הודעות היום'}</Text>
+          <Text style={[T.bold, { fontSize: 22 }]}>{tr('המאמן', 'The coach')}</Text>
+          <Text style={[T.muted, { fontSize: 13 }]}>{log.length ? tr(`${log.length} הודעות היום`, `${log.length} messages today`) : tr('עוד לא היו הודעות היום', 'No messages today yet')}</Text>
         </View>
         <Gear />
       </View>
@@ -232,7 +232,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
               return [...drinks].sort((a, b) => a.at - b.at).map((r) => {
                 const reply = r.total != null ? drinkReply(r.total, who.target, seedOf(`drink${r.at}`), who.name, prev.slice(-2)) : undefined;
                 if (reply) prev.push(reply);
-                return { at: r.at, icon: 'water' as const, color: '#9CC3EA', text: `שתיתי ${drankText(r.ml, container)}`, sub: r.total != null ? `היום ${Math.round(r.total / 100) / 10} ליטר` : undefined, water: true, reply };
+                return { at: r.at, icon: 'water' as const, color: '#9CC3EA', text: tr(`שתיתי ${drankText(r.ml, container)}`, `I drank ${drankText(r.ml, container)}`), sub: r.total != null ? tr(`היום ${Math.round(r.total / 100) / 10} ליטר`, `Today ${Math.round(r.total / 100) / 10} liters`) : undefined, water: true, reply };
               });
             })(),
             ...doings,
@@ -291,7 +291,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                   <Text style={[T.bold, { fontSize: 16, lineHeight: 22 }]}>{m.title}</Text>
                   <Text style={[T.base, { fontSize: 15, lineHeight: 22, color: '#4A453F' }]}>{m.body}</Text>
                   {key === 'workout_feel' && <WorkoutFeel id={m.id} />}
-                  {moot && <Text style={[T.muted, { fontSize: 13 }]}>עדכנת את האימון אחרי ההודעה הזו.</Text>}
+                  {moot && <Text style={[T.muted, { fontSize: 13 }]}>{tr('עדכנת את האימון אחרי ההודעה הזו.', 'You updated the workout after this message.')}</Text>}
                   {latest && answerable && !done && !acked && !moot && (
                     <View style={s.btns}>
                       {a && (
@@ -310,19 +310,19 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                           }}
                           style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}
                         >
-                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא עכשיו</Text>
+                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('לא עכשיו', 'Not now')}</Text>
                         </Pressable>
                       ) : a?.kind === 'sleep' ? (
-                        <Pressable onPress={() => say(m, 'לא יודע', 'בסדר. הלילה הזה לא ייספר, לא לטובה ולא לרעה.')} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
-                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא יודע</Text>
+                        <Pressable onPress={() => say(m, tr('לא יודע', 'I don\'t know'), tr('בסדר. הלילה הזה לא ייספר, לא לטובה ולא לרעה.', 'OK. This night will not count, for better or worse.'))} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('לא יודע', 'I don\'t know')}</Text>
                         </Pressable>
                       ) : a?.kind === 'sleep2' ? (
                         <>
-                          <Pressable onPress={() => say(m, 'לא שיניתי כלום', NOTHING_CHANGED)} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
-                            <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא שיניתי כלום</Text>
+                          <Pressable onPress={() => say(m, tr('לא שיניתי כלום', 'I changed nothing'), NOTHING_CHANGED)} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                            <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('לא שיניתי כלום', 'I changed nothing')}</Text>
                           </Pressable>
                           <Pressable onPress={() => setSleepFor(m)} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
-                            <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא ענדתי</Text>
+                            <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('לא ענדתי', 'I didn\'t wear it')}</Text>
                           </Pressable>
                         </>
                       ) : a?.kind === 'gym' ? (
@@ -331,17 +331,17 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                           onPress={async () => {
                             await rejectGuess().catch(() => undefined);
                             await ackTopic('wifi_guess', new Date(), 24 * 3600 * 1000).catch(() => undefined);
-                            setNote({ text: 'בסדר, לא אשאל על הרשת הזו שוב.' });
+                            setNote({ text: tr('בסדר, לא אשאל על הרשת הזו שוב.', 'OK, I will not ask about this network again.') });
                             setTimeout(() => setNote(null), 4000);
                             load();
                           }}
                           style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}
                         >
-                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>לא, זה לא חדר הכושר</Text>
+                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('לא, זה לא חדר הכושר', 'No, that\'s not the gym')}</Text>
                         </Pressable>
                       ) : (
                         <Pressable onPress={() => answer(m)} style={({ pressed }) => [a ? s.btnLight : s.btnDark, pressed && { opacity: 0.8 }]}>
-                          <Text style={[T.bold, { fontSize: 14, color: a ? C.ink : '#fff' }]}>הבנתי</Text>
+                          <Text style={[T.bold, { fontSize: 14, color: a ? C.ink : '#fff' }]}>{tr('הבנתי', 'Got it')}</Text>
                         </Pressable>
                       )}
                     </View>
@@ -349,7 +349,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                 </View>
                 {latest && answerable && (done || acked) && !drankAfter && !moot && !key.startsWith('sleep_missing') && (
                   <View style={s.me}>
-                    <Text style={[T.bold, { fontSize: 15, color: '#fff' }]}>{done ? 'בוצע' : 'הבנתי'}</Text>
+                    <Text style={[T.bold, { fontSize: 15, color: '#fff' }]}>{done ? tr('בוצע', 'Done') : tr('הבנתי', 'Got it')}</Text>
                     {done && <Ionicons name="checkmark" size={16} color="#fff" />}
                   </View>
                 )}
@@ -357,7 +357,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
             );
           });
         })()}
-        {!log.length && <Text style={[T.muted, { fontSize: 14, textAlign: 'center', marginTop: 40 }]}>כשהמאמן יגיד משהו, זה יופיע כאן.</Text>}
+        {!log.length && <Text style={[T.muted, { fontSize: 14, textAlign: 'center', marginTop: 40 }]}>{tr('כשהמאמן יגיד משהו, זה יופיע כאן.', 'When the coach says something, it will show up here.')}</Text>}
       </ScrollView>
 
       {note && (
@@ -367,10 +367,10 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
       )}
       <View style={s.bottom}>
         <Pressable onPress={() => onRoute({ tab: 'food', focus: 'craving' })} style={({ pressed }) => [s.quick, { backgroundColor: C.signal }, pressed && { opacity: 0.85 }]}>
-          <Text style={[T.bold, { fontSize: 15, color: '#fff', textAlign: 'center' }]}>בא לי משהו</Text>
+          <Text style={[T.bold, { fontSize: 15, color: '#fff', textAlign: 'center' }]}>{tr('בא לי משהו', 'I feel like something')}</Text>
         </Pressable>
         <Pressable onPress={ask} disabled={busy} style={({ pressed }) => [s.quick, pressed && { opacity: 0.85 }]}>
-          {busy ? <ActivityIndicator color={C.ink} /> : <Text style={[T.bold, { fontSize: 15, textAlign: 'center' }]}>מה עכשיו?</Text>}
+          {busy ? <ActivityIndicator color={C.ink} /> : <Text style={[T.bold, { fontSize: 15, textAlign: 'center' }]}>{tr('מה עכשיו?', 'What now?')}</Text>}
         </Pressable>
       </View>
       <SleepEntry
@@ -380,7 +380,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
         onSaved={(n) => {
           const m = sleepFor;
           setSleepFor(null);
-          if (m) say(m, `לא ענדתי. ישנתי בערך ${hoursText(n.minutes)}`, n.minutes >= 6.5 * 60 ? 'רשמתי. לילה סביב היעד.' : `רשמתי. זה פחות מהיעד, אז היום הרעב יהיה חזק מהרגיל. תכנן מראש ארוחה עם חלבון.`);
+          if (m) say(m, tr(`לא ענדתי. ישנתי בערך ${hoursText(n.minutes)}`, `I didn't wear it. I slept about ${hoursText(n.minutes)}`), n.minutes >= 6.5 * 60 ? tr('רשמתי. לילה סביב היעד.', 'Logged. A night around the goal.') : tr(`רשמתי. זה פחות מהיעד, אז היום הרעב יהיה חזק מהרגיל. תכנן מראש ארוחה עם חלבון.`, `Logged. That is under the goal, so today your hunger will be stronger than usual. Plan a meal with protein ahead.`));
         }}
       />
     </View>

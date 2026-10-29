@@ -8,7 +8,7 @@ import { clockText, diagnose, hoursText, Night, nightsFrom, readSleepRecords, Sl
 import { TargetBars } from '../ui/charts';
 import { C, T } from '../ui/theme';
 
-import { ROW, LOCALE } from '../i18n';
+import { ROW, LOCALE, t as tr } from '../i18n';
 const DAYS = 14;
 
 interface Loaded {
@@ -50,10 +50,10 @@ const timeOf = (t: number) => new Date(t).toLocaleTimeString(LOCALE, { hour: '2-
 function Stages({ n }: { n: Night }) {
   if (n.deep == null) return null;
   const parts = [
-    { key: 'עמוקה', min: n.deep, color: C.ink },
+    { key: tr('עמוקה', 'Deep'), min: n.deep, color: C.ink },
     { key: 'REM', min: n.rem ?? 0, color: '#4B4741' },
-    { key: 'קלה', min: n.light ?? 0, color: C.data },
-    { key: 'ער', min: n.awake ?? 0, color: C.track },
+    { key: tr('קלה', 'Light'), min: n.light ?? 0, color: C.data },
+    { key: tr('ער', 'Awake'), min: n.awake ?? 0, color: C.track },
   ].filter((p) => p.min > 0);
   const total = parts.reduce((a, p) => a + p.min, 0) || 1;
   return (
@@ -79,9 +79,9 @@ function Stages({ n }: { n: Night }) {
 
 function consistency(spread?: number): string | null {
   if (spread == null) return null;
-  if (spread <= 30) return 'אתה נרדם בשעה קבועה. זה הבסיס לשינה טובה.';
-  if (spread <= 60) return `שעת ההירדמות זזה בכשעה בין לילות (${Math.round(spread)} דקות). שעה קבועה יותר תעזור.`;
-  return `שעת ההירדמות משתנה מאוד בין לילות (כ ${Math.round(spread)} דקות). שעה קבועה, גם בסוף השבוע, משפרת את השינה ואת הרעב למחרת.`;
+  if (spread <= 30) return tr('אתה נרדם בשעה קבועה. זה הבסיס לשינה טובה.', 'You fall asleep at a steady time. That is the base of good sleep.');
+  if (spread <= 60) return tr(`שעת ההירדמות זזה בכשעה בין לילות (${Math.round(spread)} דקות). שעה קבועה יותר תעזור.`, `Your sleep time moves by about an hour between nights (${Math.round(spread)} minutes). A steadier time will help.`);
+  return tr(`שעת ההירדמות משתנה מאוד בין לילות (כ ${Math.round(spread)} דקות). שעה קבועה, גם בסוף השבוע, משפרת את השינה ואת הרעב למחרת.`, `Your sleep time changes a lot between nights (about ${Math.round(spread)} minutes). A steady time, weekends too, improves sleep and the next day's hunger.`);
 }
 
 /** The sleep drawer: last night, the week, the pattern, and where the data comes from. */
@@ -108,28 +108,28 @@ export default function SleepView() {
     <View style={{ gap: 16 }}>
       {last ? (
         <View style={{ gap: 8 }}>
-          <Text style={[T.muted, { fontSize: 13 }]}>{last.day === today ? 'הלילה האחרון' : `הלילה האחרון שהגיע: ${dateText(last.day)}`}</Text>
-          <Text style={[T.bold, { fontSize: 30 }]}>{hoursText(last.asleepMin)} שעות</Text>
+          <Text style={[T.muted, { fontSize: 13 }]}>{last.day === today ? tr('הלילה האחרון', 'Last night') : tr(`הלילה האחרון שהגיע: ${dateText(last.day)}`, `The last night that arrived: ${dateText(last.day)}`)}</Text>
+          <Text style={[T.bold, { fontSize: 30 }]}>{hoursText(last.asleepMin)} {tr('שעות', 'hours')}</Text>
           <Text style={[T.muted, { fontSize: 14 }]}>
-            {timeOf(last.bed)} עד {timeOf(last.wake)}
-            {last.asleepMin < target * 60 - 30 ? ` · ${hoursText(target * 60 - last.asleepMin)} פחות מהיעד` : ''}
+            {timeOf(last.bed)} {tr('עד', 'to')} {timeOf(last.wake)}
+            {last.asleepMin < target * 60 - 30 ? tr(` · ${hoursText(target * 60 - last.asleepMin)} פחות מהיעד`, ` · ${hoursText(target * 60 - last.asleepMin)} under the goal`) : ''}
           </Text>
           <Stages n={last} />
         </View>
       ) : (
-        <Text style={[T.bold, { fontSize: 18 }]}>אין נתוני שינה</Text>
+        <Text style={[T.bold, { fontSize: 18 }]}>{tr('אין נתוני שינה', 'No sleep data')}</Text>
       )}
 
       {sum.avgMin != null && (
         <View style={{ gap: 8 }}>
-          <Text style={[T.bold, { fontSize: 15 }]}>השבוע</Text>
+          <Text style={[T.bold, { fontSize: 15 }]}>{tr('השבוע', 'This week')}</Text>
           <TargetBars values={values} labels={bars.map((t) => DAY_LETTERS[new Date(t).getDay()])} target={target} overIsBad={false} height={70} />
           <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>
-            ממוצע {hoursText(sum.avgMin)} שעות · {sum.onTarget} מתוך {week.length} לילות סביב היעד ({target} שעות)
+            {tr('ממוצע', 'Average')} {hoursText(sum.avgMin)} {tr('שעות ·', 'hours ·')} {sum.onTarget} {tr('מתוך', 'of')} {week.length} {tr('לילות סביב היעד (', 'nights around the goal (')}{target} {tr('שעות)', 'hours)')}
           </Text>
           {sum.avgBed != null && sum.avgWake != null && (
             <Text style={[T.muted, { fontSize: 13 }]}>
-              נרדם בממוצע ב {clockText(sum.avgBed)}, קם ב {clockText(sum.avgWake)}
+              {tr('נרדם בממוצע ב', 'Asleep on average at')} {clockText(sum.avgBed)}{tr(', קם ב', ', up at')} {clockText(sum.avgWake)}
             </Text>
           )}
           {consistency(sum.bedSpread) && <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>{consistency(sum.bedSpread)}</Text>}
@@ -139,14 +139,14 @@ export default function SleepView() {
 
       {sum.nights.length > 1 && (
         <View style={{ gap: 2 }}>
-          <Text style={[T.bold, { fontSize: 15, marginBottom: 4 }]}>לילה אחרי לילה</Text>
+          <Text style={[T.bold, { fontSize: 15, marginBottom: 4 }]}>{tr('לילה אחרי לילה', 'Night by night')}</Text>
           {[...sum.nights].reverse().map((n) => (
             <View key={n.day} style={s.night}>
               <Text style={[T.base, { fontSize: 13, width: 82 }]}>{dateText(n.day)}</Text>
               <Text style={[T.bold, { fontSize: 13, width: 44, color: n.asleepMin < target * 60 - 30 ? C.warn : C.ink }]}>{hoursText(n.asleepMin)}</Text>
               <Text style={[T.muted, { fontSize: 12, flex: 1 }]}>
-                {timeOf(n.bed)} עד {timeOf(n.wake)}
-                {n.deep != null ? ` · עמוקה ${hoursText(n.deep)}` : ''}
+                {timeOf(n.bed)} {tr('עד', 'to')} {timeOf(n.wake)}
+                {n.deep != null ? tr(` · עמוקה ${hoursText(n.deep)}`, ` · deep ${hoursText(n.deep)}`) : ''}
               </Text>
             </View>
           ))}
@@ -154,7 +154,7 @@ export default function SleepView() {
       )}
 
       <View style={[s.check, !check.ok && { borderColor: C.signal }]}>
-        <Text style={[T.bold, { fontSize: 14 }]}>מאיפה זה מגיע</Text>
+        <Text style={[T.bold, { fontSize: 14 }]}>{tr('מאיפה זה מגיע', 'Where this comes from')}</Text>
         {check.lines.map((l) => (
           <Text key={l} style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>
             {l}

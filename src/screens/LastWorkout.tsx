@@ -119,7 +119,7 @@ function History({ workouts }: { workouts: WorkoutDetail[] }) {
   const max = Math.max(...list.map((w) => w.minutes), 1);
   return (
     <View style={{ gap: 6 }}>
-      <Text style={[T.muted, { fontSize: 12 }]}>{t('דקות ב', 'minutes in')}{list.length} {t('האימונים האחרונים', 'Recent workouts')}</Text>
+      <Text style={[T.muted, { fontSize: 12 }]}>{t('דקות ב', 'minutes in ')}{list.length} {t('האימונים האחרונים', 'Recent workouts')}</Text>
       <View style={s.bars}>
         {list.map((w, i) => (
           <HistoryBar key={w.start.getTime()} h={Math.max(6, Math.round((w.minutes / max) * 60))} latest={i === list.length - 1} delay={350 + i * 70} label={`${w.start.getDate()}.${w.start.getMonth() + 1}`} />

@@ -72,7 +72,7 @@ export default function PlaceChip({ place, since, via, onChanged }: { place: Pla
         </Text>
         {check && (
           <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>
-            {tr('בדיקה אחרונה ב־', 'Last check at')}{hhmm(check.at)}: {check.result === 'stay' ? tr('עדיין שם', 'Still there') : check.result === 'unknown' ? tr('לא הצליח לבדוק', 'Could not check') : tr('יצאת', 'You left')} ({check.how})
+            {tr('בדיקה אחרונה ב־', 'Last check at ')}{hhmm(check.at)}: {check.result === 'stay' ? tr('עדיין שם', 'Still there') : check.result === 'unknown' ? tr('לא הצליח לבדוק', 'Could not check') : tr('יצאת', 'You left')} ({check.how})
           </Text>
         )}
         <Text style={[T.bold, { fontSize: 14 }]}>{tr('אני בעצם:', 'I am actually:')}</Text>
