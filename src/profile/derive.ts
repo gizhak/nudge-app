@@ -6,6 +6,7 @@ import { defaultWeekend, GOALS, MINIMUM_WORKOUT, SESSIONS, setWeekend, WEEKEND_M
 import { Pain, Profile, SplitKind } from './profile';
 import { checklistOf, exercisesOf, gearFor, pickKey } from '../train/library';
 
+import { t } from '../i18n';
 export interface Derived {
   bmr: number;
   maintenance: number;
@@ -108,20 +109,20 @@ function adapt(list: Exercise[], p: Profile): Exercise[] {
 // ---------- Splits: how the week's workouts are divided ----------
 
 export const SPLITS: { key: SplitKind; label: string; hint: string; minDays: number }[] = [
-  { key: 'full', label: 'גוף מלא', hint: 'כל אימון עובד על כל הגוף. כל שריר מקבל עבודה בכל אימון.', minDays: 1 },
-  { key: 'split3', label: 'פיצול לשלושה', hint: 'חזה ויד אחורית, גב ויד קדמית, רגליים וכתפיים.', minDays: 3 },
-  { key: 'ppl', label: 'דחיפה, משיכה, רגליים', hint: 'חזה כתפיים ויד אחורית, גב ויד קדמית, רגליים.', minDays: 3 },
-  { key: 'upper_lower', label: 'עליון ותחתון', hint: 'פלג גוף עליון, פלג גוף תחתון, לסירוגין.', minDays: 2 },
+  { key: 'full', label: t('גוף מלא', 'Full body'), hint: t('כל אימון עובד על כל הגוף. כל שריר מקבל עבודה בכל אימון.', 'Every workout trains the whole body. Each muscle gets work every session.'), minDays: 1 },
+  { key: 'split3', label: t('פיצול לשלושה', 'Three-way split'), hint: t('חזה ויד אחורית, גב ויד קדמית, רגליים וכתפיים.', 'Chest and triceps, back and biceps, legs and shoulders.'), minDays: 3 },
+  { key: 'ppl', label: t('דחיפה, משיכה, רגליים', 'Push, pull, legs'), hint: t('חזה כתפיים ויד אחורית, גב ויד קדמית, רגליים.', 'Chest, shoulders and triceps, back and biceps, legs.'), minDays: 3 },
+  { key: 'upper_lower', label: t('עליון ותחתון', 'Upper and lower'), hint: t('פלג גוף עליון, פלג גוף תחתון, לסירוגין.', 'Upper body, lower body, alternating.'), minDays: 2 },
 ];
 
 /** What the coach recommends, and why, from the number of days and the experience. */
 export function recommendSplit(p: Pick<Profile, 'slots' | 'experience' | 'trainPlace'>): { split: SplitKind; why: string } {
   const days = p.slots.length;
-  if (p.trainPlace !== 'gym') return { split: 'full', why: 'באימון בבית או בחוץ, גוף מלא מנצל הכי טוב את הציוד שיש.' };
+  if (p.trainPlace !== 'gym') return { split: 'full', why: t('באימון בבית או בחוץ, גוף מלא מנצל הכי טוב את הציוד שיש.', 'Training at home or outdoors, full body makes the best use of the gear you have.') };
   if (days <= 3 || p.experience === 'beginner')
-    return { split: 'full', why: `ב${days || 'עד 3'} אימונים בשבוע, גוף מלא נותן לכל שריר עבודה 2 עד 3 פעמים בשבוע. בפיצול כל שריר עובד פעם בשבוע, וזה מאט את בניית השריר.` };
-  if (days === 4) return { split: 'upper_lower', why: 'ב4 ימים, עליון ותחתון נותן לכל שריר עבודה פעמיים בשבוע.' };
-  return { split: 'ppl', why: 'ב5 ימים ומעלה, דחיפה, משיכה ורגליים עובר על כל שריר פעמיים בשבוע.' };
+    return { split: 'full', why: t(`ב${days || 'עד 3'} אימונים בשבוע, גוף מלא נותן לכל שריר עבודה 2 עד 3 פעמים בשבוע. בפיצול כל שריר עובד פעם בשבוע, וזה מאט את בניית השריר.`, `With ${days || 'up to 3'} workouts a week, full body works each muscle 2 to 3 times a week. A split works each muscle once a week, and that slows muscle building.`) };
+  if (days === 4) return { split: 'upper_lower', why: t('ב4 ימים, עליון ותחתון נותן לכל שריר עבודה פעמיים בשבוע.', 'With 4 days, upper and lower works each muscle twice a week.') };
+  return { split: 'ppl', why: t('ב5 ימים ומעלה, דחיפה, משיכה ורגליים עובר על כל שריר פעמיים בשבוע.', 'With 5 days or more, push, pull and legs covers each muscle twice a week.') };
 }
 
 const ABS_PAIRS: Exercise[][] = [
@@ -133,18 +134,18 @@ const ABS_PAIRS: Exercise[][] = [
 /** Gym exercise lists per split day, most important first so shorter sessions keep the core. */
 const SPLIT_DAYS: Record<Exclude<SplitKind, 'full'>, { id: string; title: string; list: Exercise[] }[]> = {
   split3: [
-    { id: 'A', title: 'A: חזה ויד אחורית', list: [ex('לחיצת חזה במוט', 4, '6 עד 8'), ex('מקבילים או לחיצת חזה צרה', 3, '8 עד 10'), ex('לחיצת חזה בשיפוע במשקולות', 3, '8 עד 10'), ex('פשיטת מרפקים בכבל', 3, '12'), ex('פרפר בכבלים', 3, '12'), ex('פשיטת מרפקים מעל הראש', 2, '12')] },
-    { id: 'B', title: 'B: גב ויד קדמית', list: [ex('מתח או פולי עליון', 4, '8'), ex('כפיפת מרפקים במוט', 3, '10'), ex('חתירה במוט', 4, '8'), ex('כפיפת פטישים', 3, '12'), ex('חתירה בכבל בישיבה', 3, '10'), ex('פייס פול', 3, '15')] },
-    { id: 'C', title: 'C: רגליים וכתפיים', list: [ex('סקוואט', 4, '6 עד 8'), ex('לחיצת כתפיים במשקולות', 3, '8 עד 10'), ex('דדליפט רומני', 3, '8'), ex('הרחקה לצדדים', 3, '12 עד 15'), ex('לחיצת רגליים', 3, '10'), ex('תאומים', 3, '15')] },
+    { id: 'A', title: t('A: חזה ויד אחורית', 'A: Chest and triceps'), list: [ex('לחיצת חזה במוט', 4, '6 עד 8'), ex('מקבילים או לחיצת חזה צרה', 3, '8 עד 10'), ex('לחיצת חזה בשיפוע במשקולות', 3, '8 עד 10'), ex('פשיטת מרפקים בכבל', 3, '12'), ex('פרפר בכבלים', 3, '12'), ex('פשיטת מרפקים מעל הראש', 2, '12')] },
+    { id: 'B', title: t('B: גב ויד קדמית', 'B: Back and biceps'), list: [ex('מתח או פולי עליון', 4, '8'), ex('כפיפת מרפקים במוט', 3, '10'), ex('חתירה במוט', 4, '8'), ex('כפיפת פטישים', 3, '12'), ex('חתירה בכבל בישיבה', 3, '10'), ex('פייס פול', 3, '15')] },
+    { id: 'C', title: t('C: רגליים וכתפיים', 'C: Legs and shoulders'), list: [ex('סקוואט', 4, '6 עד 8'), ex('לחיצת כתפיים במשקולות', 3, '8 עד 10'), ex('דדליפט רומני', 3, '8'), ex('הרחקה לצדדים', 3, '12 עד 15'), ex('לחיצת רגליים', 3, '10'), ex('תאומים', 3, '15')] },
   ],
   ppl: [
-    { id: 'push', title: 'דחיפה: חזה, כתפיים ויד אחורית', list: [ex('לחיצת חזה במוט', 4, '6 עד 8'), ex('לחיצת כתפיים במשקולות', 3, '8 עד 10'), ex('לחיצת חזה בשיפוע במשקולות', 3, '8 עד 10'), ex('פשיטת מרפקים בכבל', 3, '12'), ex('הרחקה לצדדים', 3, '12 עד 15'), ex('פרפר בכבלים', 3, '12')] },
-    { id: 'pull', title: 'משיכה: גב ויד קדמית', list: [ex('מתח או פולי עליון', 4, '8'), ex('חתירה במוט', 4, '8'), ex('כפיפת מרפקים במוט', 3, '10'), ex('פייס פול', 3, '15'), ex('חתירה בכבל בישיבה', 3, '10'), ex('כפיפת פטישים', 3, '12')] },
-    { id: 'legs', title: 'רגליים', list: [ex('סקוואט', 4, '6 עד 8'), ex('דדליפט רומני', 3, '8'), ex('לחיצת רגליים', 3, '10'), ex('תאומים', 3, '15'), ex('לאנג׳ים', 2, '10 לכל רגל'), ex('כפיפת ברכיים במכונה', 3, '12')] },
+    { id: 'push', title: t('דחיפה: חזה, כתפיים ויד אחורית', 'Push: chest, shoulders and triceps'), list: [ex('לחיצת חזה במוט', 4, '6 עד 8'), ex('לחיצת כתפיים במשקולות', 3, '8 עד 10'), ex('לחיצת חזה בשיפוע במשקולות', 3, '8 עד 10'), ex('פשיטת מרפקים בכבל', 3, '12'), ex('הרחקה לצדדים', 3, '12 עד 15'), ex('פרפר בכבלים', 3, '12')] },
+    { id: 'pull', title: t('משיכה: גב ויד קדמית', 'Pull: back and biceps'), list: [ex('מתח או פולי עליון', 4, '8'), ex('חתירה במוט', 4, '8'), ex('כפיפת מרפקים במוט', 3, '10'), ex('פייס פול', 3, '15'), ex('חתירה בכבל בישיבה', 3, '10'), ex('כפיפת פטישים', 3, '12')] },
+    { id: 'legs', title: t('רגליים', 'Legs'), list: [ex('סקוואט', 4, '6 עד 8'), ex('דדליפט רומני', 3, '8'), ex('לחיצת רגליים', 3, '10'), ex('תאומים', 3, '15'), ex('לאנג׳ים', 2, '10 לכל רגל'), ex('כפיפת ברכיים במכונה', 3, '12')] },
   ],
   upper_lower: [
-    { id: 'upper', title: 'פלג גוף עליון', list: [ex('לחיצת חזה במוט', 4, '6 עד 8'), ex('חתירה במוט', 4, '8'), ex('לחיצת כתפיים במשקולות', 3, '8 עד 10'), ex('מתח או פולי עליון', 3, '10'), ex('פשיטת מרפקים בכבל', 2, '12'), ex('כפיפת מרפקים במוט', 2, '12')] },
-    { id: 'lower', title: 'פלג גוף תחתון', list: [ex('סקוואט', 4, '6 עד 8'), ex('דדליפט רומני', 3, '8'), ex('לחיצת רגליים', 3, '10'), ex('לאנג׳ים', 2, '10 לכל רגל'), ex('תאומים', 3, '15'), ex('כפיפת ברכיים במכונה', 3, '12')] },
+    { id: 'upper', title: t('פלג גוף עליון', 'Upper body'), list: [ex('לחיצת חזה במוט', 4, '6 עד 8'), ex('חתירה במוט', 4, '8'), ex('לחיצת כתפיים במשקולות', 3, '8 עד 10'), ex('מתח או פולי עליון', 3, '10'), ex('פשיטת מרפקים בכבל', 2, '12'), ex('כפיפת מרפקים במוט', 2, '12')] },
+    { id: 'lower', title: t('פלג גוף תחתון', 'Lower body'), list: [ex('סקוואט', 4, '6 עד 8'), ex('דדליפט רומני', 3, '8'), ex('לחיצת רגליים', 3, '10'), ex('לאנג׳ים', 2, '10 לכל רגל'), ex('תאומים', 3, '15'), ex('כפיפת ברכיים במכונה', 3, '12')] },
   ],
 };
 
@@ -190,8 +191,8 @@ export function editableSessions(p: Profile): EditableSession[] {
       : (() => {
           const lib = library(p);
           return [
-            { id: 'A', title: 'גוף מלא A', list: lib.A },
-            { id: 'B', title: 'גוף מלא B', list: lib.B },
+            { id: 'A', title: t('גוף מלא A', 'Full body A'), list: lib.A },
+            { id: 'B', title: t('גוף מלא B', 'Full body B'), list: lib.B },
           ];
         })();
   return days.map((d) => {
@@ -239,9 +240,9 @@ function buildFullBody(p: Profile): Record<Session['id'], Session> {
         : ex('חבל, אינטרוולים', 1, '8 דקות'),
   ];
   return {
-    A: { id: 'A', title: 'גוף מלא A', minutes: p.sessionMinutes, exercises: p.trainPlace === 'outdoor' ? [ex('ריצה קלה', 1, '15 דקות'), ...A] : A },
-    B: { id: 'B', title: 'גוף מלא B', minutes: p.sessionMinutes, exercises: p.trainPlace === 'outdoor' ? [ex('ריצה קלה', 1, '15 דקות'), ...B] : B },
-    F: { id: 'F', title: 'האימון המרכזי', minutes: long, exercises: F },
+    A: { id: 'A', title: t('גוף מלא A', 'Full body A'), minutes: p.sessionMinutes, exercises: p.trainPlace === 'outdoor' ? [ex('ריצה קלה', 1, '15 דקות'), ...A] : A },
+    B: { id: 'B', title: t('גוף מלא B', 'Full body B'), minutes: p.sessionMinutes, exercises: p.trainPlace === 'outdoor' ? [ex('ריצה קלה', 1, '15 דקות'), ...B] : B },
+    F: { id: 'F', title: t('האימון המרכזי', 'The main workout'), minutes: long, exercises: F },
   };
 }
 
@@ -281,17 +282,17 @@ export function derive(input: Profile): Derived {
   const weeksToTarget = p.targetWeightKg && weeklyRateKg > 0 ? Math.ceil(toTarget / weeklyRateKg) : null;
 
   const notes: string[] = [];
-  if (blocked) notes.push(blockText(deficitBlock(input)) ?? 'המטרה הוחלפה בשמירה על המשקל.');
-  if (p.medicalLimit) notes.push('ציינת מגבלה רפואית. מומלץ לעבור על התוכנית עם הרופא לפני שמתחילים.');
-  if (p.experience === 'returning') notes.push('חזרה אחרי הפסקה: שבועיים ראשונים ב60 עד 70 אחוז מהמשקלים שהרמת בעבר.');
-  if (p.experience === 'beginner') notes.push('מתחילים: מתמקדים בטכניקה, עם סט פחות בכל תרגיל בשבועות הראשונים.');
-  if (p.pains.length) notes.push('תרגילים שמעמיסים על האזורים שציינת הוחלפו בחלופות. כאב חד בזמן תרגיל: עוצרים.');
-  if (p.nightWakeups) notes.push('עם התעוררויות בלילה, יעד השינה הוא סך כל השינה. גם תנומה קצרה נחשבת.');
-  if (calories <= round(floor, 25) && CALORIE_DELTA[p.goal][p.pace] < 0) notes.push('הגירעון הוגבל כדי לא לרדת מתחת לחילוף החומרים הבסיסי.');
-  if (p.chronic?.length) notes.push('ציינת מצב רפואי. האימונים יהיו בעצימות מתונה, בלי אינטרוולים. לפני שמתחילים, אישור מהרופא.');
-  if (p.shiftWork) notes.push('עבודה במשמרות: שעות השקט ושומר הלילה כבויים, כי הלילה שלך לא קבוע.');
-  if (p.relationship === 'separated' && p.kidsDays?.length) notes.push('בימים שהילדים אצלך המאמן יציע אימון קצר בבית במקום חדר כושר, אם צריך.');
-  if (workouts === 0) notes.push('לא נבחרו ימי אימון. המאמן יתמקד בתזונה, צעדים ושינה.');
+  if (blocked) notes.push(blockText(deficitBlock(input)) ?? t('המטרה הוחלפה בשמירה על המשקל.', 'The goal was changed to keeping your weight.'));
+  if (p.medicalLimit) notes.push(t('ציינת מגבלה רפואית. מומלץ לעבור על התוכנית עם הרופא לפני שמתחילים.', 'You noted a medical limit. Go over the plan with your doctor before you start.'));
+  if (p.experience === 'returning') notes.push(t('חזרה אחרי הפסקה: שבועיים ראשונים ב60 עד 70 אחוז מהמשקלים שהרמת בעבר.', 'Coming back after a break: the first two weeks at 60 to 70 percent of the weights you used to lift.'));
+  if (p.experience === 'beginner') notes.push(t('מתחילים: מתמקדים בטכניקה, עם סט פחות בכל תרגיל בשבועות הראשונים.', 'Beginners: focus on technique, with one set less per exercise in the first weeks.'));
+  if (p.pains.length) notes.push(t('תרגילים שמעמיסים על האזורים שציינת הוחלפו בחלופות. כאב חד בזמן תרגיל: עוצרים.', 'Exercises that load the areas you noted were swapped for alternatives. Sharp pain during an exercise: stop.'));
+  if (p.nightWakeups) notes.push(t('עם התעוררויות בלילה, יעד השינה הוא סך כל השינה. גם תנומה קצרה נחשבת.', 'With night wake-ups, the sleep goal is total sleep. A short nap counts too.'));
+  if (calories <= round(floor, 25) && CALORIE_DELTA[p.goal][p.pace] < 0) notes.push(t('הגירעון הוגבל כדי לא לרדת מתחת לחילוף החומרים הבסיסי.', 'The deficit was capped so you do not drop below your basal metabolism.'));
+  if (p.chronic?.length) notes.push(t('ציינת מצב רפואי. האימונים יהיו בעצימות מתונה, בלי אינטרוולים. לפני שמתחילים, אישור מהרופא.', 'You noted a medical condition. Workouts will be moderate, without intervals. Get your doctor\'s approval before you start.'));
+  if (p.shiftWork) notes.push(t('עבודה במשמרות: שעות השקט ושומר הלילה כבויים, כי הלילה שלך לא קבוע.', 'Shift work: quiet hours and the night guard are off, because your night is not fixed.'));
+  if (p.relationship === 'separated' && p.kidsDays?.length) notes.push(t('בימים שהילדים אצלך המאמן יציע אימון קצר בבית במקום חדר כושר, אם צריך.', 'On days the kids are with you, the coach will suggest a short home workout instead of the gym, if needed.'));
+  if (workouts === 0) notes.push(t('לא נבחרו ימי אימון. המאמן יתמקד בתזונה, צעדים ושינה.', 'No workout days were picked. The coach will focus on food, steps and sleep.'));
 
   return {
     bmr: Math.round(bmr),

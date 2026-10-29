@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { START } from '../i18n';
+import { START, LOCALE } from '../i18n';
 export const C = {
   bg: '#F4F1EC',
   card: '#FFFFFF',
@@ -34,4 +34,4 @@ export const T = StyleSheet.create({
   muted: { color: C.muted, textAlign: START, fontFamily: FONT.regular },
 });
 
-export const fmt = (n: number, digits = 0) => n.toLocaleString('he-IL', { maximumFractionDigits: digits });
+export const fmt = (n: number, digits = 0) => n.toLocaleString(LOCALE, { maximumFractionDigits: digits });

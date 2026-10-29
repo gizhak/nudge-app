@@ -15,7 +15,7 @@ import { TimeStepper } from '../ui/inputs';
 import { Sheet } from '../ui/Sheet';
 import { C, FONT, T } from '../ui/theme';
 
-import { CHEVRON_BACK, ROW as ROW_DIR } from '../i18n';
+import { CHEVRON_BACK, ROW as ROW_DIR, t as tr } from '../i18n';
 type Slot = { session: string; time: number } | null;
 const ROW = 62;
 const HOLD_MS = 280;
@@ -152,8 +152,8 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
       await saveWeekOverrides({ ...base, plan, moves: [], sessionAt: undefined, skips: base.skips.filter((d) => !week[d]), shorts: base.shorts.filter((d) => week[d]?.session === SHORT_SESSION_ID) });
     }
     await applyReminders(await loadSettings()).catch(() => 0);
-    const line = plan.map((w) => `${w.day === today ? 'היום' : DAY_NAMES[w.day]} ${short(w.session).split(':')[0]} ב${pad2(w.hour)}:${pad2(w.minute)}`).join(' · ');
-    await noteChange(always ? 'קבעתי שבוע חדש' : 'סידרתי את השבוע', `סגור. ${always ? 'מעכשיו כל שבוע' : 'השבוע'}: ${line || 'בלי אימונים'}.`);
+    const line = plan.map((w) => tr(`${w.day === today ? 'היום' : DAY_NAMES[w.day]} ${short(w.session).split(':')[0]} ב${pad2(w.hour)}:${pad2(w.minute)}`, `${w.day === today ? 'today' : DAY_NAMES[w.day]} ${short(w.session).split(':')[0]} at ${pad2(w.hour)}:${pad2(w.minute)}`)).join(' · ');
+    await noteChange(always ? tr('קבעתי שבוע חדש', 'I set a new week') : tr('סידרתי את השבוע', 'I arranged the week'), tr(`סגור. ${always ? 'מעכשיו כל שבוע' : 'השבוע'}: ${line || 'בלי אימונים'}.`, `Done. ${always ? 'From now on, every week' : 'This week'}: ${line || 'no workouts'}.`));
     onClose(true);
   };
 
@@ -163,19 +163,19 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
     <Modal visible={open} animationType="slide" onRequestClose={() => onClose(false)} statusBarTranslucent>
       <View style={s.screen}>
         <View style={s.top}>
-          <Pressable onPress={() => onClose(false)} style={s.back} hitSlop={8} accessibilityLabel="סגור">
+          <Pressable onPress={() => onClose(false)} style={s.back} hitSlop={8} accessibilityLabel={tr("סגור", 'Close')}>
             <Ionicons name={CHEVRON_BACK} size={22} color={C.ink} />
           </Pressable>
           {changed && (
             <Pressable onPress={() => setWeek(start)} hitSlop={8}>
-              <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>לבטל שינויים</Text>
+              <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>{tr('לבטל שינויים', 'Undo changes')}</Text>
             </Pressable>
           )}
         </View>
-        <Text style={[T.bold, { fontSize: 28, fontFamily: FONT.black, paddingHorizontal: 16 }]}>השבוע שלי</Text>
+        <Text style={[T.bold, { fontSize: 28, fontFamily: FONT.black, paddingHorizontal: 16 }]}>{tr('השבוע שלי', 'My week')}</Text>
         <View style={s.hint}>
           <Text style={[T.base, { fontSize: 14, lineHeight: 20, color: '#fff' }]}>
-            {drag != null ? 'גרור ליום אחר ושחרר. ביום עם אימון הם מתחלפים.' : 'החזק אימון וגרור אותו ליום אחר. לחיצה: שעה וסוג. יום ריק: לחיצה מוסיפה אימון.'}
+            {drag != null ? tr('גרור ליום אחר ושחרר. ביום עם אימון הם מתחלפים.', 'Drag to another day and let go. On a day with a workout, they swap.') : tr('החזק אימון וגרור אותו ליום אחר. לחיצה: שעה וסוג. יום ריק: לחיצה מוסיפה אימון.', 'Hold a workout and drag it to another day. Tap: time and type. Empty day: tap to add a workout.')}
           </Text>
         </View>
 
@@ -192,7 +192,7 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
               <View key={i} style={[s.row, i > 0 && s.sep]}>
                 <View style={{ width: 54 }}>
                   <Text style={[T.bold, { fontSize: 15, fontFamily: FONT.black, color: i === today ? C.signal : lock ? C.muted : C.ink }]}>{DAY_NAMES[i]}</Text>
-                  <Text style={[T.muted, { fontSize: 11 }]}>{i === today ? (done.has(i) ? 'היום, בוצע' : 'היום') : lock ? 'עבר' : ''}</Text>
+                  <Text style={[T.muted, { fontSize: 11 }]}>{i === today ? (done.has(i) ? tr('היום, בוצע', 'Today, done') : tr('היום', 'Today')) : lock ? tr('עבר', 'Past') : ''}</Text>
                 </View>
                 {x ? (
                   <View style={[s.chip, lock && s.chipLocked, drag === i && { opacity: 0.25 }, target && s.chipTarget, landed === i && s.chipLanded]}>
@@ -203,7 +203,7 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
                   </View>
                 ) : (
                   <View style={[s.empty, target && s.emptyTarget, lock && { opacity: 0.4 }]}>
-                    <Text style={[T.bold, { fontSize: 14, color: target ? C.signal : C.muted }]}>{lock ? 'מנוחה' : target ? 'להעביר לכאן' : '+ אימון'}</Text>
+                    <Text style={[T.bold, { fontSize: 14, color: target ? C.signal : C.muted }]}>{lock ? tr('מנוחה', 'Rest') : target ? tr('להעביר לכאן', 'Move here') : tr('+ אימון', '+ Workout')}</Text>
                   </View>
                 )}
               </View>
@@ -221,31 +221,31 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
 
         <View style={s.scope}>
           <Pressable onPress={() => setAlways(false)} style={[s.opt, !always && s.optOn]}>
-            <Text style={[T.bold, { fontSize: 14, color: !always ? '#fff' : C.ink }]}>השבוע בלבד</Text>
+            <Text style={[T.bold, { fontSize: 14, color: !always ? '#fff' : C.ink }]}>{tr('השבוע בלבד', 'This week only')}</Text>
           </Pressable>
           <Pressable onPress={() => setAlways(true)} style={[s.opt, always && s.optOn]}>
-            <Text style={[T.bold, { fontSize: 14, color: always ? '#fff' : C.ink }]}>כל שבוע</Text>
+            <Text style={[T.bold, { fontSize: 14, color: always ? '#fff' : C.ink }]}>{tr('כל שבוע', 'Every week')}</Text>
           </Pressable>
         </View>
         <Text style={[T.muted, { fontSize: 12, paddingHorizontal: 16, lineHeight: 18 }]}>
-          {always ? `התוכנית הקבועה: ${count} אימונים בשבוע, בימים ובשעות האלה.` : `${count} אימונים השבוע. מהשבוע הבא חוזרים לתוכנית הקבועה.`}
+          {always ? tr(`התוכנית הקבועה: ${count} אימונים בשבוע, בימים ובשעות האלה.`, `The fixed plan: ${count} workouts a week, on these days and times.`) : tr(`${count} אימונים השבוע. מהשבוע הבא חוזרים לתוכנית הקבועה.`, `${count} workouts this week. From next week, back to the fixed plan.`)}
         </Text>
 
         <View style={s.foot}>
           <Pressable onPress={save} disabled={!changed && !always} style={({ pressed }) => [s.save, (!changed && !always) && { opacity: 0.4 }, pressed && { opacity: 0.85 }]}>
-            <Text style={[T.bold, { color: '#fff', fontSize: 16, textAlign: 'center' }]}>שמור</Text>
+            <Text style={[T.bold, { color: '#fff', fontSize: 16, textAlign: 'center' }]}>{tr('שמור', 'Save')}</Text>
           </Pressable>
         </View>
       </View>
 
-      <Sheet open={edit != null} onClose={() => setEdit(null)} title={edit != null ? `יום ${DAY_NAMES[edit]}` : undefined}>
+      <Sheet open={edit != null} onClose={() => setEdit(null)} title={edit != null ? tr(`יום ${DAY_NAMES[edit]}`, `${DAY_NAMES[edit]}`) : undefined}>
         {e && (
           <>
             <View style={s.editRow}>
-              <Text style={[T.bold, { fontSize: 15 }]}>שעה</Text>
+              <Text style={[T.bold, { fontSize: 15 }]}>{tr('שעה', 'Time')}</Text>
               <TimeStepper value={e.time} step={30} onChange={(t) => setWeek(week.map((x, k) => (k === edit ? { ...x!, time: t } : x)))} />
             </View>
-            <Text style={[T.bold, { fontSize: 15 }]}>איזה אימון</Text>
+            <Text style={[T.bold, { fontSize: 15 }]}>{tr('איזה אימון', 'Which workout')}</Text>
             <View style={{ gap: 8 }}>
               {ids.map((id) => (
                 <Pressable key={id} onPress={() => setWeek(week.map((x, k) => (k === edit ? { ...x!, session: id } : x)))} style={[s.kind, e.session === id && s.kindOn]}>
@@ -255,7 +255,7 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
             </View>
             <View style={{ flexDirection: ROW_DIR, gap: 10 }}>
               <Pressable onPress={() => setEdit(null)} style={[s.save, { flex: 1 }]}>
-                <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>אישור</Text>
+                <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>{tr('אישור', 'OK')}</Text>
               </Pressable>
               <Pressable
                 onPress={() => {
@@ -264,7 +264,7 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
                 }}
                 style={[s.remove, { flex: 1 }]}
               >
-                <Text style={[T.bold, { color: C.bad, fontSize: 15, textAlign: 'center' }]}>בלי אימון ביום הזה</Text>
+                <Text style={[T.bold, { color: C.bad, fontSize: 15, textAlign: 'center' }]}>{tr('בלי אימון ביום הזה', 'No workout on this day')}</Text>
               </Pressable>
             </View>
           </>

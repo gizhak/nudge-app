@@ -37,16 +37,16 @@ import { Choice } from '../ui/inputs';
 import { Sheet } from '../ui/Sheet';
 import { C, T } from '../ui/theme';
 
-import { END, ROW, START } from '../i18n';
+import { END, ROW, START, t as tr, LOCALE } from '../i18n';
 const ORANGE = C.signal;
 const when = (t: number) => {
   const d = new Date(t);
   const today = new Date().setHours(0, 0, 0, 0);
   const day = new Date(t).setHours(0, 0, 0, 0);
-  const time = d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
-  if (day === today) return `היום ${time}`;
-  if (day === today - 86400000) return `אתמול ${time}`;
-  return `${d.toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric', month: 'numeric' })} ${time}`;
+  const time = d.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
+  if (day === today) return tr(`היום ${time}`, `Today ${time}`);
+  if (day === today - 86400000) return tr(`אתמול ${time}`, `Yesterday ${time}`);
+  return `${d.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'numeric' })} ${time}`;
 };
 
 // ---------- the map ----------
@@ -133,7 +133,7 @@ function HrLine({ run, b, width }: { run: Run; b: HrBounds; width: number }) {
   );
 }
 
-const ZONE_NAMES = ['קל', 'אירובי', 'יציב', 'קשה', 'מקסימלי'];
+const ZONE_NAMES = [tr('קל', 'Easy'), tr('אירובי', 'Aerobic'), tr('יציב', 'Steady'), tr('קשה', 'Hard'), tr('מקסימלי', 'Max')];
 const ZONE_COLORS = ['#D9D5CF', '#B8B2A9', '#8C8780', '#E5401F', '#A3290F'];
 
 function Zones({ run, b }: { run: Run; b: HrBounds }) {
@@ -157,7 +157,7 @@ function Zones({ run, b }: { run: Run; b: HrBounds }) {
         )}
       </View>
       <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>
-        הטווחים לפי דופק מקסימלי {b.max} ({b.maxFrom === 'age' ? 'הערכה לפי גיל' : 'הגבוה שהגעת אליו'}) ודופק מנוחה {b.rest} ({b.restFrom === 'night' ? 'מהלילה' : 'הערכה, השעון לא מעביר'}). זו הערכה, לא בדיקת מאמץ.
+        {tr('הטווחים לפי דופק מקסימלי', 'Zones by max heart rate')} {b.max} ({b.maxFrom === 'age' ? tr('הערכה לפי גיל', 'estimated by age') : tr('הגבוה שהגעת אליו', 'the highest you reached')}{tr(') ודופק מנוחה', ') and resting heart rate')} {b.rest} ({b.restFrom === 'night' ? tr('מהלילה', 'from last night') : tr('הערכה, השעון לא מעביר', 'estimated, the watch does not send it')}{tr('). זו הערכה, לא בדיקת מאמץ.', '). This is an estimate, not a stress test.')}
       </Text>
     </View>
   );
@@ -186,7 +186,7 @@ function RunDetail({ run, runs, prefs, b, onChanged }: { run: Run; runs: Run[]; 
     <View style={{ gap: 16 }}>
       <Text style={[T.muted, { fontSize: 13 }]}>
         {when(run.start)} · {sourceLabel(run.source)}
-        {run.treadmill ? ' · הליכון' : ''}
+        {run.treadmill ? tr(' · הליכון', ' · treadmill') : ''}
       </Text>
       {run.route?.length ? (
         <View style={s.mapCard}>
@@ -194,49 +194,49 @@ function RunDetail({ run, runs, prefs, b, onChanged }: { run: Run; runs: Run[]; 
           <View style={[s.legend, { paddingHorizontal: 14, paddingBottom: 12 }]}>
             <View style={s.legendItem}>
               <View style={[s.swatch, { backgroundColor: ORANGE }]} />
-              <Text style={{ color: '#CFCAC2', fontSize: 12 }}>מהיר</Text>
+              <Text style={{ color: '#CFCAC2', fontSize: 12 }}>{tr('מהיר', 'Fast')}</Text>
             </View>
             <View style={s.legendItem}>
               <View style={[s.swatch, { backgroundColor: '#fff' }]} />
-              <Text style={{ color: '#CFCAC2', fontSize: 12 }}>בינוני</Text>
+              <Text style={{ color: '#CFCAC2', fontSize: 12 }}>{tr('בינוני', 'Medium')}</Text>
             </View>
             <View style={s.legendItem}>
               <View style={[s.swatch, { backgroundColor: '#6E6A63' }]} />
-              <Text style={{ color: '#CFCAC2', fontSize: 12 }}>איטי</Text>
+              <Text style={{ color: '#CFCAC2', fontSize: 12 }}>{tr('איטי', 'Slow')}</Text>
             </View>
-            <Text style={{ color: '#8C8780', fontSize: 12 }}>לבן: התחלה · מספר: כל ק"מ</Text>
+            <Text style={{ color: '#8C8780', fontSize: 12 }}>{tr('לבן: התחלה · מספר: כל ק"מ', 'White: start · number: each km')}</Text>
           </View>
         </View>
       ) : run.routeState === 'CONSENT' ? (
         <View style={{ gap: 6 }}>
           <PrimaryButton
-            label="הצג מסלול"
+            label={tr("הצג מסלול", 'Show route')}
             onPress={async () => {
-              setAsking('מחכה לאישור של Android...');
+              setAsking(tr('מחכה לאישור של Android...', 'Waiting for Android to approve...'));
               const res = await askRoute(run.id);
-              setAsking('error' in res ? `לא התקבל מסלול: ${res.error}` : null);
+              setAsking('error' in res ? tr(`לא התקבל מסלול: ${res.error}`, `No route came in: ${res.error}`) : null);
               onChanged();
             }}
           />
-          <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>{asking ?? 'בחלון של Android, "מתן הרשאה לכל המסלולים" חוסך את האישור בכל ריצה.'}</Text>
+          <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>{asking ?? tr('בחלון של Android, "מתן הרשאה לכל המסלולים" חוסך את האישור בכל ריצה.', 'In the Android window, "Allow all routes" saves approving every run.')}</Text>
         </View>
       ) : (
-        <Text style={[T.muted, { fontSize: 13 }]}>{run.treadmill ? 'ריצה על הליכון, אין מסלול.' : 'השעון לא העביר מסלול לריצה הזו.'}</Text>
+        <Text style={[T.muted, { fontSize: 13 }]}>{run.treadmill ? tr('ריצה על הליכון, אין מסלול.', 'A treadmill run, no route.') : tr('השעון לא העביר מסלול לריצה הזו.', 'The watch did not send a route for this run.')}</Text>
       )}
 
       <View style={{ flexDirection: ROW }}>
-        <Stat value={kmText(run.km)} label='ק"מ' />
-        <Stat value={paceText(minutesOf(run) * 60)} label="זמן" />
-        <Stat value={paceText(paceOf(run))} label='קצב לק"מ' />
-        {avgHr(run) ? <Stat value={String(avgHr(run))} label={`דופק (מקס ${maxHr(run)})`} /> : null}
+        <Stat value={kmText(run.km)} label={tr('ק"מ', 'km')} />
+        <Stat value={paceText(minutesOf(run) * 60)} label={tr("זמן", 'Time')} />
+        <Stat value={paceText(paceOf(run))} label={tr('קצב לק"מ', 'Pace per km')} />
+        {avgHr(run) ? <Stat value={String(avgHr(run))} label={tr(`דופק (מקס ${maxHr(run)})`, `Heart rate (max ${maxHr(run)})`)} /> : null}
       </View>
 
       <View style={[s.talk, (t.title.includes('הערה')) && { borderColor: ORANGE }]}>
-        <Text style={[T.bold, { fontSize: 15 }]}>המאמן</Text>
+        <Text style={[T.bold, { fontSize: 15 }]}>{tr('המאמן', 'The coach')}</Text>
         <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>{t.body}</Text>
         {answer ? (
           <View style={{ gap: 6 }}>
-            <Text style={[T.bold, { fontSize: 13 }]}>ענית: {answer.label}</Text>
+            <Text style={[T.bold, { fontSize: 13 }]}>{tr('ענית:', 'You answered:')} {answer.label}</Text>
             <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>{answer.reply}</Text>
           </View>
         ) : null}
@@ -258,13 +258,13 @@ function RunDetail({ run, runs, prefs, b, onChanged }: { run: Run; runs: Run[]; 
 
       {sp.length > 0 && (
         <View style={{ gap: 4 }}>
-          <Text style={[T.bold, { fontSize: 15 }]}>קילומטר אחרי קילומטר</Text>
+          <Text style={[T.bold, { fontSize: 15 }]}>{tr('קילומטר אחרי קילומטר', 'Kilometer by kilometer')}</Text>
           {sp.map((sec, i) => {
             const best = Math.min(...sp);
             const worst = Math.max(...sp);
             return (
               <View key={i} style={s.split}>
-                <Text style={[T.muted, { fontSize: 13, width: 40 }]}>ק"מ {i + 1}</Text>
+                <Text style={[T.muted, { fontSize: 13, width: 40 }]}>{tr('ק"מ', 'km')} {i + 1}</Text>
                 <View style={{ flex: 1, height: 8, backgroundColor: C.track, borderRadius: 4, overflow: 'hidden', flexDirection: ROW }}>
                   <View style={{ width: `${40 + 60 * ((worst - sec) / (worst - best || 1))}%`, backgroundColor: sec === best ? ORANGE : C.data }} />
                 </View>
@@ -277,9 +277,9 @@ function RunDetail({ run, runs, prefs, b, onChanged }: { run: Run; runs: Run[]; 
 
       {run.hr.length >= 10 && (
         <View style={{ gap: 6 }}>
-          <Text style={[T.bold, { fontSize: 15 }]}>דופק לאורך הריצה</Text>
+          <Text style={[T.bold, { fontSize: 15 }]}>{tr('דופק לאורך הריצה', 'Heart rate through the run')}</Text>
           <HrLine run={run} b={b} width={w} />
-          <Text style={[T.muted, { fontSize: 12 }]}>הקו המקווקו: {atReserve(b, 0.7)}, הגבול של ריצה קלה.</Text>
+          <Text style={[T.muted, { fontSize: 12 }]}>{tr('הקו המקווקו:', 'The dashed line:')} {atReserve(b, 0.7)}{tr(', הגבול של ריצה קלה.', ', the limit of an easy run.')}</Text>
           <Zones run={run} b={b} />
         </View>
       )}
@@ -309,7 +309,7 @@ function RunSettings({ prefs, onSave }: { prefs: RunPrefs; onSave: (p: RunPrefs)
   );
   return (
     <View style={{ gap: 14 }}>
-      <Text style={[T.bold, { fontSize: 15 }]}>ימי ריצה</Text>
+      <Text style={[T.bold, { fontSize: 15 }]}>{tr('ימי ריצה', 'Run days')}</Text>
       <View style={s.days}>
         {[0, 1, 2, 3, 4, 5, 6].map((d) => {
           const on = days.includes(d);
@@ -320,24 +320,24 @@ function RunSettings({ prefs, onSave }: { prefs: RunPrefs; onSave: (p: RunPrefs)
           );
         })}
       </View>
-      <Text style={[T.bold, { fontSize: 15 }]}>היעד</Text>
+      <Text style={[T.bold, { fontSize: 15 }]}>{tr('היעד', 'The goal')}</Text>
       <Choice
         options={[
-          { key: 'distance', label: 'מרחק ברצף' },
-          { key: 'time', label: 'מרחק בזמן' },
-          { key: 'habit', label: 'התמדה' },
-          { key: 'none', label: 'בלי יעד' },
+          { key: 'distance', label: tr('מרחק ברצף', 'Distance in one go') },
+          { key: 'time', label: tr('מרחק בזמן', 'Distance in time') },
+          { key: 'habit', label: tr('התמדה', 'Consistency') },
+          { key: 'none', label: tr('בלי יעד', 'No goal') },
         ]}
         value={kind}
         onChange={setKind}
       />
       {(kind === 'distance' || kind === 'time') &&
-        step('מרחק', `${km} ק"מ`, () => setKm(Math.max(1, km - 1)), () => setKm(Math.min(42, km + 1)))}
-      {kind === 'time' && step('בתוך', `${minutes} דק'`, () => setMinutes(Math.max(5, minutes - 1)), () => setMinutes(Math.min(300, minutes + 1)))}
-      {kind === 'time' && <Text style={[T.muted, { fontSize: 13 }]}>קצב יעד {paceText((minutes * 60) / km)} לק"מ</Text>}
-      {kind === 'habit' && step('ריצות בשבוע', String(perWeek), () => setPerWeek(Math.max(1, perWeek - 1)), () => setPerWeek(Math.min(7, perWeek + 1)))}
+        step(tr('מרחק', 'Distance'), tr(`${km} ק"מ`, `${km} km`), () => setKm(Math.max(1, km - 1)), () => setKm(Math.min(42, km + 1)))}
+      {kind === 'time' && step(tr('בתוך', 'Within'), tr(`${minutes} דק'`, `${minutes} min`), () => setMinutes(Math.max(5, minutes - 1)), () => setMinutes(Math.min(300, minutes + 1)))}
+      {kind === 'time' && <Text style={[T.muted, { fontSize: 13 }]}>{tr('קצב יעד', 'Target pace')} {paceText((minutes * 60) / km)} {tr('לק"מ', 'per km')}</Text>}
+      {kind === 'habit' && step(tr('ריצות בשבוע', 'Runs a week'), String(perWeek), () => setPerWeek(Math.max(1, perWeek - 1)), () => setPerWeek(Math.min(7, perWeek + 1)))}
       <PrimaryButton
-        label="שמור"
+        label={tr("שמור", 'Save')}
         onPress={() =>
           onSave({
             ...prefs,
@@ -403,21 +403,21 @@ export function RunCard({ openTick = 0 }: { openTick?: number }) {
       <Pressable onPress={() => (last ? setShown(last.id) : setSettings(true))} style={({ pressed }) => [s.card, pressed && { opacity: 0.9 }]}>
         <View style={{ flexDirection: ROW, gap: 14, alignItems: 'center' }}>
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: START }}>ריצה{last ? ` · ${when(last.start)}` : ''}</Text>
+            <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: START }}>{tr('ריצה', 'Run')}{last ? ` · ${when(last.start)}` : ''}</Text>
             {last ? (
               <Text style={{ color: '#fff', fontSize: 22, textAlign: START, fontFamily: T.bold.fontFamily }}>
-                {kmText(last.km)} ק"מ · {paceText(paceOf(last))}
+                {kmText(last.km)} {tr('ק"מ ·', 'km ·')} {paceText(paceOf(last))}
               </Text>
             ) : (
-              <Text style={{ color: '#fff', fontSize: 18, textAlign: START, fontFamily: T.bold.fontFamily }}>עוד לא הגיעה ריצה</Text>
+              <Text style={{ color: '#fff', fontSize: 18, textAlign: START, fontFamily: T.bold.fontFamily }}>{tr('עוד לא הגיעה ריצה', 'No run has arrived yet')}</Text>
             )}
             {last && (last.steps || last.kcal || avgHr(last)) ? (
               <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: START }}>
-                {[avgHr(last) ? `דופק ${avgHr(last)}` : null, last.kcal ? `${last.kcal} קלוריות` : null, last.steps ? `${last.steps.toLocaleString('he-IL')} צעדים` : null].filter(Boolean).join(' · ')}
+                {[avgHr(last) ? tr(`דופק ${avgHr(last)}`, `heart rate ${avgHr(last)}`) : null, last.kcal ? tr(`${last.kcal} קלוריות`, `${last.kcal} calories`) : null, last.steps ? tr(`${last.steps.toLocaleString(LOCALE)} צעדים`, `${last.steps.toLocaleString(LOCALE)} steps`) : null].filter(Boolean).join(' · ')}
               </Text>
             ) : null}
             <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: START }}>
-              הבאה: {targetText(next.km)} ק"מ{prefs.days.length ? ` · ${prefs.days.map((x) => DAY_LETTERS[x]).join(' ')}` : ''}
+              {tr('הבאה:', 'Next:')} {targetText(next.km)} {tr('ק"מ', 'km')}{prefs.days.length ? ` · ${prefs.days.map((x) => DAY_LETTERS[x]).join(' ')}` : ''}
             </Text>
             {goal && <Text style={{ color: '#CFCAC2', fontSize: 12, textAlign: START }}>{goal}</Text>}
             {/* A newer session that did not become a run says why, instead of the run just missing */}
@@ -427,8 +427,8 @@ export function RunCard({ openTick = 0 }: { openTick?: number }) {
               .map((k) => (
                 <Text key={k.id} style={{ color: '#E9B872', fontSize: 12, lineHeight: 18, textAlign: START }}>
                   {k.why === 'no_distance'
-                    ? `ריצה מ${when(k.start)} הגיעה בלי מרחק. היא תופיע כשאפליקציית השעון תשלח את המרחק ל Health Connect.`
-                    : `אימון מ${when(k.start)} (${typeName(k.type)}, ${k.km.toFixed(2)} ק"מ) לא זוהה כריצה: הקצב לא של ריצה.`}
+                    ? tr(`ריצה מ${when(k.start)} הגיעה בלי מרחק. היא תופיע כשאפליקציית השעון תשלח את המרחק ל Health Connect.`, `A run from ${when(k.start)} arrived without distance. It will show once the watch app sends the distance to Health Connect.`)
+                    : tr(`אימון מ${when(k.start)} (${typeName(k.type)}, ${k.km.toFixed(2)} ק"מ) לא זוהה כריצה: הקצב לא של ריצה.`, `A workout from ${when(k.start)} (${typeName(k.type)}, ${k.km.toFixed(2)} km) was not seen as a run: the pace is not a run's.`)}
                 </Text>
               ))}
           </View>
@@ -441,20 +441,20 @@ export function RunCard({ openTick = 0 }: { openTick?: number }) {
         <View style={{ flexDirection: ROW, gap: 16, paddingTop: 6 }}>
           {runs.length > 1 && (
             <Pressable onPress={() => setListOpen(true)} hitSlop={8}>
-              <Text style={{ color: '#fff', fontSize: 13, textDecorationLine: 'underline', fontFamily: T.bold.fontFamily }}>כל הריצות</Text>
+              <Text style={{ color: '#fff', fontSize: 13, textDecorationLine: 'underline', fontFamily: T.bold.fontFamily }}>{tr('כל הריצות', 'All runs')}</Text>
             </Pressable>
           )}
           <Pressable onPress={() => setSettings(true)} hitSlop={8}>
-            <Text style={{ color: '#fff', fontSize: 13, textDecorationLine: 'underline', fontFamily: T.bold.fontFamily }}>ימים ויעד</Text>
+            <Text style={{ color: '#fff', fontSize: 13, textDecorationLine: 'underline', fontFamily: T.bold.fontFamily }}>{tr('ימים ויעד', 'Days and goal')}</Text>
           </Pressable>
         </View>
       </Pressable>
 
-      <Sheet open={!!run} onClose={() => setShown(null)} title={run ? `${kmText(run.km)} ק"מ` : ''}>
+      <Sheet open={!!run} onClose={() => setShown(null)} title={run ? tr(`${kmText(run.km)} ק"מ`, `${kmText(run.km)} km`) : ''}>
         {run ? <RunDetail run={run} runs={runs} prefs={prefs} b={b} onChanged={() => load(false)} /> : <ActivityIndicator color={C.ink} />}
       </Sheet>
 
-      <Sheet open={listOpen} onClose={() => setListOpen(false)} title="כל הריצות">
+      <Sheet open={listOpen} onClose={() => setListOpen(false)} title={tr("כל הריצות", 'All runs')}>
         {[...runs].reverse().map((r) => (
           <Pressable
             key={r.id}
@@ -466,11 +466,11 @@ export function RunCard({ openTick = 0 }: { openTick?: number }) {
           >
             <View style={{ flex: 1 }}>
               <Text style={[T.bold, { fontSize: 14 }]}>
-                {kmText(r.km)} ק"מ · {paceText(paceOf(r))} לק"מ
+                {kmText(r.km)} {tr('ק"מ ·', 'km ·')} {paceText(paceOf(r))} {tr('לק"מ', 'per km')}
               </Text>
               <Text style={[T.muted, { fontSize: 12 }]}>
                 {when(r.start)}
-                {avgHr(r) ? ` · דופק ${avgHr(r)}` : ''}
+                {avgHr(r) ? tr(` · דופק ${avgHr(r)}`, ` · heart rate ${avgHr(r)}`) : ''}
               </Text>
             </View>
             {r.route?.length ? (
@@ -482,7 +482,7 @@ export function RunCard({ openTick = 0 }: { openTick?: number }) {
         ))}
       </Sheet>
 
-      <Sheet open={settings} onClose={() => setSettings(false)} title="ריצה: ימים ויעד">
+      <Sheet open={settings} onClose={() => setSettings(false)} title={tr("ריצה: ימים ויעד", 'Run: days and goal')}>
         {settings && (
           <RunSettings
             prefs={prefs}

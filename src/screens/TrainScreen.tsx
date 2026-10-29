@@ -36,6 +36,7 @@ import { applyDerived, derive, EditableSession, editableSessions } from '../prof
 import { loadProfile, Profile, saveProfile } from '../profile/profile';
 
 import { ROW, SIDE_START, t as tr } from '../i18n';
+import { moveName, repsText } from '../i18n/moves';
 /** The moves of a session; a move with photos opens the how-to window */
 function ExerciseList({ list, onHow, loads }: { list: Exercise[]; onHow: (list: Exercise[], i: number) => void; loads: Record<string, Load> }) {
   return (
@@ -47,11 +48,11 @@ function ExerciseList({ list, onHow, loads }: { list: Exercise[]; onHow: (list: 
           <Pressable key={e.name} disabled={!how && !kindOf(e.name)} onPress={() => onHow(list, i)} style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}>
             <View style={{ flexDirection: ROW, alignItems: 'center', gap: 8, flex: 1 }}>
               {how && <HowMark />}
-              <Text style={[T.base, s.text, { flexShrink: 1 }]}>{e.name}</Text>
+              <Text style={[T.base, s.text, { flexShrink: 1 }]}>{moveName(e.name)}</Text>
             </View>
             <Text style={[T.muted, s.text]}>
               {l ? <Text style={[T.bold, { color: C.ink }]}>{loadText(l)} · </Text> : null}
-              {e.sets} × {e.reps}
+              {e.sets} × {repsText(e.reps)}
             </Text>
           </Pressable>
         );
@@ -153,10 +154,10 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
                 disabled={!hasHow(e.name) && !kindOf(e.name)}
                 onPress={() => openHow(next.session.exercises, i)}
                 style={({ pressed }) => [s.moveTag, pressed && { opacity: 0.7 }]}
-                accessibilityLabel={tr(`${e.name}: איך עושים`, `${e.name}: how it is done`)}
+                accessibilityLabel={tr(`${e.name}: איך עושים`, `${moveName(e.name)}: how it is done`)}
               >
                 <Text style={s.moveText}>
-                  {e.name}
+                  {moveName(e.name)}
                   {loads[loadKey(e.name)] ? <Text style={{ fontWeight: '700' }}> · {loadText(loads[loadKey(e.name)])}</Text> : null}
                 </Text>
                 {hasHow(e.name) && <HowMark />}

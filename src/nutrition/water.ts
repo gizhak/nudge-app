@@ -1,5 +1,6 @@
 // Pure water math, no I/O.
 
+import { t } from '../i18n';
 export const CUP_ML = 250;
 
 /** Daily target: about 35 ml per kg, rounded to whole cups, plus two cups on a training day. */
@@ -35,11 +36,11 @@ export type Container = 30 | 250 | 500 | 750 | 1000;
 export const SIP_ML = 30;
 
 export const CONTAINERS: { key: Container; label: string }[] = [
-  { key: 250, label: 'כוס' },
-  { key: 500, label: 'בקבוק חצי ליטר' },
-  { key: 750, label: 'בקבוק 750' },
-  { key: 1000, label: 'בקבוק ליטר' },
-  { key: 30, label: 'לגימות' },
+  { key: 250, label: t('כוס', 'Glass') },
+  { key: 500, label: t('בקבוק חצי ליטר', 'Half-liter bottle') },
+  { key: 750, label: t('בקבוק 750', '750 bottle') },
+  { key: 1000, label: t('בקבוק ליטר', 'Liter bottle') },
+  { key: 30, label: t('לגימות', 'Sips') },
 ];
 
 /** 2250 ml becomes 2.3 */
@@ -49,34 +50,34 @@ export const sips = (ml: number) => Math.round(ml / SIP_ML);
 
 /** Amount in the unit he thinks in: cups, sips, or liters for bottle drinkers. */
 export function waterText(ml: number, container: Container = 250): string {
-  if (container === 250) return `${cups(ml)} כוסות`;
-  if (container === 30) return `${liters(ml)} ליטר (${sips(ml)} לגימות)`;
-  return `${liters(ml)} ליטר`;
+  if (container === 250) return t(`${cups(ml)} כוסות`, `${cups(ml)} glasses`);
+  if (container === 30) return t(`${liters(ml)} ליטר (${sips(ml)} לגימות)`, `${liters(ml)} L (${sips(ml)} sips)`);
+  return t(`${liters(ml)} ליטר`, `${liters(ml)} L`);
 }
 
 /** "X of Y" in his unit. */
 export function waterProgress(ml: number, target: number, container: Container = 250): string {
-  if (container === 250) return `${cups(ml)} מתוך ${cups(target)} כוסות`;
-  if (container === 30) return `${liters(ml)} מתוך ${liters(target)} ליטר (${sips(ml)} לגימות)`;
-  return `${liters(ml)} מתוך ${liters(target)} ליטר`;
+  if (container === 250) return t(`${cups(ml)} מתוך ${cups(target)} כוסות`, `${cups(ml)} of ${cups(target)} glasses`);
+  if (container === 30) return t(`${liters(ml)} מתוך ${liters(target)} ליטר (${sips(ml)} לגימות)`, `${liters(ml)} of ${liters(target)} L (${sips(ml)} sips)`);
+  return t(`${liters(ml)} מתוך ${liters(target)} ליטר`, `${liters(ml)} of ${liters(target)} L`);
 }
 
 /** What to drink now, in his unit: "a glass of water", "8 sips", "half a bottle". */
 export function drinkNow(ml: number, container: Container = 250): string {
-  if (container === 250) return ml <= CUP_ML ? 'כוס מים' : `${cups(ml)} כוסות מים`;
-  if (container === 30) return `${sips(ml)} לגימות`;
-  if (ml >= container) return 'בקבוק שלם';
-  if (ml >= container / 2) return 'חצי בקבוק';
-  return 'כמה לגימות טובות מהבקבוק';
+  if (container === 250) return ml <= CUP_ML ? t('כוס מים', 'A glass of water') : t(`${cups(ml)} כוסות מים`, `${cups(ml)} glasses of water`);
+  if (container === 30) return t(`${sips(ml)} לגימות`, `${sips(ml)} sips`);
+  if (ml >= container) return t('בקבוק שלם', 'A whole bottle');
+  if (ml >= container / 2) return t('חצי בקבוק', 'Half a bottle');
+  return t('כמה לגימות טובות מהבקבוק', 'A few good sips from the bottle');
 }
 
 /** Buttons for logging water: a cup, or a quarter, half or whole bottle. */
 export function waterButtons(container: Container = 250): { label: string; ml: number }[] {
-  if (container === 250) return [{ label: 'שתיתי כוס', ml: 250 }];
-  if (container === 30) return [{ label: 'לגימה', ml: SIP_ML }];
+  if (container === 250) return [{ label: t('שתיתי כוס', 'I drank a glass'), ml: 250 }];
+  if (container === 30) return [{ label: t('לגימה', 'Sip'), ml: SIP_ML }];
   return [
-    { label: 'רבע', ml: container / 4 },
-    { label: 'חצי', ml: container / 2 },
-    { label: 'בקבוק', ml: container },
+    { label: t('רבע', 'Quarter'), ml: container / 4 },
+    { label: t('חצי', 'Half'), ml: container / 2 },
+    { label: t('בקבוק', 'Bottle'), ml: container },
   ];
 }

@@ -1,6 +1,6 @@
 // Starting targets from the spec (46, 177 cm, 81 kg, recomposition).
 // Recalibrate after 3 weeks of intake vs weight trend.
-import { LANG } from '../i18n';
+import { LANG, t } from '../i18n';
 export const GOALS = {
   calories: 1925,
   proteinG: 140,
@@ -27,7 +27,7 @@ export interface Session {
 export const SESSIONS: Record<string, Session> = {
   A: {
     id: 'A',
-    title: 'גוף מלא A',
+    title: t('גוף מלא A', 'Full body A'),
     minutes: 45,
     exercises: [
       { name: 'סקוואט', sets: 3, reps: '8' },
@@ -39,7 +39,7 @@ export const SESSIONS: Record<string, Session> = {
   },
   B: {
     id: 'B',
-    title: 'גוף מלא B',
+    title: t('גוף מלא B', 'Full body B'),
     minutes: 45,
     exercises: [
       { name: 'דדליפט רומני', sets: 3, reps: '8' },
@@ -51,7 +51,7 @@ export const SESSIONS: Record<string, Session> = {
   },
   F: {
     id: 'F',
-    title: 'האימון המרכזי',
+    title: t('האימון המרכזי', 'The main workout'),
     minutes: 60,
     exercises: [
       { name: 'סקוואט', sets: 4, reps: '6' },
@@ -183,7 +183,7 @@ const byTime = (a: PlannedWorkout, b: PlannedWorkout) => a.day - b.day || a.hour
 
 /** The session to train, including the short home version. */
 export function sessionOf(id: string): Session {
-  if (id === SHORT_SESSION_ID) return { id, title: 'אימון קצר בבית', minutes: 20, exercises: MINIMUM_WORKOUT };
+  if (id === SHORT_SESSION_ID) return { id, title: t('אימון קצר בבית', 'Short home workout'), minutes: 20, exercises: MINIMUM_WORKOUT };
   return SESSIONS[id] ?? Object.values(SESSIONS)[0];
 }
 
@@ -201,11 +201,11 @@ export function nextWorkout(now = new Date(), doneToday = false): { workout: Pla
       })
       .find(({ at }) => at > now);
     if (hit) {
-      const when = offset === 0 ? 'היום' : offset === 1 ? 'מחר' : `יום ${DAY_NAMES[hit.at.getDay()]}`;
+      const when = offset === 0 ? t('היום', 'today') : offset === 1 ? t('מחר', 'tomorrow') : t(`יום ${DAY_NAMES[hit.at.getDay()]}`, `${DAY_NAMES[hit.at.getDay()]}`);
       return {
         workout: hit.w,
         session: sessionOf(hit.w.session),
-        label: `${when} ב${pad2(hit.w.hour)}:${pad2(hit.w.minute)}`,
+        label: t(`${when} ב${pad2(hit.w.hour)}:${pad2(hit.w.minute)}`, `${when} at ${pad2(hit.w.hour)}:${pad2(hit.w.minute)}`),
         at: hit.at,
       };
     }

@@ -22,7 +22,7 @@ import { checkMeal, loadMenu, menuMealOf } from '../diet/store';
 import Craving from './Craving';
 import { Sheet } from '../ui/Sheet';
 
-import { END, ROW, t as tr } from '../i18n';
+import { END, ROW, t as tr, LOCALE } from '../i18n';
 const DAY_SHORT = [tr('א', 'S'), tr('ב', 'M'), tr('ג', 'T'), tr('ד', 'W'), tr('ה', 'T'), tr('ו', 'F'), tr('ש', 'S')];
 const POLL_MS = 15_000;
 const WAIT_LIMIT_MS = 5 * 60_000;
@@ -121,7 +121,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
     setNotice(null);
     await load();
     const added = mealsRef.current - before;
-    const at = new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+    const at = new Date().toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
     const name = app?.name ?? tr('אפליקציית האוכל', 'the food app');
     setNotice(
       added > 0
@@ -249,7 +249,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
           const slotKcal = inSlot.reduce((a, m) => a + m.kcal, 0);
           const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
           const passed = slot.from < slot.to ? nowMin >= slot.to : false;
-          const at = inSlot[0]?.time.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+          const at = inSlot[0]?.time.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
           // With a dietitian's menu: what it says for this meal, and how the meal compares
           const mm = menuMealOf(diet, slot.id);
           const started = slot.from < slot.to ? nowMin >= slot.from : nowMin >= slot.from || nowMin < slot.to;
@@ -322,7 +322,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
                   </View>
                   <View style={s.row}>
                     <Text style={[T.muted, { fontSize: 13 }]}>
-                      {m.time.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })} {tr('· חלבון', '· protein')} {fmt(m.protein)} {tr('· פחמ\'', '· carbs')} {fmt(m.carbs)} {tr('· שומן', '· fat')} {fmt(m.fat)}
+                      {m.time.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })} {tr('· חלבון', '· protein')} {fmt(m.protein)} {tr('· פחמ\'', '· carbs')} {fmt(m.carbs)} {tr('· שומן', '· fat')} {fmt(m.fat)}
                     </Text>
                     {plate.length === 1 && (
                       <Text style={[s.chip, { color: v.good ? C.accent : C.signal, borderColor: v.good ? C.accent : C.signal }]}>{v.label}</Text>

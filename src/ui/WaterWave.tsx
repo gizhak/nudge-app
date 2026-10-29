@@ -6,6 +6,7 @@ import { Animated, Dimensions, Easing, StyleSheet, Text, TextStyle, View } from 
 import Svg, { Path } from 'react-native-svg';
 import { C, FONT } from './theme';
 
+import { t } from '../i18n';
 const WAVE_H = 24;
 
 function wavePath(w: number) {
@@ -65,7 +66,7 @@ export default function WaterWave({
   const n = Math.abs(count);
   const sign = count < 0 ? '−' : '';
   const unit =
-    cup === 30 ? (n === 1 ? 'לגימה' : 'לגימות') : cup === 250 ? (n === 1 ? 'כוס' : 'כוסות') : `${((n * cup) / 1000).toFixed(1)} ליטר`;
+    cup === 30 ? (n === 1 ? t('לגימה', 'sip') : t('לגימות', 'sips')) : cup === 250 ? (n === 1 ? t('כוס', 'glass') : t('כוסות', 'glasses')) : t(`${((n * cup) / 1000).toFixed(1)} ליטר`, `${((n * cup) / 1000).toFixed(1)} liters`);
 
   return (
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, s.layer, { opacity: show }]}>
@@ -81,7 +82,7 @@ export default function WaterWave({
           <Outlined style={s.big} width={4}>{`${sign}${n}`}</Outlined>
         </Animated.View>
         <Outlined style={s.unit} width={2}>{unit}</Outlined>
-        <Outlined style={s.total} width={2}>{`היום ${(Math.round(ml / 100) / 10).toFixed(1)} ליטר${target > 0 ? ` מתוך ${(Math.round(target / 100) / 10).toFixed(1)}` : ''}`}</Outlined>
+        <Outlined style={s.total} width={2}>{t(`היום ${(Math.round(ml / 100) / 10).toFixed(1)} ליטר${target > 0 ? ` מתוך ${(Math.round(target / 100) / 10).toFixed(1)}` : ''}`, `Today ${(Math.round(ml / 100) / 10).toFixed(1)} L${target > 0 ? ` of ${(Math.round(target / 100) / 10).toFixed(1)}` : ''}`)}</Outlined>
       </View>
     </Animated.View>
   );

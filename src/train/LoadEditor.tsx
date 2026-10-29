@@ -16,14 +16,14 @@ import {
   Unit,
 } from "./loads";
 
-import { ROW, SIDE_END } from '../i18n';
+import { ROW, SIDE_END, t } from '../i18n';
 type Draft = Pick<Load, "kind" | "unit" | "value" | "bar">;
 
 const HINT: Record<Load["kind"], string> = {
-  barbell: "המשקל הכולל, כולל המוט",
-  dumbbell: "המשקל של משקולת אחת",
-  machine: "המשקל שמופיע על המכונה, בפלטה שהפין נמצא בה",
-  body: "רק המשקל שמוסיפים. 0 זה משקל גוף בלבד",
+  barbell: t("המשקל הכולל, כולל המוט", 'The total weight, the bar included'),
+  dumbbell: t("המשקל של משקולת אחת", 'The weight of one dumbbell'),
+  machine: t("המשקל שמופיע על המכונה, בפלטה שהפין נמצא בה", 'The weight shown on the machine, on the plate the pin is in'),
+  body: t("רק המשקל שמוסיפים. 0 זה משקל גוף בלבד", 'Only the weight you add. 0 is bodyweight alone'),
 };
 
 const toUnit = (v: number, from: Unit, to: Unit) => {
@@ -73,7 +73,7 @@ export default function LoadEditor({
         style={({ pressed }) => [s.row, pressed && { opacity: 0.7 }]}
       >
         <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>
-          המשקל שלי
+          {t('המשקל שלי', 'My weight')}
         </Text>
         <View style={{ flex: 1, alignItems: SIDE_END }}>
           {load ? (
@@ -85,7 +85,7 @@ export default function LoadEditor({
             </>
           ) : (
             <Text style={[T.bold, { fontSize: 15, color: C.signal }]}>
-              להגדיר
+              {t('להגדיר', 'Set')}
             </Text>
           )}
         </View>
@@ -119,7 +119,7 @@ export default function LoadEditor({
 
   return (
     <View style={s.panel}>
-      <Text style={[T.bold, { fontSize: 14 }]}>המשקל שלי</Text>
+      <Text style={[T.bold, { fontSize: 14 }]}>{t('המשקל שלי', 'My weight')}</Text>
       <View style={s.seg}>
         {(["kg", "lb"] as Unit[]).map((u) => (
           <Pressable
@@ -133,14 +133,14 @@ export default function LoadEditor({
                 { fontSize: 13, color: d.unit === u ? "#fff" : C.ink },
               ]}
             >
-              {u === "kg" ? "קילוגרם" : "ליברות"}
+              {u === "kg" ? t("קילוגרם", 'Kilograms') : t("ליברות", 'Pounds')}
             </Text>
           </Pressable>
         ))}
       </View>
       {d.kind === "barbell" && (
         <View style={{ gap: 6 }}>
-          <Text style={[T.muted, { fontSize: 12 }]}>משקל המוט</Text>
+          <Text style={[T.muted, { fontSize: 12 }]}>{t('משקל המוט', 'Bar weight')}</Text>
           <View style={s.seg}>
             {BARS[d.unit].map((b) => (
               <Pressable
@@ -169,7 +169,7 @@ export default function LoadEditor({
           onPress={() => add(step)}
           style={s.stepBtn}
           hitSlop={6}
-          accessibilityLabel="להוסיף"
+          accessibilityLabel={t("להוסיף", 'Add')}
         >
           <Text style={[T.bold, { fontSize: 20 }]}>+</Text>
         </Pressable>
@@ -190,7 +190,7 @@ export default function LoadEditor({
           onPress={() => add(-step)}
           style={s.stepBtn}
           hitSlop={6}
-          accessibilityLabel="להוריד"
+          accessibilityLabel={t("להוריד", 'Take off')}
         >
           <Text style={[T.bold, { fontSize: 20 }]}>−</Text>
         </Pressable>
@@ -211,7 +211,7 @@ export default function LoadEditor({
               { color: "#fff", fontSize: 15, textAlign: "center" },
             ]}
           >
-            לשמור
+            {t('לשמור', 'Save')}
           </Text>
         </Pressable>
         <Pressable
@@ -219,7 +219,7 @@ export default function LoadEditor({
           style={({ pressed }) => [s.cancel, pressed && { opacity: 0.85 }]}
         >
           <Text style={[T.bold, { fontSize: 15, textAlign: "center" }]}>
-            ביטול
+            {t('ביטול', 'Cancel')}
           </Text>
         </Pressable>
       </View>

@@ -8,7 +8,7 @@ import { dayKey, loadLog, loadSnoozes, SentMessage } from '../coach/store';
 import { Card } from '../ui/components';
 import { C, T } from '../ui/theme';
 
-import { ROW, SIDE_START } from '../i18n';
+import { ROW, SIDE_START, LOCALE } from '../i18n';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 /** Each topic's mark: an icon in its color, the only color in the bubble. */
 export function topicLook(key: string): { icon: IconName; color: string; label: string } {
@@ -29,7 +29,7 @@ export function topicLook(key: string): { icon: IconName; color: string; label: 
   return { icon: 'chatbubble-ellipses', color: C.muted, label: 'המאמן' };
 }
 
-const time = (at: number) => new Date(at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+const time = (at: number) => new Date(at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
 
 /** Today's coach messages, one line per topic. `limit` shows a short preview with a link to the rest. */
 export default function CoachJournal({ limit, onMore, tick = 0 }: { limit?: number; onMore?: () => void; tick?: number }) {

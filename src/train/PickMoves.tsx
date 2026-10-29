@@ -10,7 +10,8 @@ import ExerciseHow from './ExerciseHow';
 import { picsOf } from './exercisePics';
 import { checklistOf, exercisesOf, Gear, minutesOf, recommendedPicks } from './library';
 
-import { CHEVRON_BACK, ROW } from '../i18n';
+import { CHEVRON_BACK, ROW, t } from '../i18n';
+import { moveName, repsText } from '../i18n/moves';
 const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
 export default function PickMoves({
@@ -40,8 +41,8 @@ export default function PickMoves({
   const over = minutes > room + 5;
   const empty = list.groups.filter((g) => !g.moves.some((x) => on.includes(x.name))).map((g) => g.name);
   const warns = [
-    empty.length ? `אין אף תרגיל ל${empty.join(' ול')}. צריך לפחות אחד.` : '',
-    over ? `יוצא כ ${minutes} דקות, יותר מ ${room} שיש לתרגילים. אפשר להוריד תרגיל, או להאריך את האימון בהגדרות.` : '',
+    empty.length ? t(`אין אף תרגיל ל${empty.join(' ול')}. צריך לפחות אחד.`, `No exercise for ${empty.join(' and ')}. Pick at least one.`) : '',
+    over ? t(`יוצא כ ${minutes} דקות, יותר מ ${room} שיש לתרגילים. אפשר להוריד תרגיל, או להאריך את האימון בהגדרות.`, `Comes to about ${minutes} minutes, more than the ${room} there is for exercises. Drop an exercise, or make the workout longer in settings.`) : '',
   ].filter(Boolean);
   const toggle = (name: string) => setOn((xs) => (xs.includes(name) ? xs.filter((x) => x !== name) : [...xs, name]));
   const howMove = how ? list.groups.flatMap((g) => g.moves).find((x) => x.name === how) : undefined;
@@ -51,21 +52,21 @@ export default function PickMoves({
       <View style={s.screen}>
         <View style={s.head}>
           <View style={s.topRow}>
-            <Pressable onPress={onClose} style={s.back} hitSlop={8} accessibilityLabel="חזרה">
+            <Pressable onPress={onClose} style={s.back} hitSlop={8} accessibilityLabel={t("חזרה", 'Back')}>
               <Ionicons name={CHEVRON_BACK} size={22} color={C.ink} />
             </Pressable>
             {!same(on, rec) && (
               <Pressable onPress={() => setOn(rec)} hitSlop={8}>
-                <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>חזרה להמלצה</Text>
+                <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>{t('חזרה להמלצה', 'Back to the recommendation')}</Text>
               </Pressable>
             )}
           </View>
           <Text style={[T.bold, { fontSize: 26, fontFamily: FONT.black }]}>{session.title}</Text>
           <View style={s.sum}>
             <View style={s.sumRow}>
-              <Text style={[T.bold, { fontSize: 19, color: '#fff' }]}>{chosen.length === 1 ? 'נבחר תרגיל אחד' : `נבחרו ${chosen.length} תרגילים`}</Text>
+              <Text style={[T.bold, { fontSize: 19, color: '#fff' }]}>{chosen.length === 1 ? t('נבחר תרגיל אחד', '1 exercise picked') : t(`נבחרו ${chosen.length} תרגילים`, `${chosen.length} exercises picked`)}</Text>
               <Text style={[T.bold, { fontSize: 14, color: over ? '#E9B872' : '#B9B2A8' }]}>
-                כ {minutes} דקות מתוך {room}
+                {t('כ', 'about')} {minutes} {t('דקות מתוך', 'minutes of')} {room}
               </Text>
             </View>
             <View style={s.track}>
@@ -86,7 +87,7 @@ export default function PickMoves({
               <View key={g.group} style={{ gap: 8 }}>
                 <View style={s.groupHead}>
                   <Text style={[T.bold, { fontSize: 18, fontFamily: FONT.black }]}>{g.name}</Text>
-                  <Text style={[T.bold, { fontSize: 13, color: c ? C.muted : C.warn }]}>{c === 0 ? 'אף תרגיל' : c === 1 ? 'תרגיל אחד' : `${c} נבחרו`}</Text>
+                  <Text style={[T.bold, { fontSize: 13, color: c ? C.muted : C.warn }]}>{c === 0 ? t('אף תרגיל', 'None') : c === 1 ? t('תרגיל אחד', 'One exercise') : t(`${c} נבחרו`, `${c} picked`)}</Text>
                 </View>
                 <View style={s.card}>
                   {g.moves.map((x, i) => {
@@ -101,7 +102,7 @@ export default function PickMoves({
                         accessibilityState={{ checked: sel }}
                       >
                         <View style={[s.box, sel ? s.boxOn : s.boxOff]}>{sel && <Ionicons name="checkmark" size={17} color="#fff" />}</View>
-                        <Pressable onPress={() => pics && setHow(x.name)} disabled={!pics} accessibilityLabel={`${x.name}: איך עושים`}>
+                        <Pressable onPress={() => pics && setHow(x.name)} disabled={!pics} accessibilityLabel={t(`${x.name}: איך עושים`, `${moveName(x.name)}: how it is done`)}>
                           {pics ? (
                             <Image source={pics.b ?? pics.a} style={[s.thumb, { opacity: sel ? 1 : 0.55 }]} />
                           ) : (
@@ -111,10 +112,10 @@ export default function PickMoves({
                           )}
                         </Pressable>
                         <View style={{ flex: 1, gap: 1 }}>
-                          <Text style={[sel ? T.bold : T.base, { fontSize: 15, color: sel ? C.ink : C.muted }]}>{x.name}</Text>
+                          <Text style={[sel ? T.bold : T.base, { fontSize: 15, color: sel ? C.ink : C.muted }]}>{moveName(x.name)}</Text>
                           <Text style={[T.muted, { fontSize: 12 }]}>
-                            {x.sets} × {x.reps}
-                            {x.rec ? ' · מומלץ' : ''}
+                            {x.sets} × {repsText(x.reps)}
+                            {x.rec ? t(' · מומלץ', ' · recommended') : ''}
                           </Text>
                         </View>
                       </Pressable>
@@ -124,7 +125,7 @@ export default function PickMoves({
               </View>
             );
           })}
-          <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>לחיצה על תמונה מראה איך עושים את התרגיל.</Text>
+          <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>{t('לחיצה על תמונה מראה איך עושים את התרגיל.', 'Tap a photo to see how the exercise is done.')}</Text>
         </ScrollView>
 
         <View style={s.foot}>
@@ -136,7 +137,7 @@ export default function PickMoves({
             style={({ pressed }) => [s.save, (chosen.length === 0 || pressed) && { opacity: chosen.length === 0 ? 0.4 : 0.85 }]}
             disabled={chosen.length === 0}
           >
-            <Text style={[T.bold, { color: '#fff', fontSize: 16, textAlign: 'center' }]}>שמור</Text>
+            <Text style={[T.bold, { color: '#fff', fontSize: 16, textAlign: 'center' }]}>{t('שמור', 'Save')}</Text>
           </Pressable>
         </View>
       </View>

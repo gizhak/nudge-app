@@ -3,20 +3,21 @@
 // the training place allows. Picks are kept per split, place and session, so switching back keeps them.
 import type { Exercise } from '../config/goals';
 
+import { t } from '../i18n';
 export type Group = 'chest' | 'triceps' | 'back' | 'biceps' | 'shoulders' | 'legs' | 'hams' | 'calves' | 'core';
 /** body: nothing needed. equip: dumbbells or a band at home. gym: bars, cables, machines */
 export type Gear = 'body' | 'equip' | 'gym';
 
 export const GROUP_NAME: Record<Group, string> = {
-  chest: 'חזה',
-  triceps: 'יד אחורית',
-  back: 'גב',
-  biceps: 'יד קדמית',
-  shoulders: 'כתפיים',
-  legs: 'רגליים',
-  hams: 'ירך אחורית וישבן',
-  calves: 'תאומים',
-  core: 'בטן וגב תחתון',
+  chest: t('חזה', 'Chest'),
+  triceps: t('יד אחורית', 'Triceps'),
+  back: t('גב', 'Back'),
+  biceps: t('יד קדמית', 'Biceps'),
+  shoulders: t('כתפיים', 'Shoulders'),
+  legs: t('רגליים', 'Legs'),
+  hams: t('ירך אחורית וישבן', 'Hamstrings and glutes'),
+  calves: t('תאומים', 'Calves'),
+  core: t('בטן וגב תחתון', 'Abs and lower back'),
 };
 
 export interface Move {

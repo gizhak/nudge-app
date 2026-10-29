@@ -46,14 +46,14 @@ import { Chip, MiniRing, Sparkline, Tile, TileGrid } from '../ui/tiles';
 import { DAY_LETTERS } from '../config/goals';
 import { C, fmt, T } from '../ui/theme';
 
-import { CHEVRON_ON, ROW, SIDE_START } from '../i18n';
+import { CHEVRON_ON, ROW, SIDE_START, t as tr, LOCALE } from '../i18n';
 const QUALITY_COLOR: Record<Quality, string> = { ok: C.accent, partial: C.warn, missing: C.bad };
 
 function greeting(now: Date) {
   const h = now.getHours();
-  if (h < 12) return 'בוקר טוב';
-  if (h < 17) return 'צהריים טובים';
-  return 'ערב טוב';
+  if (h < 12) return tr('בוקר טוב', 'Good morning');
+  if (h < 17) return tr('צהריים טובים', 'Good afternoon');
+  return tr('ערב טוב', 'Good evening');
 }
 
 const hhmmOf = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -89,14 +89,14 @@ function OutingCard({
     return (
       <Card>
         <Text style={[T.bold, { fontSize: 16 }]}>
-          יוצא ב{hhmmO(plan.leaveAt)}: {OUTING_LABEL[plan.kind]}
+          {tr('יוצא ב', 'Going out at')}{hhmmO(plan.leaveAt)}: {OUTING_LABEL[plan.kind]}
         </Text>
-        <Text style={[T.muted, { fontSize: 13 }]}>חוזר בערך ב{hhmmO(plan.returnAt)}. לא אציק על שינה עד {hhmmO(graceEnd(plan) % 1440)}.</Text>
+        <Text style={[T.muted, { fontSize: 13 }]}>{tr('חוזר בערך ב', 'Back around')}{hhmmO(plan.returnAt)}{tr('. לא אציק על שינה עד', '. I won\'t nag about sleep until')} {hhmmO(graceEnd(plan) % 1440)}.</Text>
         <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>{OUTING_TIP[plan.kind]}</Text>
         <View style={s.outRow}>
           {plan.kind === 'restaurant' && (
             <Pressable style={s.nightBtn} onPress={onOpenFood}>
-              <Text style={[T.bold, s.nightText]}>יועץ התפריט</Text>
+              <Text style={[T.bold, s.nightText]}>{tr('יועץ התפריט', 'Menu advisor')}</Text>
             </Pressable>
           )}
           <Pressable
@@ -106,7 +106,7 @@ function OutingCard({
               setEditing(true);
             }}
           >
-            <Text style={[T.bold, { fontSize: 14 }]}>שינוי</Text>
+            <Text style={[T.bold, { fontSize: 14 }]}>{tr('שינוי', 'Change')}</Text>
           </Pressable>
           <Pressable
             style={s.ghostBtn}
@@ -115,7 +115,7 @@ function OutingCard({
               onChanged();
             }}
           >
-            <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>ביטול</Text>
+            <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>{tr('ביטול', 'Cancel')}</Text>
           </Pressable>
         </View>
       </Card>
@@ -125,7 +125,7 @@ function OutingCard({
   if (!asking && !editing) {
     return (
       <Card>
-        <Text style={[T.bold, { fontSize: 16 }]}>יוצא הערב?</Text>
+        <Text style={[T.bold, { fontSize: 16 }]}>{tr('יוצא הערב?', 'Going out tonight?')}</Text>
         <View style={s.outRow}>
           <Pressable
             style={s.nightBtn}
@@ -134,7 +134,7 @@ function OutingCard({
               setAsking(true);
             }}
           >
-            <Text style={[T.bold, s.nightText]}>כן</Text>
+            <Text style={[T.bold, s.nightText]}>{tr('כן', 'Yes')}</Text>
           </Pressable>
           <Pressable
             style={s.ghostBtn}
@@ -143,7 +143,7 @@ function OutingCard({
               onChanged();
             }}
           >
-            <Text style={[T.bold, { fontSize: 14 }]}>לא</Text>
+            <Text style={[T.bold, { fontSize: 14 }]}>{tr('לא', 'No')}</Text>
           </Pressable>
         </View>
       </Card>
@@ -152,14 +152,14 @@ function OutingCard({
 
   return (
     <Card>
-      <Text style={[T.bold, { fontSize: 16 }]}>מה מתוכנן?</Text>
+      <Text style={[T.bold, { fontSize: 16 }]}>{tr('מה מתוכנן?', 'What\'s the plan?')}</Text>
       <Choice options={OUTING_KINDS} value={draft.kind} onChange={(kind) => setDraft({ ...draft, kind })} />
       <View style={s.outTime}>
-        <Text style={[T.bold, { fontSize: 15 }]}>יוצא ב</Text>
+        <Text style={[T.bold, { fontSize: 15 }]}>{tr('יוצא ב', 'Going out at')}</Text>
         <TimeStepper value={draft.leaveAt} onChange={(leaveAt) => setDraft({ ...draft, leaveAt })} />
       </View>
       <View style={s.outTime}>
-        <Text style={[T.bold, { fontSize: 15 }]}>חוזר בערך ב</Text>
+        <Text style={[T.bold, { fontSize: 15 }]}>{tr('חוזר בערך ב', 'Back around')}</Text>
         <TimeStepper value={draft.returnAt} onChange={(returnAt) => setDraft({ ...draft, returnAt })} />
       </View>
       <View style={s.outRow}>
@@ -172,7 +172,7 @@ function OutingCard({
             onChanged();
           }}
         >
-          <Text style={[T.bold, s.nightText]}>שמור</Text>
+          <Text style={[T.bold, s.nightText]}>{tr('שמור', 'Save')}</Text>
         </Pressable>
         <Pressable
           style={s.ghostBtn}
@@ -181,7 +181,7 @@ function OutingCard({
             setEditing(false);
           }}
         >
-          <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>חזרה</Text>
+          <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>{tr('חזרה', 'Back')}</Text>
         </Pressable>
       </View>
     </Card>
@@ -203,13 +203,13 @@ function askBaby(now: Date, d: TodayData, night: NightState) {
 }
 
 function coachLine(d: TodayData, now: Date, prefs: CoachPrefs, acked = false, outing: OutingPlan | null = null, water: { ml: number | null; target: number } | null = null): string {
-  if (onVacation(now, prefs.vacation)) return `חופשה עד ${vdm(prefs.vacation!.to)}. תהנה, תשתה מים ותזוז. אני כאן כשתחזור.`;
-  if (isNightWindow(now, prefs) && outing && nightMinutes(now.getHours() * 60 + now.getMinutes()) < graceEnd(outing)) return 'תהנה. כוס מים בין משקה למשקה.';
-  if (isNightWindow(now, prefs) && acked) return 'בסדר, לא מציק הלילה. לילה טוב.';
+  if (onVacation(now, prefs.vacation)) return tr(`חופשה עד ${vdm(prefs.vacation!.to)}. תהנה, תשתה מים ותזוז. אני כאן כשתחזור.`, `On vacation until ${vdm(prefs.vacation!.to)}. Enjoy, drink water and move. I am here when you are back.`);
+  if (isNightWindow(now, prefs) && outing && nightMinutes(now.getHours() * 60 + now.getMinutes()) < graceEnd(outing)) return tr('תהנה. כוס מים בין משקה למשקה.', 'Enjoy. A glass of water between drinks.');
+  if (isNightWindow(now, prefs) && acked) return tr('בסדר, לא מציק הלילה. לילה טוב.', 'OK, no nagging tonight. Good night.');
   if (isNightWindow(now, prefs)) {
     const nowMin = now.getHours() * 60 + now.getMinutes();
     const left = (prefs.wakeTime - (now.getHours() * 60 + now.getMinutes()) + 1440) % 1440;
-    return `מה אתה עושה ער? נשארו ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} שעות עד ההשכמה. סגור את האפליקציה ולך לישון.`;
+    return tr(`מה אתה עושה ער? נשארו ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} שעות עד ההשכמה. סגור את האפליקציה ולך לישון.`, `What are you doing up? ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} hours left until you wake up. Close the app and go to sleep.`);
   }
   const kcalLeft = Math.max(0, caloriesFor(now) - d.nutrition.kcal);
   const proteinLeft = Math.max(0, GOALS.proteinG - d.nutrition.protein);
@@ -222,18 +222,18 @@ function coachLine(d: TodayData, now: Date, prefs: CoachPrefs, acked = false, ou
     const gap = waterExpectedByNow(water.target, m, wake, prefs.bedTime) - water.ml;
     if (mm >= wake + 90 && mm <= bed - 90 && gap > 500) {
       return mm >= bed - 150
-        ? `חסרים ${waterText(water.target - water.ml, prefs.waterContainer)} מים להיום. זו ההזדמנות האחרונה, שתה עכשיו.`
-        : `חסרים לך ${waterText(gap, prefs.waterContainer)} מים לשעה הזו. ${drinkNow(250, prefs.waterContainer)} עכשיו, ולחץ על ה +.`;
+        ? tr(`חסרים ${waterText(water.target - water.ml, prefs.waterContainer)} מים להיום. זו ההזדמנות האחרונה, שתה עכשיו.`, `${waterText(water.target - water.ml, prefs.waterContainer)} of water still to go today. This is the last chance, drink now.`)
+        : tr(`חסרים לך ${waterText(gap, prefs.waterContainer)} מים לשעה הזו. ${drinkNow(250, prefs.waterContainer)} עכשיו, ולחץ על ה +.`, `You are ${waterText(gap, prefs.waterContainer)} of water behind for this hour. ${drinkNow(250, prefs.waterContainer)} now, and tap the +.`);
     }
   }
-  if (d.nutrition.meals === 0) return 'עוד לא נרשמה ארוחה היום. רשום את הארוחה הבאה, וכך אוכל לעקוב.';
+  if (d.nutrition.meals === 0) return tr('עוד לא נרשמה ארוחה היום. רשום את הארוחה הבאה, וכך אוכל לעקוב.', 'No meal logged today yet. Log the next one, so I can keep track.');
   if (now.getHours() >= 17 && d.nutrition.protein < GOALS.proteinG * 0.6) {
-    return `חסרים לך ${fmt(proteinLeft)} גרם חלבון. כדאי שארוחת הערב תהיה עשירה בחלבון.`;
+    return tr(`חסרים לך ${fmt(proteinLeft)} גרם חלבון. כדאי שארוחת הערב תהיה עשירה בחלבון.`, `You still need ${fmt(proteinLeft)} grams of protein. Make dinner rich in protein.`);
   }
   const over = d.nutrition.kcal - caloriesFor(now);
-  if (over > 0) return proteinLeft > 0 ? `עברת את הקלוריות ב ${fmt(over)}, ועדיין חסרים ${fmt(proteinLeft)} גרם חלבון. מכאן רק חלבון רזה.` : `עברת את הקלוריות ב ${fmt(over)}. החלבון ביעד. מכאן רק מים ותה.`;
-  if (proteinLeft <= 0) return `החלבון ביעד. נשארו לך ${fmt(kcalLeft)} קלוריות להיום.`;
-  return `נשארו לך ${fmt(kcalLeft)} קלוריות ו${fmt(proteinLeft)} גרם חלבון להיום.`;
+  if (over > 0) return proteinLeft > 0 ? tr(`עברת את הקלוריות ב ${fmt(over)}, ועדיין חסרים ${fmt(proteinLeft)} גרם חלבון. מכאן רק חלבון רזה.`, `You are ${fmt(over)} calories over, and still ${fmt(proteinLeft)} grams of protein short. Only lean protein from here.`) : tr(`עברת את הקלוריות ב ${fmt(over)}. החלבון ביעד. מכאן רק מים ותה.`, `You are ${fmt(over)} calories over. Protein is on target. Only water and tea from here.`);
+  if (proteinLeft <= 0) return tr(`החלבון ביעד. נשארו לך ${fmt(kcalLeft)} קלוריות להיום.`, `Protein is on target. ${fmt(kcalLeft)} calories left for today.`);
+  return tr(`נשארו לך ${fmt(kcalLeft)} קלוריות ו${fmt(proteinLeft)} גרם חלבון להיום.`, `${fmt(kcalLeft)} calories and ${fmt(proteinLeft)} grams of protein left for today.`);
 }
 
 
@@ -244,15 +244,15 @@ const WHY_SEEN = 'today.weightWhySeen.v1';
 const whySignature = (w: WeightWhy) => `${w.headline}|${w.reasons.join('|')}`;
 /** A hint of the first reason for the collapsed row */
 function shortReason(r: string): string {
-  if (r.includes('שתי שקילות')) return 'שקילה כפולה';
-  if (r.includes('ישנת')) return 'שינה קצרה';
-  if (r.includes('אימון')) return 'אימון';
-  if (r.includes('אכלת מעט')) return 'יום עם מעט אוכל';
-  if (r.includes('אכלת')) return 'ארוחה גדולה';
-  if (r.includes('מאוחר')) return 'שקילה מאוחרת';
-  if (r.includes('מוקדם')) return 'שקילה מוקדמת';
-  if (r.includes('קצב')) return 'קצב בריא';
-  return 'הסבר חדש';
+  if (r.includes('שתי שקילות')) return tr('שקילה כפולה', 'Double weigh-in');
+  if (r.includes('ישנת')) return tr('שינה קצרה', 'Short sleep');
+  if (r.includes('אימון')) return tr('אימון', 'Workout');
+  if (r.includes('אכלת מעט')) return tr('יום עם מעט אוכל', 'A day of little food');
+  if (r.includes('אכלת')) return tr('ארוחה גדולה', 'A big meal');
+  if (r.includes('מאוחר')) return tr('שקילה מאוחרת', 'Late weigh-in');
+  if (r.includes('מוקדם')) return tr('שקילה מוקדמת', 'Early weigh-in');
+  if (r.includes('קצב')) return tr('קצב בריא', 'A healthy pace');
+  return tr('הסבר חדש', 'New explanation');
 }
 
 interface Week {
@@ -322,12 +322,12 @@ function weekVerdict(w: Week): string | null {
   const protein = avgPast(w.protein);
   const parts: string[] = [];
   if (kcal !== null) {
-    if (kcal > GOALS.calories * 1.1) parts.push(`ממוצע ${fmt(kcal)} קלוריות, מעל היעד`);
-    else if (kcal < GOALS.calories * 0.7) parts.push(`ממוצע ${fmt(kcal)} קלוריות, כנראה לא כל הארוחות נרשמות`);
-    else parts.push(`ממוצע ${fmt(kcal)} קלוריות, בטווח`);
+    if (kcal > GOALS.calories * 1.1) parts.push(tr(`ממוצע ${fmt(kcal)} קלוריות, מעל היעד`, `Average ${fmt(kcal)} calories, over the goal`));
+    else if (kcal < GOALS.calories * 0.7) parts.push(tr(`ממוצע ${fmt(kcal)} קלוריות, כנראה לא כל הארוחות נרשמות`, `Average ${fmt(kcal)} calories, probably not every meal is logged`));
+    else parts.push(tr(`ממוצע ${fmt(kcal)} קלוריות, בטווח`, `Average ${fmt(kcal)} calories, in range`));
   }
   if (protein !== null) {
-    parts.push(protein >= GOALS.proteinG * 0.9 ? `חלבון ${fmt(protein)} גרם, מצוין` : `חלבון ${fmt(protein)} גרם, חסר ${fmt(GOALS.proteinG - protein)}`);
+    parts.push(protein >= GOALS.proteinG * 0.9 ? tr(`חלבון ${fmt(protein)} גרם, מצוין`, `Protein ${fmt(protein)} grams, excellent`) : tr(`חלבון ${fmt(protein)} גרם, חסר ${fmt(GOALS.proteinG - protein)}`, `Protein ${fmt(protein)} grams, ${fmt(GOALS.proteinG - protein)} short`));
   }
   return parts.length ? parts.join('. ') + '.' : null;
 }
@@ -453,7 +453,7 @@ export default function TodayScreen({
       setPlaceSt(st);
       await syncDoneFromData(factsFrom(situation, new Date(), pf, await loadUnlogged(), st.gymDay === dayKey())).catch(() => undefined);
       if (situation.today) setData((todayCache.data = situation.today));
-      else setError(situation.hcProblem ?? 'לא ניתן לקרוא נתונים');
+      else setError(situation.hcProblem ?? tr('לא ניתן לקרוא נתונים', 'Can\'t read data'));
       readWeek().then((w) => setWeek((todayCache.week = w)));
       setCoachToday((await loadLog()).filter((m) => m.day === dayKey()));
       setTick((t) => t + 1);
@@ -469,7 +469,7 @@ export default function TodayScreen({
   }, [load, dataTick]);
 
   const next = nextWorkout(now);
-  const dateLabel = now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' });
+  const dateLabel = now.toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
     <View style={{ flex: 1 }}>
@@ -500,7 +500,7 @@ export default function TodayScreen({
           {isNightWindow(now, prefs) && !night.acks.includes(nightKey(now)) && !(tonightPlan(now, night) && nightMinutes(now.getHours() * 60 + now.getMinutes()) < graceEnd(tonightPlan(now, night)!)) && (
             <View style={s.nightRow}>
               <Pressable style={s.nowBtn} onPress={async () => { await ackNight(false); setNight(await loadNightState()); }}>
-                <Text style={[T.bold, s.nowBtnText]}>ידוע לי, זה בסדר</Text>
+                <Text style={[T.bold, s.nowBtnText]}>{tr('ידוע לי, זה בסדר', 'I know, it\'s fine')}</Text>
               </Pressable>
               {expectsBrokenNights(family) && (
                 <Pressable style={s.nowBtn} onPress={async () => { await ackNight(true); setNight(await loadNightState()); }}>
@@ -526,7 +526,7 @@ export default function TodayScreen({
       {data && expectsBrokenNights(family) && askBaby(now, data, night) && (
         <Card>
           <Text style={[T.bold, { fontSize: 15 }]}>{labels.question}</Text>
-          <Text style={[T.muted, { fontSize: 13 }]}>כך אדע לא להאשים אותך, ולהתאים את האימון של היום.</Text>
+          <Text style={[T.muted, { fontSize: 13 }]}>{tr('כך אדע לא להאשים אותך, ולהתאים את האימון של היום.', 'So I know not to blame you, and to adjust today\'s workout.')}</Text>
           <Pressable
             style={[s.nightBtn, { alignSelf: SIDE_START }]}
             onPress={async () => {
@@ -537,7 +537,7 @@ export default function TodayScreen({
               setNight(await loadNightState());
             }}
           >
-            <Text style={[T.bold, s.nightText]}>כן, סמן את הלילה</Text>
+            <Text style={[T.bold, s.nightText]}>{tr('כן, סמן את הלילה', 'Yes, mark the night')}</Text>
           </Pressable>
         </Card>
       )}
@@ -545,13 +545,13 @@ export default function TodayScreen({
       {readiness && readiness.errors > 0 && (
         <Pressable onPress={onOpenReadiness}>
           <Card style={{ borderWidth: 1.5, borderColor: C.signal }}>
-            <Text style={[T.bold, { fontSize: 16, color: C.ink }]}>{readiness.errors} חיבורים דורשים תיקון</Text>
+            <Text style={[T.bold, { fontSize: 16, color: C.ink }]}>{readiness.errors} {tr('חיבורים דורשים תיקון', 'Connections need fixing')}</Text>
             <Text style={[T.base, { fontSize: 14 }]}>
               {readiness.items
                 .filter((i) => i.status === 'error')
                 .map((i) => i.title)
                 .join(', ')}
-              . לחץ לתיקון.
+              {tr('. לחץ לתיקון.', '. Tap to fix.')}
             </Text>
           </Card>
         </Pressable>
@@ -560,7 +560,7 @@ export default function TodayScreen({
       {error && (
         <Card>
           <Text style={[T.bold, { color: C.bad }]}>{error}</Text>
-          <PrimaryButton label="נסה שוב" onPress={load} />
+          <PrimaryButton label={tr("נסה שוב", 'Try again')} onPress={load} />
         </Card>
       )}
 
@@ -587,7 +587,7 @@ export default function TodayScreen({
                 setFollow(await loadFollowUps());
               } catch (e: any) {
                 setSit((p) => (p ? { ...p, waterMl: Math.max(0, (p.waterMl ?? 0) - cup) } : p));
-                setError(`לא נשמר: ${String(e?.message ?? e)}. בדוק הרשאת מים בבדיקת מוכנות.`);
+                setError(tr(`לא נשמר: ${String(e?.message ?? e)}. בדוק הרשאת מים בבדיקת מוכנות.`, `Not saved: ${String(e?.message ?? e)}. Check the water permission in Readiness.`));
               }
             };
             const undo = async () => {
@@ -603,29 +603,29 @@ export default function TodayScreen({
                 <Tile
                   mark={<MiniRing value={data.nutrition.kcal} max={target} color={left < 0 ? C.warn : C.kcal} icon={<Ionicons name="flame" size={16} color={C.kcal} />} />}
                   value={fmt(Math.abs(left))}
-                  label={left >= 0 ? 'קלוריות נשארו' : 'קלוריות מעל היעד'}
-                  sub={`מתוך ${fmt(target)}`}
+                  label={left >= 0 ? tr('קלוריות נשארו', 'calories left') : tr('קלוריות מעל היעד', 'calories over the goal')}
+                  sub={tr(`מתוך ${fmt(target)}`, `of ${fmt(target)}`)}
                   onPress={onOpenFood}
                 />
                 <Tile
                   mark={<MiniRing value={data.nutrition.protein} max={GOALS.proteinG} color={C.protein} icon={<Ionicons name="egg" size={15} color={C.protein} />} />}
-                  value={pLeft > 0 ? `${fmt(pLeft)} ג'` : 'ביעד'}
-                  label={pLeft > 0 ? 'חלבון חסר' : `חלבון, ${fmt(data.nutrition.protein)} ג'`}
+                  value={pLeft > 0 ? tr(`${fmt(pLeft)} ג'`, `${fmt(pLeft)} g`) : tr('ביעד', 'On target')}
+                  label={pLeft > 0 ? tr('חלבון חסר', 'protein to go') : tr(`חלבון, ${fmt(data.nutrition.protein)} ג'`, `protein, ${fmt(data.nutrition.protein)} g`)}
                   onPress={onOpenFood}
                 />
                 <Tile
                   mark={<MiniRing value={ml ?? 0} max={wTarget || 1} color={C.water} replay={ml ?? 0} icon={<Ionicons name="water" size={16} color={C.water} />} />}
-                  value={ml == null ? '—' : `${(Math.round(ml / 100) / 10).toFixed(1)} ל'`}
-                  label={!wTarget ? 'מים' : `מתוך ${(Math.round(wTarget / 100) / 10).toFixed(1)}`}
-                  sub={cup === 30 && ml != null ? `${sips(ml)} לגימות` : undefined}
+                  value={ml == null ? '—' : tr(`${(Math.round(ml / 100) / 10).toFixed(1)} ל'`, `${(Math.round(ml / 100) / 10).toFixed(1)} L`)}
+                  label={!wTarget ? tr('מים', 'water') : tr(`מתוך ${(Math.round(wTarget / 100) / 10).toFixed(1)}`, `of ${(Math.round(wTarget / 100) / 10).toFixed(1)}`)}
+                  sub={cup === 30 && ml != null ? tr(`${sips(ml)} לגימות`, `${sips(ml)} sips`) : undefined}
                   right={
                     ml != null ? (
                       <View style={{ gap: 6 }}>
-                        <Pressable onPress={drink} style={s.plus} accessibilityLabel={cup === 30 ? 'לגימה' : 'שתיתי כוס'} hitSlop={4}>
+                        <Pressable onPress={drink} style={s.plus} accessibilityLabel={cup === 30 ? tr('לגימה', 'Sip') : tr('שתיתי כוס', 'I drank a glass')} hitSlop={4}>
                           <Ionicons name="add" size={18} color="#fff" />
                         </Pressable>
                         {(ml > 0 || bursting) && (
-                          <Pressable onPress={undo} style={s.minus} accessibilityLabel="בטל את הכוס האחרונה" hitSlop={4}>
+                          <Pressable onPress={undo} style={s.minus} accessibilityLabel={tr("בטל את הכוס האחרונה", 'Undo the last glass')} hitSlop={4}>
                             <Ionicons name="remove" size={18} color={C.water} />
                           </Pressable>
                         )}
@@ -633,7 +633,7 @@ export default function TodayScreen({
                     ) : null
                   }
                 />
-                <Tile mark={<MiniRing value={data.steps} max={GOALS.steps} color={C.good} icon={<Ionicons name="footsteps" size={15} color={C.good} />} />} value={fmt(data.steps)} label={`צעדים מתוך ${fmt(GOALS.steps)}`} />
+                <Tile mark={<MiniRing value={data.steps} max={GOALS.steps} color={C.good} icon={<Ionicons name="footsteps" size={15} color={C.good} />} />} value={fmt(data.steps)} label={tr(`צעדים מתוך ${fmt(GOALS.steps)}`, `steps of ${fmt(GOALS.steps)}`)} />
               </TileGrid>
             );
           })()}
@@ -674,7 +674,7 @@ export default function TodayScreen({
                   await refreshDone();
                     setSit({ ...sit, waterMl: (sit.waterMl ?? 0) + 250 });
                   } catch (e: any) {
-                    setError(`לא נשמר: ${String(e?.message ?? e)}. בדוק הרשאת מים בבדיקת מוכנות.`);
+                    setError(tr(`לא נשמר: ${String(e?.message ?? e)}. בדוק הרשאת מים בבדיקת מוכנות.`, `Not saved: ${String(e?.message ?? e)}. Check the water permission in Readiness.`));
                   }
                 }
               }}
@@ -689,7 +689,7 @@ export default function TodayScreen({
                   setFollow(await loadFollowUps());
                   setSit({ ...sit, waterMl: (sit.waterMl ?? 0) + ml });
                 } catch (e: any) {
-                  setError(`לא נשמר: ${String(e?.message ?? e)}. בדוק הרשאת מים בבדיקת מוכנות.`);
+                  setError(tr(`לא נשמר: ${String(e?.message ?? e)}. בדוק הרשאת מים בבדיקת מוכנות.`, `Not saved: ${String(e?.message ?? e)}. Check the water permission in Readiness.`));
                 }
               }}
             />
@@ -718,7 +718,7 @@ export default function TodayScreen({
                   <Pressable onPress={open} style={({ pressed }) => [s.weightCard, pressed && { opacity: 0.85 }]}>
                     <View style={{ flex: 1, gap: 2 }}>
                       <View style={{ flexDirection: ROW, alignItems: 'center', gap: 6 }}>
-                        <Text style={[T.muted, { fontSize: 13 }]}>משקל</Text>
+                        <Text style={[T.muted, { fontSize: 13 }]}>{tr('משקל', 'Weight')}</Text>
                         {fresh && <View style={s.whyDot} />}
                       </View>
                       <View style={{ flexDirection: ROW, alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -737,10 +737,10 @@ export default function TodayScreen({
               <RowsCard>
                 <OpenRow
                   first
-                  title="השבוע"
+                  title={tr("השבוע", 'This week')}
                   sub={[
-                    sit ? `${sit.workoutDaysThisWeek} מתוך ${GOALS.workoutsPerWeek} אימונים` : null,
-                    past.length ? `חלבון ביעד ${pDays} מתוך ${past.length} ימים` : null,
+                    sit ? tr(`${sit.workoutDaysThisWeek} מתוך ${GOALS.workoutsPerWeek} אימונים`, `${sit.workoutDaysThisWeek} of ${GOALS.workoutsPerWeek} workouts`) : null,
+                    past.length ? tr(`חלבון ביעד ${pDays} מתוך ${past.length} ימים`, `Protein on target ${pDays} of ${past.length} days`) : null,
                   ]
                     .filter(Boolean)
                     .join(' · ')}
@@ -752,22 +752,22 @@ export default function TodayScreen({
                   const got = sl.filter((v): v is number => v != null && v > 1);
                   const h = (v: number) => `${Math.floor(v)}:${String(Math.round((v % 1) * 60)).padStart(2, '0')}`;
                   const sub = !week
-                    ? 'טוען'
+                    ? tr('טוען', 'Loading')
                     : !got.length
-                      ? 'לא הגיעו נתוני שינה. לחץ לבדיקה'
-                      : [lastNight != null && lastNight > 1 ? `הלילה ${h(lastNight)}` : 'הלילה עוד לא הגיע', `ממוצע ${h(got.reduce((a, b) => a + b, 0) / got.length)}`].join(' · ');
-                  return <OpenRow title="שינה" sub={sub} dot={!!week && !got.length} onPress={() => {
+                      ? tr('לא הגיעו נתוני שינה. לחץ לבדיקה', 'No sleep data arrived. Tap to check')
+                      : [lastNight != null && lastNight > 1 ? tr(`הלילה ${h(lastNight)}`, `Last night ${h(lastNight)}`) : tr('הלילה עוד לא הגיע', 'Last night has not come in yet'), tr(`ממוצע ${h(got.reduce((a, b) => a + b, 0) / got.length)}`, `Average ${h(got.reduce((a, b) => a + b, 0) / got.length)}`)].join(' · ');
+                  return <OpenRow title={tr("שינה", 'Sleep')} sub={sub} dot={!!week && !got.length} onPress={() => {
                         setSleepOpen((n) => n + 1);
                         setSheet('sleep');
                       }} />;
                 })()}
                 <OpenRow
-                  title="האימון הבא"
-                  sub={data.workouts.count > 0 ? `התאמנת היום ${data.workouts.minutes} דקות` : `${next.session.title} · ${next.label}`}
+                  title={tr("האימון הבא", 'Next workout')}
+                  sub={data.workouts.count > 0 ? tr(`התאמנת היום ${data.workouts.minutes} דקות`, `Trained today for ${data.workouts.minutes} minutes`) : `${next.session.title} · ${next.label}`}
                   onPress={onOpenTraining}
                 />
                 {badQuality.length > 0 && (
-                  <OpenRow title="איכות נתונים" sub={`חסר: ${badQuality.map((q) => q.label).join(', ')}`} dot onPress={() => setSheet('quality')} />
+                  <OpenRow title={tr("איכות נתונים", 'Data quality')} sub={tr(`חסר: ${badQuality.map((q) => q.label).join(', ')}`, `Missing: ${badQuality.map((q) => q.label).join(', ')}`)} dot onPress={() => setSheet('quality')} />
                 )}
               </RowsCard>
               </>
@@ -776,7 +776,7 @@ export default function TodayScreen({
         </>
       )}
 
-      <Sheet open={sheet === 'weight'} onClose={() => setSheet(null)} title={week?.why ? (week.why.headline.startsWith('עלית') ? 'למה זה כנראה עלה' : week.why.headline.startsWith('ירדת') ? 'למה זה כנראה ירד' : 'המשקל') : 'המשקל'}>
+      <Sheet open={sheet === 'weight'} onClose={() => setSheet(null)} title={week?.why ? (week.why.headline.startsWith('עלית') ? tr('למה זה כנראה עלה', 'Why it probably went up') : week.why.headline.startsWith('ירדת') ? tr('למה זה כנראה ירד', 'Why it probably went down') : tr('המשקל', 'Weight')) : tr('המשקל', 'Weight')}>
         {week?.why && (
           <View style={{ gap: 10 }}>
             <Text style={[T.bold, { fontSize: 18 }]}>{week.why.headline}</Text>
@@ -793,21 +793,21 @@ export default function TodayScreen({
         )}
       </Sheet>
 
-      <Sheet open={sheet === 'sleep'} onClose={() => setSheet(null)} title="שינה">
+      <Sheet open={sheet === 'sleep'} onClose={() => setSheet(null)} title={tr("שינה", 'Sleep')}>
         {sleepOpen > 0 && <SleepView key={sleepOpen} />}
       </Sheet>
 
-      <Sheet open={sheet === 'nudge'} onClose={() => setSheet(null)} title="המאמן">
+      <Sheet open={sheet === 'nudge'} onClose={() => setSheet(null)} title={tr("המאמן", 'The coach')}>
         {(() => {
           const n = freshNudge(coachToday.filter((m) => !((quiet[m.id.split('@')[0]] ?? 0) > Date.now()) && !doneSince(acted, m.id, m.at)), now);
-          if (!n) return <Text style={[T.muted, { fontSize: 14 }]}>אין הודעה פתוחה.</Text>;
+          if (!n) return <Text style={[T.muted, { fontSize: 14 }]}>{tr('אין הודעה פתוחה.', 'No open message.')}</Text>;
           return (
             <Card>
-              <Text style={[T.muted, { fontSize: 12 }]}>{new Date(n.at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</Text>
+              <Text style={[T.muted, { fontSize: 12 }]}>{new Date(n.at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}</Text>
               <Text style={[T.bold, { fontSize: 17 }]}>{n.title}</Text>
               <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>{n.body}</Text>
               <PrimaryButton
-                label="הבנתי"
+                label={tr("הבנתי", 'Got it')}
                 onPress={async () => {
                   // Close first; the screen updates after the drawer is gone, so the next
                   // message does not flash inside the closing drawer
@@ -833,26 +833,26 @@ export default function TodayScreen({
           }}
           style={s.inlineLink}
         >
-          <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>הגדרות המאמן</Text>
+          <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>{tr('הגדרות המאמן', 'Coach settings')}</Text>
         </Pressable>
       </Sheet>
 
-      <Sheet open={sheet === 'week'} onClose={() => setSheet(null)} title="השבוע">
+      <Sheet open={sheet === 'week'} onClose={() => setSheet(null)} title={tr("השבוע", 'This week')}>
         {week && weekVerdict(week) && <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>{weekVerdict(week)}</Text>}
         {week && week.labels.length > 0 && (
           <View style={{ gap: 6 }}>
-            <Text style={[T.bold, s.small]}>קלוריות ביום</Text>
+            <Text style={[T.bold, s.small]}>{tr('קלוריות ביום', 'Calories a day')}</Text>
             <TargetBars values={week.kcal} labels={week.labels} target={GOALS.calories} height={70} />
-            <Text style={[T.bold, s.small, { marginTop: 6 }]}>חלבון ביום</Text>
+            <Text style={[T.bold, s.small, { marginTop: 6 }]}>{tr('חלבון ביום', 'Protein a day')}</Text>
             <TargetBars values={week.protein} labels={week.labels} target={GOALS.proteinG} overIsBad={false} height={70} />
-            <Text style={[T.bold, s.small, { marginTop: 6 }]}>שעות שינה</Text>
+            <Text style={[T.bold, s.small, { marginTop: 6 }]}>{tr('שעות שינה', 'Hours of sleep')}</Text>
             <TargetBars values={week.sleep} labels={week.labels} target={GOALS.sleepHours} overIsBad={false} height={70} />
           </View>
         )}
-        <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>הקו המקווקו בכל גרף הוא היעד. היום עצמו עוד לא נגמר, ולכן הוא לא נכנס לממוצע.</Text>
+        <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{tr('הקו המקווקו בכל גרף הוא היעד. היום עצמו עוד לא נגמר, ולכן הוא לא נכנס לממוצע.', 'The dashed line in each chart is the goal. Today is not over yet, so it is not in the average.')}</Text>
       </Sheet>
 
-      <Sheet open={sheet === 'quality'} onClose={() => setSheet(null)} title="איכות נתונים">
+      <Sheet open={sheet === 'quality'} onClose={() => setSheet(null)} title={tr("איכות נתונים", 'Data quality')}>
         {data?.quality.map((q) => (
           <View key={q.label} style={{ gap: 2 }}>
             <View style={s.qualityHead}>
@@ -922,10 +922,10 @@ function Checklist({
   const flagOf = (key: string) => {
     const f = Object.values(follow).find((x) => checklistKeyOf(x.key) === key);
     if (!f) return null;
-    const hm = (t: number) => new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+    const hm = (t: number) => new Date(t).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
     return Date.now() >= f.dueAt
-      ? { overdue: true, text: `הבנתי ב${hm(f.ackAt)}, אבל לא בוצע` }
-      : { overdue: false, text: `הבנתי ב${hm(f.ackAt)}, אבדוק שוב ב${hm(f.dueAt)}` };
+      ? { overdue: true, text: tr(`הבנתי ב${hm(f.ackAt)}, אבל לא בוצע`, `Got it at ${hm(f.ackAt)}, but not done`) }
+      : { overdue: false, text: tr(`הבנתי ב${hm(f.ackAt)}, אבדוק שוב ב${hm(f.dueAt)}`, `Got it at ${hm(f.ackAt)}, I will check again at ${hm(f.dueAt)}`) };
   };
   // Short chips instead of a list: what is left first, done ones crossed out. Water has its own tile.
   const chipItems = [...open, ...shown.filter((i) => i.done)].filter((i) => i.key !== 'water');
@@ -1014,14 +1014,14 @@ function NowCard({
   onJournal?: () => void;
   children?: ReactNode;
 }) {
-  const at = nudge ? new Date(nudge.at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
+  const at = nudge ? new Date(nudge.at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' }) : '';
   return (
     <View style={s.now}>
       <View style={s.nowHead}>
-        <Text style={[T.muted, s.nowLabel]}>עכשיו</Text>
+        <Text style={[T.muted, s.nowLabel]}>{tr('עכשיו', 'Now')}</Text>
         {more > 0 && onJournal && (
           <Pressable onPress={onJournal} hitSlop={8}>
-            <Text style={[T.base, { fontSize: 12, color: '#BDB8B0' }]}>{more === 1 ? 'הודעה אחת מהמאמן היום' : `${more} הודעות מהמאמן היום`}</Text>
+            <Text style={[T.base, { fontSize: 12, color: '#BDB8B0' }]}>{more === 1 ? tr('הודעה אחת מהמאמן היום', 'One message from the coach today') : tr(`${more} הודעות מהמאמן היום`, `${more} messages from the coach today`)}</Text>
           </Pressable>
         )}
       </View>
@@ -1101,8 +1101,8 @@ function GymNowCard({ since, via, counted, onOpen }: { since: number; via?: stri
   return (
     <Pressable onPress={onOpen} style={({ pressed }) => [gymS.card, pressed && { opacity: 0.9 }]}>
       <View style={{ flexDirection: ROW, justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <Text style={[T.bold, { fontSize: 13, color: C.signal }]}>בחדר הכושר · {minutes} דק'</Text>
-        {via ? <Text style={[T.base, { fontSize: 12, color: '#B8B1A7' }]}>לפי {via}</Text> : null}
+        <Text style={[T.bold, { fontSize: 13, color: C.signal }]}>{tr('בחדר הכושר ·', 'At the gym ·')} {minutes} {tr('דק\'', 'min')}</Text>
+        {via ? <Text style={[T.base, { fontSize: 12, color: '#B8B1A7' }]}>{tr('לפי', 'by')} {via}</Text> : null}
       </View>
       <Text style={[T.bold, { fontSize: 22, color: '#fff' }]}>{session.title}</Text>
       <View style={{ gap: 6 }}>
@@ -1110,7 +1110,7 @@ function GymNowCard({ since, via, counted, onOpen }: { since: number; via?: stri
           <View style={[gymS.fill, { width: `${(counted ? 1 : pct) * 100}%` }]} />
         </View>
         <Text style={[T.base, { fontSize: 13, color: '#D6D2CC' }]}>
-          {counted || left === 0 ? 'האימון נספר. תמשיך כמה שצריך.' : `עוד ${left} דקות והיום נספר כאימון`}
+          {counted || left === 0 ? tr('האימון נספר. תמשיך כמה שצריך.', 'The workout counts. Keep going as long as you need.') : tr(`עוד ${left} דקות והיום נספר כאימון`, `${left} more minutes and today counts as a workout`)}
         </Text>
       </View>
       <View style={{ flexDirection: ROW, flexWrap: 'wrap', gap: 6 }}>
@@ -1119,7 +1119,7 @@ function GymNowCard({ since, via, counted, onOpen }: { since: number; via?: stri
             {e.name} {e.sets}×{e.reps}
           </Text>
         ))}
-        {session.exercises.length > 3 && <Text style={gymS.move}>ועוד {session.exercises.length - 3}</Text>}
+        {session.exercises.length > 3 && <Text style={gymS.move}>{tr('ועוד', 'and')} {session.exercises.length - 3}</Text>}
       </View>
     </Pressable>
   );

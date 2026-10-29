@@ -24,7 +24,7 @@ import WeightWhyCard, { dayLine } from './WeightWhyCard';
 import LogSheet, { LogKind } from './LogSheet';
 import { loadWaist } from '../progress/waist';
 
-import { ROW } from '../i18n';
+import { ROW, LOCALE } from '../i18n';
 const dayStart = (d: Date) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -285,13 +285,13 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
               if (pickedDay == null) return last14.length >= 2 ? <Text style={[T.base, { fontSize: 11, color: '#6F6A63' }]}>לחץ על נקודה בגרף לפרטי היום</Text> : null;
               return (
                 <Text style={[T.bold, { fontSize: 13, lineHeight: 19, color: '#fff' }]}>
-                  {row ? dayLine(row, story!.target) : `${new Date(pickedDay).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'numeric' })} · אין נתוני אוכל ושינה ליום הזה`}
+                  {row ? dayLine(row, story!.target) : `${new Date(pickedDay).toLocaleDateString(LOCALE, { weekday: 'long', day: 'numeric', month: 'numeric' })} · אין נתוני אוכל ושינה ליום הזה`}
                 </Text>
               );
             })()}
             {last && (
               <Text style={[T.base, { fontSize: 12, color: '#8A847B' }]}>
-                אחרונה {fmt(last.kg, 1)} · {last.date.toDateString() === new Date().toDateString() ? 'היום' : last.date.toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })} · {sourceLabel(last.source)}
+                אחרונה {fmt(last.kg, 1)} · {last.date.toDateString() === new Date().toDateString() ? 'היום' : last.date.toLocaleDateString(LOCALE, { day: 'numeric', month: 'numeric' })} · {sourceLabel(last.source)}
               </Text>
             )}
             {jump && (

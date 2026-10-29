@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { advise, CravingKind, findFood, Food, FOODS, KIND_LABEL, personalFoods } from '../nutrition/cravings';
 import { C, FONT, T } from '../ui/theme';
 
-import { ROW, SIDE_END, START } from '../i18n';
+import { ROW, SIDE_END, START, t } from '../i18n';
 const KINDS: CravingKind[] = ['sweet', 'salty', 'cold', 'savory', 'drink'];
 
 /** "I feel like something": pick or type it, and the coach says whether now is the time, and what instead. */
@@ -54,7 +54,7 @@ export default function Craving({ kcalLeft, proteinLeft, bedTime }: { kcalLeft: 
                 <View style={{ flex: 1 }}>
                   <Text style={[T.bold, { fontSize: 15 }]}>{f.name}</Text>
                   <Text style={[T.muted, { fontSize: 12 }]}>
-                    {f.portion} · חלבון {Math.round(f.protein)} · סוכר {Math.round(f.sugar)}
+                    {f.portion} {t('· חלבון', '· protein')} {Math.round(f.protein)} {t('· סוכר', '· sugar')} {Math.round(f.sugar)}
                   </Text>
                 </View>
                 <Text style={[T.bold, { fontSize: 15 }]}>{f.kcal}</Text>
@@ -63,9 +63,9 @@ export default function Craving({ kcalLeft, proteinLeft, bedTime }: { kcalLeft: 
           </View>
         )}
         <Pressable onPress={() => setFood(null)} hitSlop={8}>
-          <Text style={[T.bold, { fontSize: 14, color: C.muted, textDecorationLine: 'underline' }]}>משהו אחר</Text>
+          <Text style={[T.bold, { fontSize: 14, color: C.muted, textDecorationLine: 'underline' }]}>{t('משהו אחר', 'Something else')}</Text>
         </Pressable>
-        <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>הערכים הם הערכה למנה רגילה. אם אכלת, רשום כרגיל באפליקציית האוכל.</Text>
+        <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>{t('הערכים הם הערכה למנה רגילה. אם אכלת, רשום כרגיל באפליקציית האוכל.', 'Values are an estimate for a normal portion. If you ate it, log it as usual in the food app.')}</Text>
       </View>
     );
   }
@@ -75,7 +75,7 @@ export default function Craving({ kcalLeft, proteinLeft, bedTime }: { kcalLeft: 
       <TextInput
         value={text}
         onChangeText={setText}
-        placeholder="מה בא לך? למשל גלידה"
+        placeholder={t("מה בא לך? למשל גלידה", 'What do you feel like? e.g. ice cream')}
         placeholderTextColor={C.muted}
         style={s.input}
       />
@@ -90,16 +90,16 @@ export default function Craving({ kcalLeft, proteinLeft, bedTime }: { kcalLeft: 
       )}
       {text.trim() && !found.length && (
         <Text style={[T.muted, { fontSize: 14, lineHeight: 21 }]}>
-          לא מכיר את "{text.trim()}". נסה מילה אחרת, או צלם ב Zepp: מה שתרשום שם יופיע כאן בפעם הבאה.
+          {t('לא מכיר את "', 'Don\'t know "')}{text.trim()}{t('". נסה מילה אחרת, או צלם ב Zepp: מה שתרשום שם יופיע כאן בפעם הבאה.', '". Try another word, or snap it in Zepp: what you log there will show up here next time.')}
         </Text>
       )}
       {judged.length > 1 && (
         <View style={s.sortRow}>
           <Text style={[T.muted, { fontSize: 13, flex: 1 }]}>
-            {judged.filter((j) => j.a.call !== 'swap').length} מתאימים עכשיו, {judged.filter((j) => j.a.call === 'swap').length} לא
+            {judged.filter((j) => j.a.call !== 'swap').length} {t('מתאימים עכשיו,', 'fit right now,')} {judged.filter((j) => j.a.call === 'swap').length} {t('לא', 'not')}
           </Text>
           <Pressable onPress={() => setFitFirst(!fitFirst)} style={[s.sort, fitFirst && s.kindOn]} hitSlop={6}>
-            <Text style={[T.bold, { fontSize: 13, color: fitFirst ? '#fff' : C.ink }]}>מה מתאים קודם</Text>
+            <Text style={[T.bold, { fontSize: 13, color: fitFirst ? '#fff' : C.ink }]}>{t('מה מתאים קודם', 'What fits first')}</Text>
           </Pressable>
         </View>
       )}
@@ -110,21 +110,21 @@ export default function Craving({ kcalLeft, proteinLeft, bedTime }: { kcalLeft: 
           <Pressable key={f.id} onPress={() => setFood(f)} style={({ pressed }) => [s.item, pressed && { opacity: 0.7 }]}>
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={[T.bold, { fontSize: 15, color: no ? C.bad : C.ink }]}>{f.name}</Text>
-              <Text style={[T.muted, { fontSize: 12 }]}>{f.mine ? `שלך · ${f.portion}` : f.portion}</Text>
+              <Text style={[T.muted, { fontSize: 12 }]}>{f.mine ? t(`שלך · ${f.portion}`, `yours · ${f.portion}`) : f.portion}</Text>
               {alt && (
                 <Text style={[T.base, { fontSize: 12, color: C.ink }]} numberOfLines={1}>
-                  במקום: {alt.name}, {alt.kcal} קלוריות
+                  {t('במקום:', 'Instead:')} {alt.name}, {alt.kcal} {t('קלוריות', 'calories')}
                 </Text>
               )}
             </View>
             <View style={{ alignItems: SIDE_END, gap: 2 }}>
               <Text style={[T.bold, { fontSize: 15, color: no ? C.bad : C.ink }]}>{f.kcal}</Text>
-              {no ? <Text style={[T.bold, { fontSize: 11, color: C.bad }]}>לא עכשיו</Text> : a.call === 'small' ? <Text style={[T.bold, { fontSize: 11, color: C.warn }]}>מנה קטנה</Text> : null}
+              {no ? <Text style={[T.bold, { fontSize: 11, color: C.bad }]}>{t('לא עכשיו', 'Not now')}</Text> : a.call === 'small' ? <Text style={[T.bold, { fontSize: 11, color: C.warn }]}>{t('מנה קטנה', 'Small portion')}</Text> : null}
             </View>
           </Pressable>
         );
       })}
-      {!text.trim() && !kind && <Text style={[T.muted, { fontSize: 13 }]}>בחר כיוון או כתוב מה בא לך, ואגיד לך אם עכשיו זה הזמן, ומה במקום.</Text>}
+      {!text.trim() && !kind && <Text style={[T.muted, { fontSize: 13 }]}>{t('בחר כיוון או כתוב מה בא לך, ואגיד לך אם עכשיו זה הזמן, ומה במקום.', 'Pick a direction or type what you feel like, and I will tell you if now is the time, and what to have instead.')}</Text>}
     </View>
   );
 }

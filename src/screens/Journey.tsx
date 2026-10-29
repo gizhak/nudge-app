@@ -20,7 +20,7 @@ import { addCheckpoint, deleteCheckpoint, dropPhotos, givePhotoConsent, keepPhot
 import { Card, PrimaryButton, Screen } from '../ui/components';
 import { C, FONT, fmt, T } from '../ui/theme';
 
-import { END, ROW } from '../i18n';
+import { END, ROW, LOCALE } from '../i18n';
 // ---------- The card on the Progress tab ----------
 
 export function JourneyCard({ list, onCheckpoint, onCompare, onEdit }: { list: Checkpoint[]; onCheckpoint: () => void; onCompare: () => void; onEdit: () => void }) {
@@ -337,7 +337,7 @@ export function CompareView({ list, onClose, onChanged }: { list: Checkpoint[]; 
         {s0.map((c, i) => (
           <View key={c.id} style={s.row}>
             <Text style={[T.base, { fontSize: 14, flex: 1 }]}>
-              {i === 0 ? 'התחלה' : `ביקורת ${i}`} · {new Date(c.at).toLocaleDateString('he-IL')}
+              {i === 0 ? 'התחלה' : `ביקורת ${i}`} · {new Date(c.at).toLocaleDateString(LOCALE)}
               {c.waistCm ? ` · מותן ${c.waistCm}` : ''}
               {c.weightAvg ? ` · ${c.weightAvg} ק"ג` : ''}
             </Text>

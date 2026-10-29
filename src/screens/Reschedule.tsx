@@ -12,7 +12,7 @@ import { Card } from '../ui/components';
 import { TimeStepper } from '../ui/inputs';
 import { C, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, t as tr } from '../i18n';
 /** "Can't make it": move to another day this week, a short home version, or skip. */
 /** compact: only the short version and skipping; moving lives in the week planner */
 export default function Reschedule({ workout, onDone, compact = false }: { workout: PlannedWorkout; onDone: () => void; compact?: boolean }) {
@@ -45,17 +45,17 @@ export default function Reschedule({ workout, onDone, compact = false }: { worko
 
   return (
     <Card>
-      <Text style={[T.bold, { fontSize: 16 }]}>{compact ? 'לא מסתדר היום?' : `לא מסתדר: ${session.title}`}</Text>
+      <Text style={[T.bold, { fontSize: 16 }]}>{compact ? tr('לא מסתדר היום?', 'Can\'t make it today?') : tr(`לא מסתדר: ${session.title}`, `Can't make it: ${session.title}`)}</Text>
       {!compact && stats.week >= 1 && (
         <Text style={[T.bold, { fontSize: 14, color: C.signal }]}>
-          {stats.thisOne >= 2 ? 'האימון הזה כבר זז פעמיים השבוע. נשארו רק גרסה קצרה או ויתור.' : 'זה כבר השינוי השני השבוע. מה מפריע? אם זה קבוע, כדאי לשנות את הימים בתיק שלי.'}
+          {stats.thisOne >= 2 ? tr('האימון הזה כבר זז פעמיים השבוע. נשארו רק גרסה קצרה או ויתור.', 'This workout already moved twice this week. Only a short version or skipping is left.') : tr('זה כבר השינוי השני השבוע. מה מפריע? אם זה קבוע, כדאי לשנות את הימים בתיק שלי.', 'This is already the second change this week. What is in the way? If it is regular, change the days in My file.')}
         </Text>
       )}
 
       {canMove && (
         <>
-          <Text style={[T.muted, { fontSize: 13 }]}>להעביר ליום אחר השבוע:</Text>
-          {suggestions.length === 0 && <Text style={[T.base, { fontSize: 14 }]}>אין יום פנוי מתאים השבוע.</Text>}
+          <Text style={[T.muted, { fontSize: 13 }]}>{tr('להעביר ליום אחר השבוע:', 'Move to another day this week:')}</Text>
+          {suggestions.length === 0 && <Text style={[T.base, { fontSize: 14 }]}>{tr('אין יום פנוי מתאים השבוע.', 'No free day fits this week.')}</Text>}
           {suggestions.map((sg) => {
             const on = picked?.day === sg.day;
             return (
@@ -65,10 +65,10 @@ export default function Reschedule({ workout, onDone, compact = false }: { worko
               </Pressable>
             );
           })}
-          {picked && <Text style={[T.base, { fontSize: 13, color: C.muted }]}>הסדר אחרי ההעברה: {preview}</Text>}
+          {picked && <Text style={[T.base, { fontSize: 13, color: C.muted }]}>{tr('הסדר אחרי ההעברה:', 'The order after the move:')} {preview}</Text>}
           {picked && (
             <View style={s.timeRow}>
-              <Text style={[T.bold, { fontSize: 14 }]}>שעה</Text>
+              <Text style={[T.bold, { fontSize: 14 }]}>{tr('שעה', 'Time')}</Text>
               <TimeStepper value={picked.time} onChange={(time) => setPicked({ ...picked, time })} />
               <Pressable
                 style={s.btn}
@@ -76,17 +76,17 @@ export default function Reschedule({ workout, onDone, compact = false }: { worko
                   const next = moveWorkout(ov, now, workout, picked.day, picked.time);
                   save(
                     next,
-                    `מעביר את ${session.title} ליום ${DAY_NAMES[picked.day]} ב${hhmm(picked.time)}`,
+                    tr(`מעביר את ${session.title} ליום ${DAY_NAMES[picked.day]} ב${hhmm(picked.time)}`, `Moving ${session.title} to ${DAY_NAMES[picked.day]} at ${hhmm(picked.time)}`),
                     (() => {
                       // When the order puts another session on today, the coach says what today is now
                       const today = planThisWeek(now, undefined, next).find((w) => w.day === now.getDay());
                       const s = today ? sessionOf(today.session) : null;
-                      return `קיבלתי. מעכשיו: ${orderText(next, now, name)}.${s ? ` היום ${s.title}: ${sessionLine(s.exercises)}` : isToday ? ' היום מנוחה, אז מים וחלבון כרגיל.' : ''}`;
+                      return tr(`קיבלתי. מעכשיו: ${orderText(next, now, name)}.${s ? ` היום ${s.title}: ${sessionLine(s.exercises)}` : isToday ? ' היום מנוחה, אז מים וחלבון כרגיל.' : ''}`, `Got it. From now: ${orderText(next, now, name)}.${s ? ` Today ${s.title}: ${sessionLine(s.exercises)}` : isToday ? ' Today is rest, so water and protein as usual.' : ''}`);
                     })(),
                   );
                 }}
               >
-                <Text style={[T.bold, { color: '#fff', fontSize: 14 }]}>העבר</Text>
+                <Text style={[T.bold, { color: '#fff', fontSize: 14 }]}>{tr('העבר', 'Move')}</Text>
               </Pressable>
             </View>
           )}
@@ -94,15 +94,15 @@ export default function Reschedule({ workout, onDone, compact = false }: { worko
       )}
 
       <View style={s.row}>
-        <Pressable style={s.ghost} onPress={() => save(shortenWorkout(ov, now, workout), `במקום ${session.title}, 20 דקות בבית`, 'בסדר. 20 דקות זה עדיין אימון, והוא נספר.')}>
-          <Text style={[T.bold, { fontSize: 14 }]}>20 דקות בבית במקום</Text>
+        <Pressable style={s.ghost} onPress={() => save(shortenWorkout(ov, now, workout), tr(`במקום ${session.title}, 20 דקות בבית`, `Instead of ${session.title}, 20 minutes at home`), tr('בסדר. 20 דקות זה עדיין אימון, והוא נספר.', 'OK. 20 minutes is still a workout, and it counts.'))}>
+          <Text style={[T.bold, { fontSize: 14 }]}>{tr('20 דקות בבית במקום', '20 minutes at home instead')}</Text>
         </Pressable>
-        <Pressable style={s.ghost} onPress={() => save(skipWorkout(ov, now, workout), `מוותר על ${session.title} השבוע`, 'בסדר, לא אציק על האימון הזה. נתראה באימון הבא.')}>
-          <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>לוותר השבוע</Text>
+        <Pressable style={s.ghost} onPress={() => save(skipWorkout(ov, now, workout), tr(`מוותר על ${session.title} השבוע`, `Skipping ${session.title} this week`), tr('בסדר, לא אציק על האימון הזה. נתראה באימון הבא.', 'OK, I will not nag about this workout. See you at the next one.'))}>
+          <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>{tr('לוותר השבוע', 'Skip this week')}</Text>
         </Pressable>
       </View>
       <Pressable onPress={onDone}>
-        <Text style={[T.muted, { fontSize: 13 }]}>סגור, אני כן מתאמן ב{pad2(workout.hour)}:{pad2(workout.minute)}</Text>
+        <Text style={[T.muted, { fontSize: 13 }]}>{tr('סגור, אני כן מתאמן ב', 'Fine, I am training at')}{pad2(workout.hour)}:{pad2(workout.minute)}</Text>
       </Pressable>
     </Card>
   );

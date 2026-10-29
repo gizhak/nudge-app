@@ -27,7 +27,7 @@ import SleepEntry, { hoursText } from './SleepEntry';
 import WorkoutFeel from '../train/WorkoutFeel';
 import { SLEEP_MISSING, SLEEP_MISSING2 } from '../sleep/ask';
 
-import { ROW, SIDE_END, SIDE_START, START } from '../i18n';
+import { ROW, SIDE_END, SIDE_START, START, LOCALE } from '../i18n';
 const WATCH_CHANGED =
   'ככה מחברים שעון חדש:\n1. באפליקציה של השעון החדש (ל Bip Max זו Zepp) מפעילים סנכרון ל Health Connect.\n2. ב Health Connect, בהרשאות של אותה אפליקציה, מאשרים לה לכתוב שינה, צעדים, דופק ואימונים.\n3. ב Nudge, בהגדרות, מעדכנים את סוג השעון.\nמהלילה הבא הנתונים אמורים להגיע.';
 const NOTHING_CHANGED =
@@ -67,7 +67,7 @@ async function readDoings(): Promise<Mine[]> {
   return out;
 }
 
-const time = (at: number) => new Date(at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+const time = (at: number) => new Date(at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
 const baseOf = (id: string) => id.split('@')[0];
 const keyOf = (id: string) => (/^meal_\d+$/.test(id) ? 'food' : /^status_\d+$/.test(id) ? 'status' : baseOf(id));
 

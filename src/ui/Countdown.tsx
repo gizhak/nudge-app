@@ -5,6 +5,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { C, FONT } from './theme';
 import { useGrow } from './tabEnter';
 
+import { t as tr } from '../i18n';
 const ACircle = Animated.createAnimatedComponent(Circle);
 /** The ring counts the last 12 hours before the workout */
 const WINDOW_MS = 12 * 3600_000;
@@ -14,17 +15,17 @@ const STROKE = 7;
 const two = (n: number) => String(n).padStart(2, '0');
 
 export function countdownText(ms: number): { big: string; small: string } {
-  if (ms <= 0) return { big: 'עכשיו', small: 'זמן אימון' };
+  if (ms <= 0) return { big: tr('עכשיו', 'Now'), small: tr('זמן אימון', 'Workout time') };
   const mins = Math.floor(ms / 60_000);
   if (mins >= 24 * 60) {
     const days = Math.round(mins / (24 * 60));
-    return { big: String(days), small: days === 1 ? 'יום לאימון' : 'ימים לאימון' };
+    return { big: String(days), small: days === 1 ? tr('יום לאימון', 'day to workout') : tr('ימים לאימון', 'days to workout') };
   }
   // Hours as a number of hours: "12:52" reads like a clock time
-  if (mins >= 3 * 60) return { big: String(Math.round(mins / 60)), small: 'שעות לאימון' };
-  if (mins >= 60) return { big: `${Math.floor(mins / 60)}:${two(mins % 60)}`, small: 'שעות לאימון' };
+  if (mins >= 3 * 60) return { big: String(Math.round(mins / 60)), small: tr('שעות לאימון', 'hours to workout') };
+  if (mins >= 60) return { big: `${Math.floor(mins / 60)}:${two(mins % 60)}`, small: tr('שעות לאימון', 'hours to workout') };
   const secs = Math.floor(ms / 1000);
-  return { big: `${Math.floor(secs / 60)}:${two(secs % 60)}`, small: 'דקות לאימון' };
+  return { big: `${Math.floor(secs / 60)}:${two(secs % 60)}`, small: tr('דקות לאימון', 'minutes to workout') };
 }
 
 export default function Countdown({ at }: { at: Date }) {

@@ -8,7 +8,7 @@ import { loadAndApply } from '../profile/bootstrap';
 import { Card, PrimaryButton } from '../ui/components';
 import { C, FONT, T } from '../ui/theme';
 
-import { START } from '../i18n';
+import { START, t as tr } from '../i18n';
 /** Paste a restaurant menu, get the dishes that fit the goal and the ones to skip. */
 export default function MenuAdvisor({ kcal, protein, initialText }: { kcal: number; protein: number; initialText?: string }) {
   const [text, setText] = useState(initialText ?? '');
@@ -18,7 +18,7 @@ export default function MenuAdvisor({ kcal, protein, initialText }: { kcal: numb
   const analyze = async (menu = text) => {
     setNote(null);
     if (menu.trim().length < 5) {
-      setNote('אין טקסט לנתח. הדבק את התפריט קודם.');
+      setNote(tr('אין טקסט לנתח. הדבק את התפריט קודם.', 'No text to read. Paste the menu first.'));
       return;
     }
     const { profile } = await loadAndApply();
@@ -29,7 +29,7 @@ export default function MenuAdvisor({ kcal, protein, initialText }: { kcal: numb
       vegetarian: profile.diet.includes('vegetarian'),
     });
     setAdvice(result);
-    if (!result.total) setNote('לא זיהיתי מנות בטקסט. כל מנה צריכה להיות בשורה נפרדת.');
+    if (!result.total) setNote(tr('לא זיהיתי מנות בטקסט. כל מנה צריכה להיות בשורה נפרדת.', 'No dishes found in the text. Each dish should be on its own line.'));
   };
 
   // After "photograph menu": when he comes back from Lens with the text copied, analyze it at once
@@ -63,14 +63,14 @@ export default function MenuAdvisor({ kcal, protein, initialText }: { kcal: numb
     lastClip.current = await Clipboard.getStringAsync().catch(() => '');
     if (!(await openLens())) {
       lensAt.current = 0;
-      setNote('לא הצלחתי לפתוח את Google Lens. פתח אותו בעצמך, העתק את הטקסט וחזור לכאן.');
+      setNote(tr('לא הצלחתי לפתוח את Google Lens. פתח אותו בעצמך, העתק את הטקסט וחזור לכאן.', 'Could not open Google Lens. Open it yourself, copy the text and come back.'));
     }
   };
 
   const paste = async () => {
     const clip = await Clipboard.getStringAsync().catch(() => '');
     if (!clip.trim()) {
-      setNote('הלוח ריק. העתק קודם את טקסט התפריט.');
+      setNote(tr('הלוח ריק. העתק קודם את טקסט התפריט.', 'The clipboard is empty. Copy the menu text first.'));
       return;
     }
     setText(clip);
@@ -78,41 +78,41 @@ export default function MenuAdvisor({ kcal, protein, initialText }: { kcal: numb
   };
 
   return (
-    <Card title="מה להזמין במסעדה">
+    <Card title={tr("מה להזמין במסעדה", 'What to order at a restaurant')}>
       <Text style={[T.base, s.help]}>
-        צלם את התפריט, ב Google Lens בחר "טקסט" ואז "העתק", וחזור לכאן. הניתוח מתחיל לבד. אפשר גם לשתף טקסט ל Nudge מכל אפליקציה.
+        {tr('צלם את התפריט, ב Google Lens בחר "טקסט" ואז "העתק", וחזור לכאן. הניתוח מתחיל לבד. אפשר גם לשתף טקסט ל Nudge מכל אפליקציה.', 'Photograph the menu: in Google Lens choose "Text" and then "Copy", and come back. Reading starts on its own. You can also share text to Nudge from any app.')}
       </Text>
-      <PrimaryButton label="צלם תפריט" onPress={photograph} />
+      <PrimaryButton label={tr("צלם תפריט", 'Photograph a menu')} onPress={photograph} />
       <Pressable onPress={paste} style={s.secondary}>
-        <Text style={[T.bold, { textAlign: 'center', color: C.ink }]}>הדבק תפריט שכבר העתקת</Text>
+        <Text style={[T.bold, { textAlign: 'center', color: C.ink }]}>{tr('הדבק תפריט שכבר העתקת', 'Paste a menu you copied')}</Text>
       </Pressable>
       <TextInput
         value={text}
         onChangeText={setText}
         multiline
-        placeholder="או הקלד כאן, מנה בכל שורה"
+        placeholder={tr("או הקלד כאן, מנה בכל שורה", 'Or type here, one dish per line')}
         placeholderTextColor={C.muted}
         style={s.input}
         textAlignVertical="top"
       />
       {text.trim().length > 0 && (
         <Pressable onPress={() => analyze()} style={s.secondary}>
-          <Text style={[T.bold, { textAlign: 'center', color: C.ink }]}>נתח שוב</Text>
+          <Text style={[T.bold, { textAlign: 'center', color: C.ink }]}>{tr('נתח שוב', 'Read again')}</Text>
         </Pressable>
       )}
       {note && <Text style={[T.bold, { color: C.warn, fontSize: 14 }]}>{note}</Text>}
 
       {advice && advice.total > 0 && (
         <View style={{ gap: 10 }}>
-          <Section title="מומלץ" color={C.accent} dishes={advice.best} empty="אין מנה שמתאימה באמת למטרה." />
-          <Section title="עדיף לוותר" color={C.bad} dishes={advice.avoid} empty="אין מנה בעייתית במיוחד." />
+          <Section title={tr("מומלץ", 'Recommended')} color={C.accent} dishes={advice.best} empty={tr("אין מנה שמתאימה באמת למטרה.", 'No dish really fits the goal.')} />
+          <Section title={tr("עדיף לוותר", 'Better to skip')} color={C.bad} dishes={advice.avoid} empty={tr("אין מנה בעייתית במיוחד.", 'No especially bad dish.')} />
           {advice.tips.map((t) => (
             <Text key={t} style={[T.base, s.tip]}>
               {t}
             </Text>
           ))}
           <Text style={[T.muted, { fontSize: 12 }]}>
-            נבדקו {advice.total} שורות, {advice.unknown} לא זוהו. הדירוג לפי מרכיבים ושיטת הכנה, בלי גודל מנה. אחרי האוכל, צלם ב Zepp.
+            {tr('נבדקו', 'Checked')} {advice.total} {tr('שורות,', 'lines,')} {advice.unknown} {tr('לא זוהו. הדירוג לפי מרכיבים ושיטת הכנה, בלי גודל מנה. אחרי האוכל, צלם ב Zepp.', 'not recognized. Ranked by ingredients and cooking method, not portion size. After eating, snap it in Zepp.')}
           </Text>
         </View>
       )}

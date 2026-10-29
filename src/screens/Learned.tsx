@@ -10,7 +10,7 @@ import { loadSettings } from '../notifications/settings';
 import { Card, PrimaryButton } from '../ui/components';
 import { C, T } from '../ui/theme';
 
-import { SIDE_END } from '../i18n';
+import { SIDE_END, LOCALE } from '../i18n';
 const HOUR = 3600000;
 
 /**
@@ -95,7 +95,7 @@ export default function Learned() {
           <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>יום נספר כאימון רק אחרי {GYM_MIN} דקות בחדר הכושר, או אימון מהשעון, או "התאמנתי".</Text>
           {[...gym].reverse().slice(0, 12).map((g, i) => (
             <Text key={i} style={[T.base, { fontSize: 13 }]}>
-              {new Date(g.at).toLocaleString('he-IL', { weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })} ·{' '}
+              {new Date(g.at).toLocaleString(LOCALE, { weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })} ·{' '}
               {g.kind === 'enter' ? 'הגעה' : g.kind === 'exit' ? `יציאה אחרי ${g.minutes ?? 0} דק'` : `נספר כאימון, ${g.minutes} דק'`}
               {g.via ? ` · לפי ${g.via}` : ''}
             </Text>
@@ -126,12 +126,12 @@ export default function Learned() {
         )}
         {lastMsg && (
           <Text style={[T.muted, { fontSize: 13 }]}>
-            ההודעה האחרונה שנשלחה: {new Date(lastMsg).toLocaleString('he-IL', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            ההודעה האחרונה שנשלחה: {new Date(lastMsg).toLocaleString(LOCALE, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </Text>
         )}
         {run && (
           <Text style={[T.muted, { fontSize: 13 }]} selectable>
-            בדיקה אחרונה ב {new Date(run.at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}:{' '}
+            בדיקה אחרונה ב {new Date(run.at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}:{' '}
             {run.why === 'driving'
               ? 'שקט, כי נראה שאתה נוהג (הרכב מחובר)'
               : run.why === 'sent'
@@ -157,14 +157,14 @@ export default function Learned() {
         {logOpen &&
           [...runLog].reverse().map((x, i) => (
             <Text key={i} style={[T.muted, { fontSize: 12, lineHeight: 18 }]} selectable>
-              {new Date(x.at).toLocaleString('he-IL', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} ·{' '}
+              {new Date(x.at).toLocaleString(LOCALE, { weekday: 'short', hour: '2-digit', minute: '2-digit' })} ·{' '}
               {x.how === 'manual' ? 'ידני' : x.how === 'unlock' ? 'פתיחת מסך' : x.how === 'place' ? 'מקום' : 'רקע'} ·{' '}
               {x.why === 'driving' ? 'נהיגה, שקט' : x.why === 'sent' ? `נשלח: ${(x.sent ?? []).join(', ')}` : x.why === 'caps' ? `הוחזק: ${(x.held ?? []).join(', ')}` : x.why === 'said' ? 'כבר נאמר' : x.why === 'snoozed' ? 'מושתק' : 'אין מה להגיד'}
             </Text>
           ))}
         {err && now - err.at < 24 * HOUR && (
           <Text style={[T.base, { fontSize: 13, color: C.signal }]} selectable>
-            תקלה ב {new Date(err.at).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}: {err.msg} {err.where ? `(${err.where})` : ''}
+            תקלה ב {new Date(err.at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}: {err.msg} {err.where ? `(${err.where})` : ''}
           </Text>
         )}
       </Card>
@@ -190,7 +190,7 @@ export default function Learned() {
           </Text>
         )}
         <Text style={[T.muted, { fontSize: 12 }]}>
-          {l.at ? `עודכן ב ${new Date(l.at).toLocaleString('he-IL', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}. ` : ''}
+          {l.at ? `עודכן ב ${new Date(l.at).toLocaleString(LOCALE, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}. ` : ''}
           הלמידה רצה פעם ב 12 שעות, על 3 השבועות האחרונים, ונשארת בטלפון.
         </Text>
         <PrimaryButton

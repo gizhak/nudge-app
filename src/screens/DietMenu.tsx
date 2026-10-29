@@ -11,7 +11,7 @@ import { clearMenu, loadMenu, saveMenu } from '../diet/store';
 import type { SlotId } from '../nutrition/meals';
 import { C, FONT, fmt, T } from '../ui/theme';
 
-import { ROW, START } from '../i18n';
+import { ROW, START, t as tr } from '../i18n';
 const SLOT_ORDER: SlotId[] = ['breakfast', 'snack_am', 'lunch', 'snack_pm', 'dinner', 'night'];
 
 export default function DietMenuScreen({ open, onClose, initialText, onSaved }: { open: boolean; onClose: () => void; initialText?: string; onSaved?: () => void }) {
@@ -33,7 +33,7 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
   const read = (text: string) => {
     const d = parseDiet(text);
     if (!d.meals.length) {
-      setNote('לא זיהיתי ארוחות בטקסט. צריך כותרות כמו "ארוחת בוקר" ושורה לכל מאכל.');
+      setNote(tr('לא זיהיתי ארוחות בטקסט. צריך כותרות כמו "ארוחת בוקר" ושורה לכל מאכל.', 'No meals found in the text. It needs headers like "Breakfast" and a line for each food.'));
       return;
     }
     setNote(null);
@@ -62,12 +62,12 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
   const lens = async () => {
     lensAt.current = Date.now();
     const ok = await openLens();
-    if (!ok) setNote('לא הצלחתי לפתוח את Google Lens. צלם את התפריט ב Lens, העתק את הטקסט, והדבק כאן.');
+    if (!ok) setNote(tr('לא הצלחתי לפתוח את Google Lens. צלם את התפריט ב Lens, העתק את הטקסט, והדבק כאן.', 'Could not open Google Lens. Photograph the menu in Lens, copy the text, and paste it here.'));
   };
   const fromClipboard = async () => {
     const clip = await Clipboard.getStringAsync().catch(() => '');
     if (clip.trim()) read(clip);
-    else setNote('אין טקסט בזיכרון. העתק את התפריט קודם.');
+    else setNote(tr('אין טקסט בזיכרון. העתק את התפריט קודם.', 'Nothing on the clipboard. Copy the menu first.'));
   };
 
   const setItem = (mi: number, ii: number, patch: Partial<MenuItem> | null) => {
@@ -116,30 +116,30 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
     <Modal visible={open} animationType="slide" onRequestClose={close} statusBarTranslucent>
       <View style={s.root}>
         <View style={s.head}>
-          <Pressable onPress={close} style={s.x} hitSlop={8} accessibilityLabel="סגור">
+          <Pressable onPress={close} style={s.x} hitSlop={8} accessibilityLabel={tr("סגור", 'Close')}>
             <Ionicons name="close" size={22} color={C.ink} />
           </Pressable>
-          <Text style={[T.bold, { fontSize: 22, flex: 1 }]}>{view === 'review' ? 'בדיקת התפריט' : 'התפריט שלי'}</Text>
+          <Text style={[T.bold, { fontSize: 22, flex: 1 }]}>{view === 'review' ? tr('בדיקת התפריט', 'Check the menu') : tr('התפריט שלי', 'My menu')}</Text>
         </View>
 
         <ScrollView contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
           {view === 'intake' && (
             <>
               <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>
-                יש לך תפריט מדיאטנית? צלם אותו, ואני אקרא את הארוחות והכמויות. אחרי בדיקה שלך, התפריט יקבע את היעד היומי, ובכל ארוחה תראה מה בתפריט מול מה שאכלת.
+                {tr('יש לך תפריט מדיאטנית? צלם אותו, ואני אקרא את הארוחות והכמויות. אחרי בדיקה שלך, התפריט יקבע את היעד היומי, ובכל ארוחה תראה מה בתפריט מול מה שאכלת.', 'Have a menu from a dietitian? Photograph it, and I will read the meals and amounts. After you check it, the menu sets the daily goal, and each meal shows what the menu says against what you ate.')}
               </Text>
               <Pressable onPress={lens} style={({ pressed }) => [s.dark, pressed && { opacity: 0.85 }]}>
                 <Ionicons name="camera-outline" size={20} color="#fff" />
-                <Text style={[T.bold, { color: '#fff', fontSize: 16 }]}>לצלם עם Google Lens</Text>
+                <Text style={[T.bold, { color: '#fff', fontSize: 16 }]}>{tr('לצלם עם Google Lens', 'Photograph with Google Lens')}</Text>
               </Pressable>
-              <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>ב Lens: בוחרים "טקסט", מסמנים הכל, מעתיקים, וחוזרים לכאן. הקריאה מתחילה לבד.</Text>
+              <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{tr('ב Lens: בוחרים "טקסט", מסמנים הכל, מעתיקים, וחוזרים לכאן. הקריאה מתחילה לבד.', 'In Lens: choose "Text", select all, copy, and come back here. Reading starts on its own.')}</Text>
               <Pressable onPress={fromClipboard} style={({ pressed }) => [s.light, pressed && { opacity: 0.85 }]}>
-                <Text style={[T.bold, { fontSize: 15 }]}>כבר העתקתי, להדביק</Text>
+                <Text style={[T.bold, { fontSize: 15 }]}>{tr('כבר העתקתי, להדביק', 'I already copied it, paste')}</Text>
               </Pressable>
-              <TextInput value={paste} onChangeText={setPaste} placeholder="או להקליד או להדביק כאן את התפריט" placeholderTextColor={C.muted} multiline style={s.area} />
+              <TextInput value={paste} onChangeText={setPaste} placeholder={tr("או להקליד או להדביק כאן את התפריט", 'Or type or paste the menu here')} placeholderTextColor={C.muted} multiline style={s.area} />
               {paste.trim().length > 10 && (
                 <Pressable onPress={() => read(paste)} style={({ pressed }) => [s.light, pressed && { opacity: 0.85 }]}>
-                  <Text style={[T.bold, { fontSize: 15 }]}>לקרוא את הטקסט</Text>
+                  <Text style={[T.bold, { fontSize: 15 }]}>{tr('לקרוא את הטקסט', 'Read the text')}</Text>
                 </Pressable>
               )}
             </>
@@ -150,14 +150,14 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
           {view === 'review' && draft && totals && (
             <>
               <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>
-                הקלוריות והחלבון הם הערכה שלי לפי טבלה, לא חלק מהתפריט. לחיצה על שורה מאפשרת לתקן. שורות בכתום לא זיהיתי, ותצטרך למלא אותן או למחוק.
+                {tr('הקלוריות והחלבון הם הערכה שלי לפי טבלה, לא חלק מהתפריט. לחיצה על שורה מאפשרת לתקן. שורות בכתום לא זיהיתי, ותצטרך למלא אותן או למחוק.', 'Calories and protein are my estimate from a table, not part of the menu. Tap a line to fix it. Orange lines I could not read; fill them in or delete them.')}
               </Text>
               {draft.meals.map((m, mi) => (
                 <View key={m.slot + mi} style={s.meal}>
                   <View style={s.mealHead}>
                     <Text style={[T.bold, { fontSize: 17 }]}>{m.title}</Text>
                     <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>
-                      {fmt(mealKcal(m))} קל' · {fmt(mealProtein(m))} ג' חלבון
+                      {fmt(mealKcal(m))} {tr('קל\' ·', 'kcal ·')} {fmt(mealProtein(m))} {tr('ג\' חלבון', 'g protein')}
                     </Text>
                   </View>
                   <View style={{ gap: 6, flexDirection: ROW, flexWrap: 'wrap' }}>
@@ -174,14 +174,14 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
                         <Pressable onPress={() => setEdit(edit === id ? null : id)} style={{ gap: 2 }}>
                           <Text style={[T.base, { fontSize: 15, lineHeight: 21 }]}>{x.text}</Text>
                           <Text style={[T.bold, { fontSize: 12, color: x.known ? C.muted : C.signal }]}>
-                            {x.known ? `${fmt(x.kcal)} קל' · ${x.protein} ג' חלבון${x.free ? ' · חופשי' : ''}` : 'לא זיהיתי. לחץ כדי למלא'}
+                            {x.known ? tr(`${fmt(x.kcal)} קל' · ${x.protein} ג' חלבון${x.free ? ' · חופשי' : ''}`, `${fmt(x.kcal)} kcal · ${x.protein} g protein${x.free ? ' · unlimited' : ''}`) : tr('לא זיהיתי. לחץ כדי למלא', 'Not recognized. Tap to fill in')}
                           </Text>
                         </Pressable>
                         {edit === id && (
                           <View style={s.editRow}>
-                            <Num label="קלוריות" value={x.kcal} onChange={(v) => setItem(mi, ii, { kcal: v })} />
-                            <Num label="חלבון, גרם" value={x.protein} onChange={(v) => setItem(mi, ii, { protein: v })} />
-                            <Pressable onPress={() => setItem(mi, ii, null)} style={s.del} hitSlop={6} accessibilityLabel="למחוק שורה">
+                            <Num label={tr("קלוריות", 'Calories')} value={x.kcal} onChange={(v) => setItem(mi, ii, { kcal: v })} />
+                            <Num label={tr("חלבון, גרם", 'Protein, grams')} value={x.protein} onChange={(v) => setItem(mi, ii, { protein: v })} />
+                            <Pressable onPress={() => setItem(mi, ii, null)} style={s.del} hitSlop={6} accessibilityLabel={tr("למחוק שורה", 'Delete line')}>
                               <Ionicons name="trash-outline" size={18} color={C.warn} />
                             </Pressable>
                           </View>
@@ -190,25 +190,25 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
                     );
                   })}
                   <View style={s.addRow}>
-                    <TextInput value={adding[mi] ?? ''} onChangeText={(t) => setAdding({ ...adding, [mi]: t })} placeholder="להוסיף שורה, למשל 2 ביצים" placeholderTextColor={C.muted} style={s.addInput} onSubmitEditing={() => addLine(mi)} />
-                    <Pressable onPress={() => addLine(mi)} hitSlop={6} accessibilityLabel="להוסיף">
+                    <TextInput value={adding[mi] ?? ''} onChangeText={(t) => setAdding({ ...adding, [mi]: t })} placeholder={tr("להוסיף שורה, למשל 2 ביצים", 'Add a line, e.g. 2 eggs')} placeholderTextColor={C.muted} style={s.addInput} onSubmitEditing={() => addLine(mi)} />
+                    <Pressable onPress={() => addLine(mi)} hitSlop={6} accessibilityLabel={tr("להוסיף", 'Add')}>
                       <Ionicons name="add-circle" size={28} color={C.ink} />
                     </Pressable>
                   </View>
                 </View>
               ))}
               <View style={s.total}>
-                <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>סך הכל ביום</Text>
+                <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>{tr('סך הכל ביום', 'Total a day')}</Text>
                 <Text style={[T.bold, { fontSize: 22, fontFamily: FONT.black }]}>
-                  {fmt(totals.kcal)} קלוריות · {totals.protein} ג' חלבון
+                  {fmt(totals.kcal)} {tr('קלוריות ·', 'calories ·')} {totals.protein} {tr('ג\' חלבון', 'g protein')}
                 </Text>
-                {totals.unknown > 0 && <Text style={[T.bold, { fontSize: 13, color: C.signal }]}>{totals.unknown} שורות עוד לא מולאו, והן לא נספרות.</Text>}
+                {totals.unknown > 0 && <Text style={[T.bold, { fontSize: 13, color: C.signal }]}>{totals.unknown} {tr('שורות עוד לא מולאו, והן לא נספרות.', 'lines are not filled in yet, and they do not count.')}</Text>}
               </View>
               <Pressable onPress={save} style={({ pressed }) => [s.dark, pressed && { opacity: 0.85 }]}>
-                <Text style={[T.bold, { color: '#fff', fontSize: 16 }]}>לשמור את התפריט</Text>
+                <Text style={[T.bold, { color: '#fff', fontSize: 16 }]}>{tr('לשמור את התפריט', 'Save the menu')}</Text>
               </Pressable>
               <Pressable onPress={() => setDraft(null)} style={({ pressed }) => [s.light, pressed && { opacity: 0.85 }]}>
-                <Text style={[T.bold, { fontSize: 15 }]}>ביטול</Text>
+                <Text style={[T.bold, { fontSize: 15 }]}>{tr('ביטול', 'Cancel')}</Text>
               </Pressable>
             </>
           )}
@@ -217,7 +217,7 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
             <>
               {fresh && (
                 <Text style={[T.bold, { fontSize: 15, color: C.good, lineHeight: 22 }]}>
-                  נשמר. מעכשיו היעד היומי הוא {fmt(totals.kcal)} קלוריות ו {totals.protein} גרם חלבון, לפי התפריט.
+                  {tr('נשמר. מעכשיו היעד היומי הוא', 'Saved. From now the daily goal is')} {fmt(totals.kcal)} {tr('קלוריות ו', 'calories and')} {totals.protein} {tr('גרם חלבון, לפי התפריט.', 'grams of protein, by the menu.')}
                 </Text>
               )}
               {saved.meals.map((m, mi) => (
@@ -225,7 +225,7 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
                   <View style={s.mealHead}>
                     <Text style={[T.bold, { fontSize: 17 }]}>{m.title}</Text>
                     <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>
-                      {fmt(mealKcal(m))} קל' · {fmt(mealProtein(m))} ג'
+                      {fmt(mealKcal(m))} {tr('קל\' ·', 'kcal ·')} {fmt(mealProtein(m))} {tr('ג\'', 'g')}
                     </Text>
                   </View>
                   {m.items.map((x, ii) => (
@@ -236,20 +236,20 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
                 </View>
               ))}
               <View style={s.total}>
-                <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>היעד היומי לפי התפריט</Text>
+                <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>{tr('היעד היומי לפי התפריט', 'Daily goal by the menu')}</Text>
                 <Text style={[T.bold, { fontSize: 22, fontFamily: FONT.black }]}>
-                  {fmt(totals.kcal)} קלוריות · {totals.protein} ג' חלבון
+                  {fmt(totals.kcal)} {tr('קלוריות ·', 'calories ·')} {totals.protein} {tr('ג\' חלבון', 'g protein')}
                 </Text>
-                <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>כל עוד יש תפריט, המאמן לא מציע לשנות קלוריות. את התפריט משנה רק הדיאטנית.</Text>
+                <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{tr('כל עוד יש תפריט, המאמן לא מציע לשנות קלוריות. את התפריט משנה רק הדיאטנית.', 'As long as there is a menu, the coach does not suggest changing calories. Only the dietitian changes the menu.')}</Text>
               </View>
               <Pressable onPress={() => setDraft(saved)} style={({ pressed }) => [s.light, pressed && { opacity: 0.85 }]}>
-                <Text style={[T.bold, { fontSize: 15 }]}>לתקן</Text>
+                <Text style={[T.bold, { fontSize: 15 }]}>{tr('לתקן', 'Fix')}</Text>
               </Pressable>
               <Pressable onPress={() => setSaved(null)} style={({ pressed }) => [s.light, pressed && { opacity: 0.85 }]}>
-                <Text style={[T.bold, { fontSize: 15 }]}>תפריט חדש</Text>
+                <Text style={[T.bold, { fontSize: 15 }]}>{tr('תפריט חדש', 'New menu')}</Text>
               </Pressable>
               <Pressable onPress={remove} style={({ pressed }) => [s.light, pressed && { opacity: 0.85 }]}>
-                <Text style={[T.bold, { fontSize: 15, color: C.warn }]}>להסיר את התפריט</Text>
+                <Text style={[T.bold, { fontSize: 15, color: C.warn }]}>{tr('להסיר את התפריט', 'Remove the menu')}</Text>
               </Pressable>
             </>
           )}

@@ -3,6 +3,7 @@
 import { readRecords } from 'react-native-health-connect';
 import { sleepMinutesInWindow } from './today';
 
+import { LOCALE } from '../i18n';
 const DAY = 24 * 3600 * 1000;
 const H = 3600 * 1000;
 
@@ -154,7 +155,7 @@ export function diagnose(p: { records: any[]; error?: string; granted: boolean; 
   for (const [s, c] of bySource) lines.push(`מקור: ${p.label(s)} · ${c} לילות מתוך ${p.days}`);
   const last = Math.max(...p.records.map((r) => new Date(r.endTime).getTime()));
   const ago = (now - last) / H;
-  const lastText = new Date(last).toLocaleString('he-IL', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const lastText = new Date(last).toLocaleString(LOCALE, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
   let ok = true;
   if (ago > 36) {
     ok = false;

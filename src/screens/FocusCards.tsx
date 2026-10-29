@@ -11,7 +11,7 @@ import { Sheet } from '../ui/Sheet';
 import SleepEntry from './SleepEntry';
 import { C, FONT, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, t } from '../i18n';
 export default function FocusCards({ tick = 0 }: { tick?: number }) {
   const [focus, setFocus] = useState<Focus | null>(null);
   const [days, setDays] = useState<(boolean | null)[]>([]);
@@ -59,9 +59,9 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
       {focus && (
         <Pressable onPress={() => setOpen(true)} style={({ pressed }) => [s.card, pressed && { opacity: 0.9 }]}>
           <View style={s.row}>
-            <Text style={[T.bold, { fontSize: 12, color: C.signal }]}>המיקוד של השבוע</Text>
+            <Text style={[T.bold, { fontSize: 12, color: C.signal }]}>{t('המיקוד של השבוע', 'This week\'s focus')}</Text>
             <Text style={[T.bold, { fontSize: 12, color: C.muted }]}>
-              {hit} מתוך {focus.need}
+              {hit} {t('מתוך', 'of')} {focus.need}
             </Text>
           </View>
           <Text style={[T.bold, { fontSize: 17, fontFamily: FONT.black }]}>{focus.title}</Text>
@@ -84,15 +84,15 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
       )}
       {prop && (
         <View style={[s.card, s.ask]}>
-          <Text style={[T.bold, { fontSize: 12, color: C.signal }]}>המאמן מציע שינוי בתוכנית</Text>
+          <Text style={[T.bold, { fontSize: 12, color: C.signal }]}>{t('המאמן מציע שינוי בתוכנית', 'The coach suggests a change to the plan')}</Text>
           <Text style={[T.bold, { fontSize: 17, fontFamily: FONT.black }]}>{prop.title}</Text>
           <Text style={[T.base, { fontSize: 14, lineHeight: 21, color: '#4A453F' }]}>{prop.body}</Text>
           <View style={{ flexDirection: ROW, gap: 8 }}>
             <Pressable onPress={() => answer(true)} style={({ pressed }) => [s.yes, pressed && { opacity: 0.85 }]}>
-              <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>כן, לעדכן</Text>
+              <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>{t('כן, לעדכן', 'Yes, update')}</Text>
             </Pressable>
             <Pressable onPress={() => answer(false)} style={({ pressed }) => [s.no, pressed && { opacity: 0.85 }]}>
-              <Text style={[T.bold, { fontSize: 15, textAlign: 'center' }]}>לא עכשיו</Text>
+              <Text style={[T.bold, { fontSize: 15, textAlign: 'center' }]}>{t('לא עכשיו', 'Not now')}</Text>
             </Pressable>
           </View>
         </View>
@@ -103,20 +103,20 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
         </View>
       )}
 
-      <Sheet open={open} onClose={() => setOpen(false)} title="המיקוד של השבוע">
+      <Sheet open={open} onClose={() => setOpen(false)} title={t("המיקוד של השבוע", 'This week\'s focus')}>
         {focus && (
           <>
             <Text style={[T.bold, { fontSize: 20, fontFamily: FONT.black }]}>{focus.title}</Text>
-            <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>למה דווקא זה: {focus.why}</Text>
+            <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>{t('למה דווקא זה:', 'Why this one:')} {focus.why}</Text>
             <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>
-              המטרה: {focus.need} ימים מתוך 7. עד עכשיו {hit}.
+              {t('המטרה:', 'The goal:')} {focus.need} {t('ימים מתוך 7. עד עכשיו', 'days out of 7. So far')} {hit}.
             </Text>
             {focus.last && (
               <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>
-                בשבוע שעבר: {focus.last.title}, {focus.last.hit} מתוך {focus.last.need}.
+                {t('בשבוע שעבר:', 'Last week:')} {focus.last.title}, {focus.last.hit} {t('מתוך', 'of')} {focus.last.need}.
               </Text>
             )}
-            <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>המיקוד נבחר בכל יום ראשון לפי השבועיים שלפניו: הדבר שהכי משפיע על המטרה שלך ועוד לא ביעד.</Text>
+            <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{t('המיקוד נבחר בכל יום ראשון לפי השבועיים שלפניו: הדבר שהכי משפיע על המטרה שלך ועוד לא ביעד.', 'The focus is chosen every Sunday from the two weeks before: what moves your goal most and is not on target yet.')}</Text>
           </>
         )}
       </Sheet>
@@ -137,10 +137,10 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
                 }}
                 style={({ pressed }) => [s.yes, { flex: 0 }, pressed && { opacity: 0.85 }]}
               >
-                <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>להכניס ידנית</Text>
+                <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>{t('להכניס ידנית', 'Enter by hand')}</Text>
               </Pressable>
             )}
-            <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>המיקוד: {focus.title}</Text>
+            <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{t('המיקוד:', 'The focus:')} {focus.title}</Text>
           </>
         )}
       </Sheet>

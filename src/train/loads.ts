@@ -10,6 +10,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { moveOf } from './library';
 
+import { t } from '../i18n';
 const KEY = 'train.loads.v1';
 
 export type LoadKind = 'barbell' | 'dumbbell' | 'machine' | 'body';
@@ -61,11 +62,11 @@ export function startLoad(kind: LoadKind, unit: Unit = 'kg'): Pick<Load, 'kind' 
 }
 
 const fmtNum = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
-const unitText = (u: Unit) => (u === 'kg' ? 'ק"ג' : 'lb');
+const unitText = (u: Unit) => (u === 'kg' ? t('ק"ג', 'kg') : 'lb');
 
 /** The weight as said in a tag or a row */
 export function loadText(l: Pick<Load, 'kind' | 'unit' | 'value'>): string {
-  if (l.kind === 'body') return l.value > 0 ? `+${fmtNum(l.value)} ${unitText(l.unit)}` : 'משקל גוף';
+  if (l.kind === 'body') return l.value > 0 ? `+${fmtNum(l.value)} ${unitText(l.unit)}` : t('משקל גוף', 'Bodyweight');
   return `${fmtNum(l.value)} ${unitText(l.unit)}`;
 }
 
@@ -73,9 +74,9 @@ export function loadText(l: Pick<Load, 'kind' | 'unit' | 'value'>): string {
 export function perSide(l: Pick<Load, 'value' | 'bar' | 'unit'>): string | null {
   if (l.bar == null) return null;
   const side = (l.value - l.bar) / 2;
-  if (side < 0) return 'פחות ממשקל המוט';
-  if (side === 0) return 'מוט בלבד';
-  return `בכל צד ${fmtNum(side)} ${unitText(l.unit)}, ומוט של ${fmtNum(l.bar)} ${unitText(l.unit)}`;
+  if (side < 0) return t('פחות ממשקל המוט', 'Less than the bar weight');
+  if (side === 0) return t('מוט בלבד', 'Bar only');
+  return t(`בכל צד ${fmtNum(side)} ${unitText(l.unit)}, ומוט של ${fmtNum(l.bar)} ${unitText(l.unit)}`, `${fmtNum(side)} ${unitText(l.unit)} per side, on a ${fmtNum(l.bar)} ${unitText(l.unit)} bar`);
 }
 
 export async function loadLoads(): Promise<Record<string, Load>> {

@@ -8,7 +8,7 @@ import { clockText, diagnose, hoursText, Night, nightsFrom, readSleepRecords, Sl
 import { TargetBars } from '../ui/charts';
 import { C, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, LOCALE } from '../i18n';
 const DAYS = 14;
 
 interface Loaded {
@@ -44,8 +44,8 @@ async function load(): Promise<Loaded> {
   };
 }
 
-const dateText = (t: number) => new Date(t).toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric', month: 'numeric' });
-const timeOf = (t: number) => new Date(t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+const dateText = (t: number) => new Date(t).toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'numeric' });
+const timeOf = (t: number) => new Date(t).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
 
 function Stages({ n }: { n: Night }) {
   if (n.deep == null) return null;

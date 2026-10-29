@@ -6,11 +6,12 @@ import { sessionOf } from '../config/goals';
 import { C, T } from '../ui/theme';
 import { answerOffer, Feel, Load, loadKey, loadLoads, loadText, noteFeel } from './loads';
 
-import { ROW } from '../i18n';
+import { ROW, t } from '../i18n';
+import { moveName } from '../i18n/moves';
 const FEELS: { v: Feel; label: string; on: string; fg: string }[] = [
-  { v: 'easy', label: 'קל', on: '#E6F0E9', fg: '#3E7A55' },
-  { v: 'right', label: 'בדיוק', on: '#ECE7DF', fg: C.ink },
-  { v: 'hard', label: 'קשה', on: '#FDF1EC', fg: '#B4532A' },
+  { v: 'easy', label: t('קל', 'Easy'), on: '#E6F0E9', fg: '#3E7A55' },
+  { v: 'right', label: t('בדיוק', 'Right'), on: '#ECE7DF', fg: C.ink },
+  { v: 'hard', label: t('קשה', 'Hard'), on: '#FDF1EC', fg: '#B4532A' },
 ];
 
 /** "workout_feel@<start>:<session>" into its parts */
@@ -37,7 +38,7 @@ export default function WorkoutFeel({ id }: { id: string }) {
   };
   const offer = async (name: string, yes: boolean) => {
     const l = await answerOffer(name, yes).catch(() => null);
-    setDone({ ...done, [loadKey(name)]: yes && l ? `עודכן: ${loadText(l)}. מהאימון הבא.` : 'בסדר, נשאר כמו שהוא. נבדוק שוב בעוד שני אימונים.' });
+    setDone({ ...done, [loadKey(name)]: yes && l ? t(`עודכן: ${loadText(l)}. מהאימון הבא.`, `Updated: ${loadText(l)}. From the next workout.`) : t('בסדר, נשאר כמו שהוא. נבדוק שוב בעוד שני אימונים.', 'OK, it stays as it is. We will check again in two workouts.') });
     load();
   };
 
@@ -50,7 +51,7 @@ export default function WorkoutFeel({ id }: { id: string }) {
         return (
           <View key={k} style={s.move}>
             <View style={s.head}>
-              <Text style={[T.bold, { fontSize: 14, flexShrink: 1 }]}>{e.name}</Text>
+              <Text style={[T.bold, { fontSize: 14, flexShrink: 1 }]}>{moveName(e.name)}</Text>
               <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>{loadText(l)}</Text>
             </View>
             <View style={s.feels}>
@@ -63,14 +64,14 @@ export default function WorkoutFeel({ id }: { id: string }) {
             {l.offer && l.offer.at === p.at && (
               <View style={s.offer}>
                 <Text style={[T.base, { fontSize: 14, lineHeight: 20 }]}>
-                  {l.offer.dir === 'up' ? 'פעמיים ברצף קל.' : 'פעמיים ברצף קשה.'} {l.offer.dir === 'up' ? 'להעלות' : 'להוריד'} ל {loadText({ ...l, value: l.offer.to })}?
+                  {l.offer.dir === 'up' ? t('פעמיים ברצף קל.', 'Easy twice in a row.') : t('פעמיים ברצף קשה.', 'Hard twice in a row.')} {l.offer.dir === 'up' ? t('להעלות', 'Raise') : t('להוריד', 'Lower')} {t('ל', 'to')} {loadText({ ...l, value: l.offer.to })}?
                 </Text>
                 <View style={{ flexDirection: ROW, gap: 8 }}>
                   <Pressable onPress={() => offer(e.name, true)} style={({ pressed }) => [s.yes, pressed && { opacity: 0.85 }]}>
-                    <Text style={[T.bold, { fontSize: 14, color: '#fff' }]}>כן, {l.offer.dir === 'up' ? 'להעלות' : 'להוריד'}</Text>
+                    <Text style={[T.bold, { fontSize: 14, color: '#fff' }]}>{t('כן,', 'Yes,')} {l.offer.dir === 'up' ? t('להעלות', 'raise') : t('להוריד', 'lower')}</Text>
                   </Pressable>
                   <Pressable onPress={() => offer(e.name, false)} style={({ pressed }) => [s.no, pressed && { opacity: 0.85 }]}>
-                    <Text style={[T.bold, { fontSize: 14 }]}>לא עכשיו</Text>
+                    <Text style={[T.bold, { fontSize: 14 }]}>{t('לא עכשיו', 'Not now')}</Text>
                   </Pressable>
                 </View>
               </View>

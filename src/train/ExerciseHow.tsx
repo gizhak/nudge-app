@@ -9,13 +9,14 @@ import { choicesOf, picsOf } from './exercisePics';
 import LoadEditor from './LoadEditor';
 import { Load, loadKey, loadLoads } from './loads';
 
-import { CHEVRON_BACK, CHEVRON_ON, ROW, START } from '../i18n';
+import { CHEVRON_BACK, CHEVRON_ON, ROW, START, t as tr } from '../i18n';
+import { moveName, repsText } from '../i18n/moves';
 const FLIP_MS = 900;
 
 /** Reps like "40 שניות" carry their own unit; plain numbers are repetitions */
 function repsParts(reps: string): { big: string; unit: string } {
   const m = reps.match(/^(.*?\d)\s+(שניות|דקות|דקה)$/);
-  return m ? { big: m[1], unit: m[2] } : { big: reps, unit: 'חזרות' };
+  return m ? { big: repsText(m[1]), unit: repsText(m[2]) } : { big: repsText(reps), unit: tr('חזרות', 'reps') };
 }
 
 export default function ExerciseHow({ list, start, onClose, onLoads }: { list: Exercise[]; start: number | null; onClose: () => void; onLoads?: () => void }) {
@@ -78,14 +79,14 @@ export default function ExerciseHow({ list, start, onClose, onLoads }: { list: E
 
   return (
     <Modal visible={start != null} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={s.veil} onPress={onClose} accessibilityLabel="סגור" />
+      <Pressable style={s.veil} onPress={onClose} accessibilityLabel={tr("סגור", 'Close')} />
       <View style={s.center} pointerEvents="box-none">
         <View style={s.card} {...pan.panHandlers}>
           <View style={s.top}>
             <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>
-              תרגיל {i + 1} מתוך {list.length}
+              {tr('תרגיל', 'Exercise')} {i + 1} {tr('מתוך', 'of')} {list.length}
             </Text>
-            <Pressable onPress={onClose} style={s.close} hitSlop={8} accessibilityLabel="סגור">
+            <Pressable onPress={onClose} style={s.close} hitSlop={8} accessibilityLabel={tr("סגור", 'Close')}>
               <Ionicons name="close" size={20} color={C.ink} />
             </Pressable>
           </View>
@@ -97,7 +98,7 @@ export default function ExerciseHow({ list, start, onClose, onLoads }: { list: E
                 {pics.b ? <Animated.Image source={pics.b} style={[s.img, { opacity: fade }]} resizeMode="contain" /> : null}
               </>
             ) : (
-              <Text style={[T.muted, { fontSize: 14 }]}>אין תמונה לתרגיל הזה</Text>
+              <Text style={[T.muted, { fontSize: 14 }]}>{tr('אין תמונה לתרגיל הזה', 'No photo for this exercise')}</Text>
             )}
           </View>}
 
@@ -106,18 +107,18 @@ export default function ExerciseHow({ list, start, onClose, onLoads }: { list: E
               {choices.map((c, k) => (
                 <Pressable key={c} onPress={() => setPick(k)} style={[s.opt, k === pick && s.optOn]}>
                   <Text style={[T.bold, { fontSize: 13, color: k === pick ? '#fff' : C.ink }]} numberOfLines={1}>
-                    {c}
+                    {moveName(c)}
                   </Text>
                 </Pressable>
               ))}
             </View>
           )}
 
-          <Text style={[T.bold, { fontSize: 22, lineHeight: 28 }]}>{name}</Text>
+          <Text style={[T.bold, { fontSize: 22, lineHeight: 28 }]}>{moveName(name)}</Text>
           <View style={s.nums}>
             <View style={s.num}>
               <Text style={s.big}>{e.sets}</Text>
-              <Text style={[T.muted, { fontSize: 13 }]}>סטים</Text>
+              <Text style={[T.muted, { fontSize: 13 }]}>{tr('סטים', 'sets')}</Text>
             </View>
             <View style={s.num}>
               <Text style={s.big}>{reps.big}</Text>
@@ -137,7 +138,7 @@ export default function ExerciseHow({ list, start, onClose, onLoads }: { list: E
 
           {!editing && list.length > 1 && (
             <View style={s.nav}>
-              <Pressable onPress={() => go(i - 1)} style={[s.arrow, { opacity: first ? 0.35 : 1 }]} disabled={first} accessibilityLabel="התרגיל הקודם">
+              <Pressable onPress={() => go(i - 1)} style={[s.arrow, { opacity: first ? 0.35 : 1 }]} disabled={first} accessibilityLabel={tr("התרגיל הקודם", 'Previous exercise')}>
                 <Ionicons name={CHEVRON_BACK} size={22} color={C.ink} />
               </Pressable>
               <View style={s.dots}>
@@ -145,7 +146,7 @@ export default function ExerciseHow({ list, start, onClose, onLoads }: { list: E
                   <View key={k} style={[s.dot, k === i && s.dotOn]} />
                 ))}
               </View>
-              <Pressable onPress={() => go(i + 1)} style={[s.arrow, s.arrowNext, { opacity: last ? 0.35 : 1 }]} disabled={last} accessibilityLabel="התרגיל הבא">
+              <Pressable onPress={() => go(i + 1)} style={[s.arrow, s.arrowNext, { opacity: last ? 0.35 : 1 }]} disabled={last} accessibilityLabel={tr("התרגיל הבא", 'Next exercise')}>
                 <Ionicons name={CHEVRON_ON} size={22} color="#fff" />
               </Pressable>
             </View>

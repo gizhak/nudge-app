@@ -6,9 +6,9 @@ import { sourceLabel } from '../config/sources';
 import { Sheet } from '../ui/Sheet';
 import { C, fmt, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, LOCALE } from '../i18n';
 const when = (d: Date) =>
-  `${d.toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })} ${d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
+  `${d.toLocaleDateString(LOCALE, { day: 'numeric', month: 'numeric' })} ${d.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}`;
 
 function Row({ w }: { w: WeighIn }) {
   const parts = [
