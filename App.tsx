@@ -32,6 +32,7 @@ import TodayScreen from './src/screens/TodayScreen';
 import TrainScreen from './src/screens/TrainScreen';
 import { C, FONT } from './src/ui/theme';
 
+import { ROW } from './src/i18n';
 type Tab = 'today' | 'train' | 'food' | 'progress' | 'settings';
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -426,7 +427,7 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   // A floating bar of icons: the active one on a dark tile, no labels
   bar: {
-    flexDirection: 'row-reverse',
+    flexDirection: ROW,
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: C.card,
