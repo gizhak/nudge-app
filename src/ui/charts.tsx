@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Line, Polyline, Circle as Dot } from 'react-native-svg';
 import { C, FONT, T } from './theme';
 
+import { ROW } from '../i18n';
 /** Progress ring with the value in the middle and a label under it. */
 export function Ring({
   value,
@@ -81,7 +82,7 @@ export function TargetBars({
     <View style={{ gap: 4 }}>
       <View style={{ height }}>
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: (target / top) * height, borderTopWidth: 1, borderStyle: 'dashed', borderColor: C.muted }} />
-        <View style={{ flexDirection: 'row-reverse', alignItems: 'flex-end', gap: 8, height }}>
+        <View style={{ flexDirection: ROW, alignItems: 'flex-end', gap: 8, height }}>
           {values.map((v, i) => (
             <View key={i} style={{ flex: 1, height: '100%', justifyContent: 'flex-end' }}>
               {v === null || v === 0 ? (
@@ -93,7 +94,7 @@ export function TargetBars({
           ))}
         </View>
       </View>
-      <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
+      <View style={{ flexDirection: ROW, gap: 8 }}>
         {labels.map((l, i) => (
           <Text key={i} style={[T.muted, { flex: 1, textAlign: 'center', fontSize: 12 }]}>
             {l}
@@ -124,7 +125,7 @@ export function TrendLine({ values, height = 80, width = 300, ends }: { values: 
         <Polyline points={pts.map((p) => p.join(',')).join(' ')} fill="none" stroke={C.ink} strokeWidth={2.5} strokeLinejoin="round" />
         <Dot cx={last[0]} cy={last[1]} r={4} fill={C.signal} />
       </Svg>
-      <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between' }}>
+      <View style={{ flexDirection: ROW, justifyContent: 'space-between' }}>
         <Text style={[T.muted, { fontSize: 12, fontFamily: FONT.regular }]}>{values[0].toFixed(1)}{ends ? ` · ${ends[0]}` : ''}</Text>
         <Text style={[T.muted, { fontSize: 12, fontFamily: FONT.regular }]}>{values[values.length - 1].toFixed(1)}{ends ? ` · ${ends[1]}` : ''}</Text>
       </View>

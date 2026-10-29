@@ -1,6 +1,8 @@
 import Learned from './Learned';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { BackHandler, Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Sheet } from '../ui/Sheet';
+import { reloadApp, setAppLang } from '../../modules/night-guard';
 import { Ionicons } from '@expo/vector-icons';
 import { searchSettings, SettingEntry } from './settingsIndex';
 import { GOALS, pad2, SESSIONS, WEEKLY_PLAN, DAY_NAMES } from '../config/goals';
@@ -12,12 +14,16 @@ import ReportSettings from './ReportSettings';
 import VacationSettings from './VacationSettings';
 import { C, fmt, FONT, T } from '../ui/theme';
 
+import { LANG, Lang, ROW, SIDE_END, START } from '../i18n';
 export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditSchedule, onClose }: { onEditProfile: () => void; onOpenReadiness: () => void; onEditSchedule?: () => void; onClose?: () => void }) {
   const [settings, setSettings] = useState<ReminderSettings>(DEFAULT_SETTINGS);
   const [status, setStatus] = useState<string | null>(null);
   /** One settings area at a time, instead of every card on one long page */
   const [section, setSection] = useState<null | 'coach' | 'reminders' | 'reports' | 'plan' | 'vacation' | 'learned'>(null);
   const [query, setQuery] = useState('');
+  // The language: chosen here, in effect from the next start
+  const [langOpen, setLangOpen] = useState(false);
+  const [langPicked, setLangPicked] = useState<Lang | null>(null);
   const [focus, setFocus] = useState<string | undefined>(undefined);
   const open = (e: SettingEntry) => {
     if (e.target === 'myfile') return onEditProfile();
@@ -145,7 +151,7 @@ export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditS
               ))}
             </RowsCard>
           ) : (
-            <Text style={[T.muted, { fontSize: 14, textAlign: 'right' }]}>לא מצאתי. נסה מילה אחרת, למשל "ארוחה" או "שינה".</Text>
+            <Text style={[T.muted, { fontSize: 14, textAlign: START }]}>לא מצאתי. נסה מילה אחרת, למשל "ארוחה" או "שינה".</Text>
           );
         })()
       ) : (
@@ -168,6 +174,39 @@ export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditS
             <OpenRow first title="יעדים ולוח אימונים" sub={`${fmt(GOALS.calories)} קלוריות · ${GOALS.proteinG} ג' חלבון · ${WEEKLY_PLAN.length} אימונים`} onPress={() => setSection('plan')} />
             <OpenRow title="בדיקת מוכנות וחיבורים" sub="שעון, אוכל, Health Connect" onPress={onOpenReadiness} />
           </RowsCard>
+
+          <RowsCard>
+            <OpenRow first title="שפה · Language" sub={LANG === 'en' ? 'English' : 'עברית'} onPress={() => setLangOpen(true)} />
+          </RowsCard>
+          <Sheet open={langOpen} onClose={() => setLangOpen(false)} title="שפה · Language">
+            {(
+              [
+                ['he', 'עברית', ''],
+                ['en', 'English', 'בבנייה: חלק מהטקסטים עדיין בעברית'],
+              ] as [Lang, string, string][]
+            ).map(([k, label, note]) => {
+              const on = (langPicked ?? LANG) === k;
+              return (
+                <Pressable
+                  key={k}
+                  onPress={() => {
+                    setAppLang(k);
+                    setLangPicked(k);
+                  }}
+                  style={({ pressed }) => [{ borderWidth: 1.5, borderColor: on ? C.ink : C.track, borderRadius: 16, padding: 14, gap: 2 }, pressed && { opacity: 0.8 }]}
+                >
+                  <Text style={[T.bold, { fontSize: 16 }]}>{label}</Text>
+                  {note ? <Text style={[T.muted, { fontSize: 13 }]}>{note}</Text> : null}
+                </Pressable>
+              );
+            })}
+            {langPicked && langPicked !== LANG && (
+              <>
+                <PrimaryButton label="להחליף עכשיו · Switch now" onPress={() => (reloadApp() ? undefined : BackHandler.exitApp())} />
+                <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>האפליקציה תיפתח מחדש בשפה שבחרת. The app restarts in the language you chose.</Text>
+              </>
+            )}
+          </Sheet>
         </>
       )}
     </Screen>
@@ -176,9 +215,9 @@ export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditS
 
 const s = StyleSheet.create({
   text: { fontSize: 15 },
-  search: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, backgroundColor: C.card, borderRadius: 16, paddingHorizontal: 14, height: 48 },
+  search: { flexDirection: ROW, alignItems: 'center', gap: 8, backgroundColor: C.card, borderRadius: 16, paddingHorizontal: 14, height: 48 },
   searchInput: { flex: 1, fontSize: 15, color: C.ink, fontFamily: FONT.regular, writingDirection: 'rtl', paddingVertical: 0 },
-  group: { fontSize: 13, color: C.muted, textAlign: 'right', marginBottom: -6, marginTop: 4, fontFamily: FONT.bold },
-  back: { alignSelf: 'flex-start', paddingVertical: 4 },
-  toggleRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, paddingVertical: 4 },
+  group: { fontSize: 13, color: C.muted, textAlign: START, marginBottom: -6, marginTop: 4, fontFamily: FONT.bold },
+  back: { alignSelf: SIDE_END, paddingVertical: 4 },
+  toggleRow: { flexDirection: ROW, alignItems: 'center', gap: 12, paddingVertical: 4 },
 });

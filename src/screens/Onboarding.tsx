@@ -14,6 +14,7 @@ import { Bar, Card, PrimaryButton, Row, Wordmark } from '../ui/components';
 import { Choice, Multi, NumberField, Question, TextField, TimeStepper } from '../ui/inputs';
 import { C, fmt, T } from '../ui/theme';
 
+import { CHEVRON_ON, ROW } from '../i18n';
 /** A new user answers only these; family, routine and the coach's style wait for My File */
 const FIRST_RUN_LAST = 3;
 
@@ -431,7 +432,7 @@ export default function Onboarding({
                           {x.picked ? `${x.picked.length} תרגילים · הבחירה שלך` : `${x.recommended.length} תרגילים · לפי ההמלצה`}
                         </Text>
                       </View>
-                      <Ionicons name="chevron-back" size={18} color={C.muted} />
+                      <Ionicons name={CHEVRON_ON} size={18} color={C.muted} />
                     </Pressable>
                   ))}
                 </View>
@@ -683,18 +684,18 @@ export default function Onboarding({
 
 const s = StyleSheet.create({
   movesCard: { backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 14 },
-  movesRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, paddingVertical: 13 },
+  movesRow: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 13 },
   movesSep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
   header: { paddingHorizontal: 16, paddingTop: 16, gap: 10 },
-  headRow: { flexDirection: 'row-reverse', justifyContent: 'space-between' },
+  headRow: { flexDirection: ROW, justifyContent: 'space-between' },
   body: { padding: 16, gap: 18, paddingBottom: 32 },
   label: { fontSize: 16 },
-  timeRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' },
-  days: { flexDirection: 'row-reverse', justifyContent: 'space-between' },
+  timeRow: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'center' },
+  days: { flexDirection: ROW, justifyContent: 'space-between' },
   day: { width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: C.track, backgroundColor: C.card, justifyContent: 'center' },
   dayOn: { backgroundColor: C.accent, borderColor: C.accent },
   footer: {
-    flexDirection: 'row-reverse',
+    flexDirection: ROW,
     gap: 10,
     padding: 16,
     borderTopWidth: StyleSheet.hairlineWidth,

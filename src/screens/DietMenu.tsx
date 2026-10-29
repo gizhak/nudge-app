@@ -11,6 +11,7 @@ import { clearMenu, loadMenu, saveMenu } from '../diet/store';
 import type { SlotId } from '../nutrition/meals';
 import { C, FONT, fmt, T } from '../ui/theme';
 
+import { ROW, START } from '../i18n';
 const SLOT_ORDER: SlotId[] = ['breakfast', 'snack_am', 'lunch', 'snack_pm', 'dinner', 'night'];
 
 export default function DietMenuScreen({ open, onClose, initialText, onSaved }: { open: boolean; onClose: () => void; initialText?: string; onSaved?: () => void }) {
@@ -159,7 +160,7 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
                       {fmt(mealKcal(m))} קל' · {fmt(mealProtein(m))} ג' חלבון
                     </Text>
                   </View>
-                  <View style={{ gap: 6, flexDirection: 'row-reverse', flexWrap: 'wrap' }}>
+                  <View style={{ gap: 6, flexDirection: ROW, flexWrap: 'wrap' }}>
                     {SLOT_ORDER.map((sl) => (
                       <Pressable key={sl} onPress={() => setSlot(mi, sl)} style={[s.chip, m.slot === sl && s.chipOn]}>
                         <Text style={[T.bold, { fontSize: 12, color: m.slot === sl ? '#fff' : C.muted }]}>{slotTitle(sl)}</Text>
@@ -279,22 +280,22 @@ function Num({ label, value, onChange }: { label: string; value: number; onChang
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg, paddingTop: 44 },
-  head: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 8 },
+  head: { flexDirection: ROW, alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingBottom: 8 },
   x: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   body: { padding: 16, gap: 12, paddingBottom: 60 },
-  dark: { flexDirection: 'row-reverse', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: C.ink, borderRadius: 16, paddingVertical: 14 },
+  dark: { flexDirection: ROW, gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: C.ink, borderRadius: 16, paddingVertical: 14 },
   light: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderRadius: 16, paddingVertical: 13 },
-  area: { backgroundColor: '#fff', borderRadius: 16, minHeight: 120, padding: 12, textAlign: 'right', textAlignVertical: 'top', fontSize: 15, fontFamily: T.base.fontFamily, color: C.ink },
+  area: { backgroundColor: '#fff', borderRadius: 16, minHeight: 120, padding: 12, textAlign: START, textAlignVertical: 'top', fontSize: 15, fontFamily: T.base.fontFamily, color: C.ink },
   meal: { backgroundColor: '#fff', borderRadius: 20, padding: 14, gap: 8 },
-  mealHead: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
+  mealHead: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
   chip: { borderRadius: 999, paddingVertical: 5, paddingHorizontal: 10, backgroundColor: C.bg },
   chipOn: { backgroundColor: C.ink },
   item: { borderTopWidth: 1, borderTopColor: '#EFEAE3', paddingTop: 8, gap: 6 },
   unknown: { backgroundColor: '#FFF6F1', borderRadius: 10, paddingHorizontal: 8, paddingBottom: 6, borderTopWidth: 0 },
-  editRow: { flexDirection: 'row-reverse', alignItems: 'flex-end', gap: 8 },
-  num: { backgroundColor: C.bg, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10, fontSize: 16, textAlign: 'right', fontFamily: T.base.fontFamily, color: C.ink },
+  editRow: { flexDirection: ROW, alignItems: 'flex-end', gap: 8 },
+  num: { backgroundColor: C.bg, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10, fontSize: 16, textAlign: START, fontFamily: T.base.fontFamily, color: C.ink },
   del: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
-  addRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, borderTopWidth: 1, borderTopColor: '#EFEAE3', paddingTop: 8 },
-  addInput: { flex: 1, fontSize: 14, textAlign: 'right', fontFamily: T.base.fontFamily, color: C.ink, paddingVertical: 4 },
+  addRow: { flexDirection: ROW, alignItems: 'center', gap: 8, borderTopWidth: 1, borderTopColor: '#EFEAE3', paddingTop: 8 },
+  addInput: { flex: 1, fontSize: 14, textAlign: START, fontFamily: T.base.fontFamily, color: C.ink, paddingVertical: 4 },
   total: { backgroundColor: '#fff', borderRadius: 20, padding: 14, gap: 4 },
 });

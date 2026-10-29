@@ -28,6 +28,7 @@ import { Choice } from '../ui/inputs';
 import { CONTAINERS } from '../nutrition/water';
 import { C, FONT, T } from '../ui/theme';
 
+import { ROW, START } from '../i18n';
 const LEVELS: { key: NagLevel; label: string }[] = [
   { key: 'quiet', label: 'שקט' },
   { key: 'normal', label: 'רגיל' },
@@ -429,15 +430,15 @@ function StatusRow({ label, ok }: { label: string; ok: boolean }) {
 
 const s = StyleSheet.create({
   text: { fontSize: 15 },
-  row: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 2 },
-  segment: { flexDirection: 'row-reverse', backgroundColor: C.track, borderRadius: 12, padding: 3, gap: 3 },
+  row: { flexDirection: ROW, alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingVertical: 2 },
+  segment: { flexDirection: ROW, backgroundColor: C.track, borderRadius: 12, padding: 3, gap: 3 },
   segBtn: { flex: 1, paddingVertical: 9, borderRadius: 10 },
   segOn: { backgroundColor: C.accent },
-  stepper: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
+  stepper: { flexDirection: ROW, alignItems: 'center', gap: 6 },
   stepBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.track, alignItems: 'center', justifyContent: 'center' },
   smallBtn: { borderWidth: 1.5, borderColor: C.accent, borderRadius: 10, paddingVertical: 7, paddingHorizontal: 12 },
-  btnPair: { flexDirection: 'row-reverse', gap: 8 },
-  slotWrap: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
+  btnPair: { flexDirection: ROW, gap: 8 },
+  slotWrap: { flexDirection: ROW, flexWrap: 'wrap', gap: 8 },
   slotChip: { borderWidth: 1.5, borderColor: C.track, borderRadius: 12, paddingVertical: 7, paddingHorizontal: 12, alignItems: 'center', backgroundColor: C.card },
   slotOn: { backgroundColor: C.accent, borderColor: C.accent },
   result: { backgroundColor: C.card, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderColor: C.track },
@@ -453,6 +454,6 @@ const s = StyleSheet.create({
     fontSize: 15,
     color: C.ink,
     fontFamily: FONT.regular,
-    textAlign: 'right',
+    textAlign: START,
   },
 });

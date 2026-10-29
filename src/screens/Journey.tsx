@@ -20,6 +20,7 @@ import { addCheckpoint, deleteCheckpoint, dropPhotos, givePhotoConsent, keepPhot
 import { Card, PrimaryButton, Screen } from '../ui/components';
 import { C, FONT, fmt, T } from '../ui/theme';
 
+import { END, ROW } from '../i18n';
 // ---------- The card on the Progress tab ----------
 
 export function JourneyCard({ list, onCheckpoint, onCompare, onEdit }: { list: Checkpoint[]; onCheckpoint: () => void; onCompare: () => void; onEdit: () => void }) {
@@ -382,7 +383,7 @@ function TapeTable({ first, last }: { first: Checkpoint; last: Checkpoint }) {
             <Text style={[T.muted, { fontSize: 13 }]}>
               {a != null && b != null ? `מ${a} ל${b}` : `${b ?? a}`}
             </Text>
-            <Text style={[T.bold, { fontSize: 14, width: 70, textAlign: 'left' }]}>{dl == null ? '' : signed(dl, 'ס"מ')}</Text>
+            <Text style={[T.bold, { fontSize: 14, width: 70, textAlign: END }]}>{dl == null ? '' : signed(dl, 'ס"מ')}</Text>
           </View>
         );
       })}
@@ -488,23 +489,23 @@ function ShareNum({ value, label }: { value: string; label: string }) {
 
 const s = StyleSheet.create({
   p: { fontSize: 14, lineHeight: 21 },
-  head: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'baseline' },
-  nums: { flexDirection: 'row-reverse', paddingVertical: 6 },
+  head: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'baseline' },
+  nums: { flexDirection: ROW, paddingVertical: 6 },
   link: { paddingVertical: 8, alignItems: 'center' },
   next: { backgroundColor: C.signal, borderRadius: 14, paddingVertical: 12 },
   prevImg: { width: '100%', height: 220, borderRadius: 12, opacity: 0.6, backgroundColor: C.track },
   newImg: { width: '100%', height: 260, borderRadius: 12, backgroundColor: C.track },
   input: { borderWidth: 1, borderColor: C.track, borderRadius: 12, padding: 12, fontSize: 18, textAlign: 'center', color: C.ink, fontFamily: FONT.regular },
-  toggle: { flexDirection: 'row-reverse', gap: 8, justifyContent: 'center' },
+  toggle: { flexDirection: ROW, gap: 8, justifyContent: 'center' },
   chip: { borderWidth: 1, borderColor: C.track, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 14, backgroundColor: C.card },
   chipOn: { backgroundColor: C.ink, borderColor: C.ink },
-  row: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  row: { flexDirection: ROW, alignItems: 'center', gap: 8, paddingVertical: 4 },
   ba: { width: '100%', aspectRatio: 3 / 4, borderRadius: 16, overflow: 'hidden', backgroundColor: C.track },
   handle: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: '#fff' },
   tag: { position: 'absolute', top: 8, color: '#fff', fontFamily: FONT.bold, fontSize: 12, backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 8, borderRadius: 6 },
   share: { backgroundColor: C.ink, borderRadius: 20, padding: 20, gap: 12 },
   brand: { fontFamily: FONT.black, fontSize: 22, color: '#fff' },
-  sharePhotos: { flexDirection: 'row-reverse', gap: 8 },
+  sharePhotos: { flexDirection: ROW, gap: 8 },
   sharePhoto: { flex: 1, aspectRatio: 3 / 4, borderRadius: 12 },
-  shareNums: { flexDirection: 'row-reverse' },
+  shareNums: { flexDirection: ROW },
 });

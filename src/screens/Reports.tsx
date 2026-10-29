@@ -8,6 +8,7 @@ import { Bar, Card } from '../ui/components';
 import { Sheet } from '../ui/Sheet';
 import { C, fmt, T } from '../ui/theme';
 
+import { CHEVRON_BACK, CHEVRON_ON, ROW } from '../i18n';
 const dm = (t: number) => {
   const d = new Date(t);
   return `${d.getDate()}.${d.getMonth() + 1}`;
@@ -256,7 +257,7 @@ export function ReportsCard({
             <View style={s.nav}>
               {older ? (
                 <Pressable onPress={() => onOpen(older.id)} style={({ pressed }) => [s.navBtn, pressed && { opacity: 0.7 }]}>
-                  <Ionicons name="chevron-forward" size={16} color={C.ink} />
+                  <Ionicons name={CHEVRON_BACK} size={16} color={C.ink} />
                   <View>
                     <Text style={[T.bold, { fontSize: 13 }]}>{view.kind === 'month' ? 'חודש קודם' : 'שבוע קודם'}</Text>
                     <Text style={[T.muted, { fontSize: 12 }]}>{period(older)}</Text>
@@ -267,7 +268,7 @@ export function ReportsCard({
               )}
               {newer ? (
                 <Pressable onPress={() => onOpen(newer.id)} style={({ pressed }) => [s.navBtn, { flexDirection: 'row' }, pressed && { opacity: 0.7 }]}>
-                  <Ionicons name="chevron-back" size={16} color={C.ink} />
+                  <Ionicons name={CHEVRON_ON} size={16} color={C.ink} />
                   <View>
                     <Text style={[T.bold, { fontSize: 13 }]}>{view.kind === 'month' ? 'חודש אחרי' : 'שבוע אחרי'}</Text>
                     <Text style={[T.muted, { fontSize: 12 }]}>{period(newer)}</Text>
@@ -287,12 +288,12 @@ export function ReportsCard({
 const s = StyleSheet.create({
   chip: { fontSize: 12, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, overflow: 'hidden' },
   line: { gap: 2, paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
-  lineTop: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  lineTop: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   h: { fontSize: 16, marginBottom: 2 },
   action: { backgroundColor: C.ink, borderRadius: 16, padding: 14, gap: 4 },
   fresh: { backgroundColor: C.ink, borderRadius: 24, padding: 16, gap: 6 },
-  links: { flexDirection: 'row-reverse', justifyContent: 'space-between', paddingTop: 4 },
-  nav: { flexDirection: 'row-reverse', gap: 10, paddingTop: 8 },
-  navBtn: { flex: 1, flexDirection: 'row-reverse', alignItems: 'center', gap: 8, backgroundColor: C.card, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 12 },
+  links: { flexDirection: ROW, justifyContent: 'space-between', paddingTop: 4 },
+  nav: { flexDirection: ROW, gap: 10, paddingTop: 8 },
+  navBtn: { flex: 1, flexDirection: ROW, alignItems: 'center', gap: 8, backgroundColor: C.card, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 12 },
   link: { fontSize: 13, color: C.muted, textDecorationLine: 'underline' },
 });

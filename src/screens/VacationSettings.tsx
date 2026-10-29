@@ -8,6 +8,7 @@ import { Card, PrimaryButton } from '../ui/components';
 import { Choice } from '../ui/inputs';
 import { C, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 function Stepper({ label, value, min, max, text, onChange }: { label: string; value: number; min: number; max: number; text: string; onChange: (n: number) => void }) {
   return (
     <View style={s.row}>
@@ -95,6 +96,6 @@ export default function VacationSettings({ onChanged }: { onChanged?: () => void
 }
 
 const s = StyleSheet.create({
-  row: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  row: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   step: { width: 40, height: 36, borderRadius: 10, borderWidth: 1, borderColor: C.track, justifyContent: 'center' },
 });

@@ -46,6 +46,7 @@ import { Chip, MiniRing, Sparkline, Tile, TileGrid } from '../ui/tiles';
 import { DAY_LETTERS } from '../config/goals';
 import { C, fmt, T } from '../ui/theme';
 
+import { CHEVRON_ON, ROW, SIDE_START } from '../i18n';
 const QUALITY_COLOR: Record<Quality, string> = { ok: C.accent, partial: C.warn, missing: C.bad };
 
 function greeting(now: Date) {
@@ -527,7 +528,7 @@ export default function TodayScreen({
           <Text style={[T.bold, { fontSize: 15 }]}>{labels.question}</Text>
           <Text style={[T.muted, { fontSize: 13 }]}>כך אדע לא להאשים אותך, ולהתאים את האימון של היום.</Text>
           <Pressable
-            style={[s.nightBtn, { alignSelf: 'flex-end' }]}
+            style={[s.nightBtn, { alignSelf: SIDE_START }]}
             onPress={async () => {
               const y = new Date(now);
               y.setDate(y.getDate() - 1);
@@ -716,11 +717,11 @@ export default function TodayScreen({
                 return (
                   <Pressable onPress={open} style={({ pressed }) => [s.weightCard, pressed && { opacity: 0.85 }]}>
                     <View style={{ flex: 1, gap: 2 }}>
-                      <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 6 }}>
+                      <View style={{ flexDirection: ROW, alignItems: 'center', gap: 6 }}>
                         <Text style={[T.muted, { fontSize: 13 }]}>משקל</Text>
                         {fresh && <View style={s.whyDot} />}
                       </View>
-                      <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <View style={{ flexDirection: ROW, alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <Text style={[T.bold, { fontSize: 26, lineHeight: 32 }]}>{data.weight ? fmt(data.weight.kg, 1) : '—'}</Text>
                         {why && (
                           <Text style={[T.bold, s.weightChip, { color: tone, backgroundColor: down ? '#E4EFE6' : up ? '#F8EEDC' : C.track }]} numberOfLines={1}>
@@ -1032,7 +1033,7 @@ function NowCard({
           <Text style={[T.base, s.nowNudge, { flex: 1 }]} numberOfLines={1}>
             {at} · {nudge.title}
           </Text>
-          <Ionicons name="chevron-back" size={16} color="#C9C6C0" />
+          <Ionicons name={CHEVRON_ON} size={16} color="#C9C6C0" />
         </Pressable>
       )}
       {children}
@@ -1042,45 +1043,45 @@ function NowCard({
 
 const s = StyleSheet.create({
   rowsCard: { backgroundColor: C.card, borderRadius: 20, paddingHorizontal: 18 },
-  openLine: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, paddingVertical: 14 },
+  openLine: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 14 },
   openLineSep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
-  openSub: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
-  whyRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
+  openSub: { flexDirection: ROW, alignItems: 'center', gap: 6 },
+  whyRow: { flexDirection: ROW, alignItems: 'center', gap: 8, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
   whyDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.signal },
-  outRow: { flexDirection: 'row-reverse', gap: 10, flexWrap: 'wrap' },
-  outTime: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' },
+  outRow: { flexDirection: ROW, gap: 10, flexWrap: 'wrap' },
+  outTime: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'center' },
   ghostBtn: { borderWidth: 1, borderColor: C.track, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16, backgroundColor: C.card },
-  nightRow: { flexDirection: 'row-reverse', gap: 10 },
+  nightRow: { flexDirection: ROW, gap: 10 },
   nightBtn: { backgroundColor: C.ink, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14 },
   nightText: { color: '#fff', fontSize: 14, textAlign: 'center' },
-  checkHead: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  checkHead: { flexDirection: ROW, alignItems: 'center', gap: 10 },
   mark: { width: 22, alignItems: 'center' },
-  checkRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, paddingVertical: 4 },
+  checkRow: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 4 },
   actBtn: { backgroundColor: C.ink, borderRadius: 10, paddingVertical: 7, paddingHorizontal: 10 },
   extraBtn: { borderWidth: 1.5, borderColor: C.ink, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 9 },
-  openRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 20, paddingVertical: 16, paddingHorizontal: 18 },
-  inlineLink: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4, alignSelf: 'flex-end' },
+  openRow: { flexDirection: ROW, alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 20, paddingVertical: 16, paddingHorizontal: 18 },
+  inlineLink: { flexDirection: ROW, alignItems: 'center', gap: 4, alignSelf: SIDE_START },
   undo: { borderWidth: 1, borderColor: C.track, borderRadius: 10, padding: 5 },
-  rings: { flexDirection: 'row-reverse', justifyContent: 'space-between' },
+  rings: { flexDirection: ROW, justifyContent: 'space-between' },
   plus: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.water, alignItems: 'center', justifyContent: 'center' },
   minus: { width: 30, height: 30, borderRadius: 15, borderWidth: 1.5, borderColor: C.water, alignItems: 'center', justifyContent: 'center' },
-  weightCard: { backgroundColor: C.card, borderRadius: 24, paddingVertical: 14, paddingHorizontal: 18, flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
+  weightCard: { backgroundColor: C.card, borderRadius: 24, paddingVertical: 14, paddingHorizontal: 18, flexDirection: ROW, alignItems: 'center', gap: 12 },
   weightChip: { fontSize: 13, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
-  chips: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
-  nowHead: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' },
+  chips: { flexDirection: ROW, flexWrap: 'wrap', gap: 8 },
+  nowHead: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'center' },
   now: { backgroundColor: C.ink, borderRadius: 28, padding: 20, gap: 10 },
   nowLabel: { color: C.signal, fontSize: 12, letterSpacing: 1 },
   nowLine: { color: '#fff', fontSize: 21, lineHeight: 30 },
   nowNudge: { color: '#C9C6C0', fontSize: 14, lineHeight: 21 },
-  nowNudgeRow: { flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10 },
+  nowNudgeRow: { flexDirection: ROW, alignItems: 'flex-start', gap: 10 },
   nowGotIt: { borderWidth: 1, borderColor: '#fff', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   nowBtn: { backgroundColor: '#fff', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14 },
   nowBtnText: { color: C.ink, fontSize: 14, textAlign: 'center' },
   small: { fontSize: 14 },
-  qualityRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' },
-  dots: { flexDirection: 'row-reverse', gap: 6 },
+  qualityRow: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'center' },
+  dots: { flexDirection: ROW, gap: 6 },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  qualityHead: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  qualityHead: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   hint: { fontSize: 13, marginRight: 18 },
 });
 
@@ -1099,7 +1100,7 @@ function GymNowCard({ since, via, counted, onOpen }: { since: number; via?: stri
   const session = sessionOf(todays?.session ?? nextWorkout(d).workout.session);
   return (
     <Pressable onPress={onOpen} style={({ pressed }) => [gymS.card, pressed && { opacity: 0.9 }]}>
-      <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <View style={{ flexDirection: ROW, justifyContent: 'space-between', alignItems: 'baseline' }}>
         <Text style={[T.bold, { fontSize: 13, color: C.signal }]}>בחדר הכושר · {minutes} דק'</Text>
         {via ? <Text style={[T.base, { fontSize: 12, color: '#B8B1A7' }]}>לפי {via}</Text> : null}
       </View>
@@ -1112,7 +1113,7 @@ function GymNowCard({ since, via, counted, onOpen }: { since: number; via?: stri
           {counted || left === 0 ? 'האימון נספר. תמשיך כמה שצריך.' : `עוד ${left} דקות והיום נספר כאימון`}
         </Text>
       </View>
-      <View style={{ flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 6 }}>
+      <View style={{ flexDirection: ROW, flexWrap: 'wrap', gap: 6 }}>
         {session.exercises.slice(0, 3).map((e) => (
           <Text key={e.name} style={gymS.move}>
             {e.name} {e.sets}×{e.reps}
@@ -1126,7 +1127,7 @@ function GymNowCard({ since, via, counted, onOpen }: { since: number; via?: stri
 
 const gymS = StyleSheet.create({
   card: { backgroundColor: C.ink, borderRadius: 26, padding: 18, gap: 12 },
-  track: { height: 6, borderRadius: 3, backgroundColor: '#3A3733', overflow: 'hidden', flexDirection: 'row-reverse' },
+  track: { height: 6, borderRadius: 3, backgroundColor: '#3A3733', overflow: 'hidden', flexDirection: ROW },
   fill: { height: 6, borderRadius: 3, backgroundColor: C.signal },
   move: { fontFamily: T.base.fontFamily, fontSize: 13, color: '#fff', backgroundColor: '#2C2A27', borderRadius: 12, paddingVertical: 5, paddingHorizontal: 10, overflow: 'hidden' },
 });

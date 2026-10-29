@@ -22,6 +22,7 @@ import { checkMeal, loadMenu, menuMealOf } from '../diet/store';
 import Craving from './Craving';
 import { Sheet } from '../ui/Sheet';
 
+import { END, ROW } from '../i18n';
 const DAY_SHORT = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
 const POLL_MS = 15_000;
 const WAIT_LIMIT_MS = 5 * 60_000;
@@ -180,7 +181,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
         );
         return (
           <Card>
-            <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 18 }}>
+            <View style={{ flexDirection: ROW, alignItems: 'center', gap: 18 }}>
               <DoubleRing outer={{ value: kcal, max: target, color: left < 0 ? C.warn : C.kcal }} inner={{ value: protein, max: GOALS.proteinG, color: C.protein }} />
               <View style={{ flex: 1, gap: 10 }}>
                 <View>
@@ -379,23 +380,23 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
 }
 
 const s = StyleSheet.create({
-  actions: { flexDirection: 'row-reverse', gap: 10 },
+  actions: { flexDirection: ROW, gap: 10 },
   actTile: { flex: 1, height: 92, borderRadius: 24, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', gap: 6 },
   primary: { flex: 1.7, backgroundColor: C.ink, borderRadius: 18, paddingVertical: 15 },
   secondary: { flex: 1, borderWidth: 0, borderColor: C.card, borderRadius: 18, paddingVertical: 15, backgroundColor: C.card },
   secondaryOn: { backgroundColor: C.ink, borderColor: C.ink },
-  leftRow: { flexDirection: 'row-reverse', alignItems: 'baseline', gap: 8 },
+  leftRow: { flexDirection: ROW, alignItems: 'baseline', gap: 8 },
   leftNum: { fontSize: 40, lineHeight: 46 },
-  macro: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  macro: { flexDirection: ROW, alignItems: 'center', gap: 10 },
   macroLabel: { width: 62, fontSize: 13 },
-  macroVal: { width: 72, fontSize: 13, textAlign: 'left' },
+  macroVal: { width: 72, fontSize: 13, textAlign: END },
   menuBtn: { borderWidth: 1.5, borderColor: C.accent, borderRadius: 14, paddingVertical: 12, backgroundColor: C.card },
-  row: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  row: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   text: { fontSize: 15 },
   removeBox: { gap: 10, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
-  removeRow: { flexDirection: 'row-reverse', gap: 10 },
+  removeRow: { flexDirection: ROW, gap: 10 },
   removeBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: C.track },
   meal: { gap: 3, paddingVertical: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
   chip: { fontFamily: FONT.bold, fontSize: 12, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 1 },
-  waiting: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  waiting: { flexDirection: ROW, alignItems: 'center', gap: 10 },
 });

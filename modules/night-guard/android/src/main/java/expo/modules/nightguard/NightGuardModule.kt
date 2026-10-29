@@ -118,6 +118,28 @@ class NightGuardModule : Module() {
       NightPrefs.unlocks(appContext.reactContext ?: return@Function emptyList<Double>())
     }
 
+    // The app's language, read at start before any screen is drawn; a change shows from the next start
+    Function("getLang") {
+      NightPrefs.get(context).getString("lang", null)
+    }
+    Function("setLang") { lang: String ->
+      NightPrefs.get(context).edit().putString("lang", lang).commit()
+    }
+    // Starts the app's screens again, so a new language takes effect now
+    Function("reload") {
+      try {
+        val host = (context.applicationContext as com.facebook.react.ReactApplication).reactHost
+        if (host == null) {
+          false
+        } else {
+          android.os.Handler(android.os.Looper.getMainLooper()).post { host.reload("language") }
+          true
+        }
+      } catch (e: Throwable) {
+        false
+      }
+    }
+
     Function("getState") {
       val prefs = NightPrefs.get(context)
       mapOf(

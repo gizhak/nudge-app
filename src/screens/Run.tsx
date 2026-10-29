@@ -37,6 +37,7 @@ import { Choice } from '../ui/inputs';
 import { Sheet } from '../ui/Sheet';
 import { C, T } from '../ui/theme';
 
+import { END, ROW, START } from '../i18n';
 const ORANGE = C.signal;
 const when = (t: number) => {
   const d = new Date(t);
@@ -223,7 +224,7 @@ function RunDetail({ run, runs, prefs, b, onChanged }: { run: Run; runs: Run[]; 
         <Text style={[T.muted, { fontSize: 13 }]}>{run.treadmill ? 'ריצה על הליכון, אין מסלול.' : 'השעון לא העביר מסלול לריצה הזו.'}</Text>
       )}
 
-      <View style={{ flexDirection: 'row-reverse' }}>
+      <View style={{ flexDirection: ROW }}>
         <Stat value={kmText(run.km)} label='ק"מ' />
         <Stat value={paceText(minutesOf(run) * 60)} label="זמן" />
         <Stat value={paceText(paceOf(run))} label='קצב לק"מ' />
@@ -264,10 +265,10 @@ function RunDetail({ run, runs, prefs, b, onChanged }: { run: Run; runs: Run[]; 
             return (
               <View key={i} style={s.split}>
                 <Text style={[T.muted, { fontSize: 13, width: 40 }]}>ק"מ {i + 1}</Text>
-                <View style={{ flex: 1, height: 8, backgroundColor: C.track, borderRadius: 4, overflow: 'hidden', flexDirection: 'row-reverse' }}>
+                <View style={{ flex: 1, height: 8, backgroundColor: C.track, borderRadius: 4, overflow: 'hidden', flexDirection: ROW }}>
                   <View style={{ width: `${40 + 60 * ((worst - sec) / (worst - best || 1))}%`, backgroundColor: sec === best ? ORANGE : C.data }} />
                 </View>
-                <Text style={[T.bold, { fontSize: 13, width: 44, textAlign: 'left' }]}>{paceText(sec)}</Text>
+                <Text style={[T.bold, { fontSize: 13, width: 44, textAlign: END }]}>{paceText(sec)}</Text>
               </View>
             );
           })}
@@ -400,31 +401,31 @@ export function RunCard({ openTick = 0 }: { openTick?: number }) {
   return (
     <>
       <Pressable onPress={() => (last ? setShown(last.id) : setSettings(true))} style={({ pressed }) => [s.card, pressed && { opacity: 0.9 }]}>
-        <View style={{ flexDirection: 'row-reverse', gap: 14, alignItems: 'center' }}>
+        <View style={{ flexDirection: ROW, gap: 14, alignItems: 'center' }}>
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: 'right' }}>ריצה{last ? ` · ${when(last.start)}` : ''}</Text>
+            <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: START }}>ריצה{last ? ` · ${when(last.start)}` : ''}</Text>
             {last ? (
-              <Text style={{ color: '#fff', fontSize: 22, textAlign: 'right', fontFamily: T.bold.fontFamily }}>
+              <Text style={{ color: '#fff', fontSize: 22, textAlign: START, fontFamily: T.bold.fontFamily }}>
                 {kmText(last.km)} ק"מ · {paceText(paceOf(last))}
               </Text>
             ) : (
-              <Text style={{ color: '#fff', fontSize: 18, textAlign: 'right', fontFamily: T.bold.fontFamily }}>עוד לא הגיעה ריצה</Text>
+              <Text style={{ color: '#fff', fontSize: 18, textAlign: START, fontFamily: T.bold.fontFamily }}>עוד לא הגיעה ריצה</Text>
             )}
             {last && (last.steps || last.kcal || avgHr(last)) ? (
-              <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: 'right' }}>
+              <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: START }}>
                 {[avgHr(last) ? `דופק ${avgHr(last)}` : null, last.kcal ? `${last.kcal} קלוריות` : null, last.steps ? `${last.steps.toLocaleString('he-IL')} צעדים` : null].filter(Boolean).join(' · ')}
               </Text>
             ) : null}
-            <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: 'right' }}>
+            <Text style={{ color: '#CFCAC2', fontSize: 13, textAlign: START }}>
               הבאה: {targetText(next.km)} ק"מ{prefs.days.length ? ` · ${prefs.days.map((x) => DAY_LETTERS[x]).join(' ')}` : ''}
             </Text>
-            {goal && <Text style={{ color: '#CFCAC2', fontSize: 12, textAlign: 'right' }}>{goal}</Text>}
+            {goal && <Text style={{ color: '#CFCAC2', fontSize: 12, textAlign: START }}>{goal}</Text>}
             {/* A newer session that did not become a run says why, instead of the run just missing */}
             {skips
               .filter((k) => !last || k.start > last.start)
               .slice(-1)
               .map((k) => (
-                <Text key={k.id} style={{ color: '#E9B872', fontSize: 12, lineHeight: 18, textAlign: 'right' }}>
+                <Text key={k.id} style={{ color: '#E9B872', fontSize: 12, lineHeight: 18, textAlign: START }}>
                   {k.why === 'no_distance'
                     ? `ריצה מ${when(k.start)} הגיעה בלי מרחק. היא תופיע כשאפליקציית השעון תשלח את המרחק ל Health Connect.`
                     : `אימון מ${when(k.start)} (${typeName(k.type)}, ${k.km.toFixed(2)} ק"מ) לא זוהה כריצה: הקצב לא של ריצה.`}
@@ -437,7 +438,7 @@ export function RunCard({ openTick = 0 }: { openTick?: number }) {
             </View>
           ) : null}
         </View>
-        <View style={{ flexDirection: 'row-reverse', gap: 16, paddingTop: 6 }}>
+        <View style={{ flexDirection: ROW, gap: 16, paddingTop: 6 }}>
           {runs.length > 1 && (
             <Pressable onPress={() => setListOpen(true)} hitSlop={8}>
               <Text style={{ color: '#fff', fontSize: 13, textDecorationLine: 'underline', fontFamily: T.bold.fontFamily }}>כל הריצות</Text>
@@ -501,18 +502,18 @@ const s = StyleSheet.create({
   card: { backgroundColor: C.ink, borderRadius: 28, padding: 18, gap: 4 },
   mapCard: { backgroundColor: '#161514', borderRadius: 18, overflow: 'hidden' },
   tile: { backgroundColor: '#1F1E1C', borderRadius: 14, overflow: 'hidden' },
-  legend: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 12 },
-  legendItem: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4 },
+  legend: { flexDirection: ROW, flexWrap: 'wrap', gap: 12 },
+  legendItem: { flexDirection: ROW, alignItems: 'center', gap: 4 },
   swatch: { width: 10, height: 10, borderRadius: 3 },
-  zbar: { flexDirection: 'row-reverse', height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: C.track },
+  zbar: { flexDirection: ROW, height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: C.track },
   talk: { gap: 10, borderWidth: 1, borderColor: C.track, borderRadius: 16, padding: 14 },
   answer: { borderWidth: 1, borderColor: C.ink, borderRadius: 12, paddingVertical: 11 },
   answerOn: { backgroundColor: C.ink },
-  split: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
-  stepRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  split: { flexDirection: ROW, alignItems: 'center', gap: 8 },
+  stepRow: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   stepBtn: { width: 40, height: 36, borderRadius: 10, borderWidth: 1, borderColor: C.track, justifyContent: 'center' },
-  days: { flexDirection: 'row-reverse', gap: 6, justifyContent: 'space-between' },
+  days: { flexDirection: ROW, gap: 6, justifyContent: 'space-between' },
   day: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: C.track, justifyContent: 'center' },
   dayOn: { backgroundColor: C.ink, borderColor: C.ink },
-  listRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
+  listRow: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
 });

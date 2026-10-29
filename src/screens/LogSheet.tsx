@@ -9,6 +9,7 @@ import { PrimaryButton } from '../ui/components';
 import { Sheet } from '../ui/Sheet';
 import { C, FONT, fmt, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 export type LogKind = 'weight' | 'waist';
 
 const HOW: Record<LogKind, string> = {
@@ -83,10 +84,10 @@ const LogSheet = forwardRef<
 export default LogSheet;
 
 const s = StyleSheet.create({
-  toggle: { flexDirection: 'row-reverse', backgroundColor: C.bg, borderRadius: 14, padding: 4, gap: 4 },
+  toggle: { flexDirection: ROW, backgroundColor: C.bg, borderRadius: 14, padding: 4, gap: 4 },
   opt: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 11 },
   optOn: { backgroundColor: C.ink },
-  row: { flexDirection: 'row-reverse', gap: 10, alignItems: 'center' },
+  row: { flexDirection: ROW, gap: 10, alignItems: 'center' },
   input: {
     width: 100,
     borderWidth: 1,

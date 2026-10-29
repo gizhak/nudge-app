@@ -7,6 +7,7 @@ import { EnterCtx, useGrow } from './tabEnter';
 import { onEnter } from './enter';
 import { GrowText } from './grow';
 
+import { ROW } from '../i18n';
 const ACircle = Animated.createAnimatedComponent(Circle);
 const APolyline = Animated.createAnimatedComponent(Polyline);
 
@@ -187,7 +188,7 @@ export function Sparkline({
 }
 
 const s = StyleSheet.create({
-  grid: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 10 },
+  grid: { flexDirection: ROW, flexWrap: 'wrap', gap: 10 },
   tile: {
     flexBasis: '47%',
     flexGrow: 1,
@@ -195,12 +196,12 @@ const s = StyleSheet.create({
     borderRadius: 24,
     paddingVertical: 14,
     paddingHorizontal: 14,
-    flexDirection: 'row-reverse',
+    flexDirection: ROW,
     alignItems: 'center',
     gap: 10,
   },
   chip: {
-    flexDirection: 'row-reverse',
+    flexDirection: ROW,
     alignItems: 'center',
     gap: 6,
     backgroundColor: C.card,

@@ -24,6 +24,7 @@ import WeightWhyCard, { dayLine } from './WeightWhyCard';
 import LogSheet, { LogKind } from './LogSheet';
 import { loadWaist } from '../progress/waist';
 
+import { ROW } from '../i18n';
 const dayStart = (d: Date) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -228,7 +229,7 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
               <View style={{ flex: 1.3, gap: 2 }}>
                 <Text style={[T.base, { fontSize: 13, color: '#B9B2A8' }]}>משקל · ממוצע שבועי</Text>
                 {avg !== null ? (
-                  <View style={{ flexDirection: 'row-reverse', alignItems: 'baseline', gap: 6 }}>
+                  <View style={{ flexDirection: ROW, alignItems: 'baseline', gap: 6 }}>
                     <Text style={{ fontFamily: FONT.black, fontSize: 40, color: '#fff' }}><GrowNumber value={avg} from={a0 ?? avg} format={(n) => fmt(n, 1)} delay={150} /></Text>
                     <Text style={[T.base, { fontSize: 14, color: '#B9B2A8' }]}>ק"ג</Text>
                   </View>
@@ -246,7 +247,7 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
                 <Text style={[T.base, { fontSize: 13, color: '#B9B2A8' }]}>היקף מותן</Text>
                 {wLast ? (
                   <>
-                    <View style={{ flexDirection: 'row-reverse', alignItems: 'baseline', gap: 6 }}>
+                    <View style={{ flexDirection: ROW, alignItems: 'baseline', gap: 6 }}>
                       <Text style={{ fontFamily: FONT.black, fontSize: 40, color: '#fff' }}>{fmt(wLast.cm, 1)}</Text>
                       <Text style={[T.base, { fontSize: 14, color: '#B9B2A8' }]}>ס"מ</Text>
                     </View>
@@ -351,11 +352,11 @@ export default function ProgressScreen({ focusWeigh = 0, openCheckpoint = 0, ope
 
 const s = StyleSheet.create({
   text: { fontSize: 15 },
-  weightHead: { flexDirection: 'row-reverse', alignItems: 'baseline' },
+  weightHead: { flexDirection: ROW, alignItems: 'baseline' },
   hero: { backgroundColor: C.ink, borderRadius: 28, padding: 20, gap: 8 },
-  cols: { flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 14 },
+  cols: { flexDirection: ROW, alignItems: 'flex-start', gap: 14 },
   colSep: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', backgroundColor: '#4A4640' },
-  inputRow: { flexDirection: 'row-reverse', gap: 10, alignItems: 'center' },
+  inputRow: { flexDirection: ROW, gap: 10, alignItems: 'center' },
   input: {
     width: 100,
     borderWidth: 1,

@@ -8,6 +8,7 @@ import { dayKey, loadLog, loadSnoozes, SentMessage } from '../coach/store';
 import { Card } from '../ui/components';
 import { C, T } from '../ui/theme';
 
+import { ROW, SIDE_START } from '../i18n';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 /** Each topic's mark: an icon in its color, the only color in the bubble. */
 export function topicLook(key: string): { icon: IconName; color: string; label: string } {
@@ -202,11 +203,11 @@ const s = StyleSheet.create({
   line: { gap: 4, paddingVertical: 9, borderTopWidth: StyleSheet.hairlineWidth, borderColor: C.track },
   entry: { gap: 2, paddingVertical: 6, borderTopWidth: 1, borderColor: C.track },
   // A message bubble from the coach: on the right, the corner by its tail smaller
-  bubble: { alignSelf: 'flex-end', maxWidth: '92%', backgroundColor: C.card, borderRadius: 22, borderBottomRightRadius: 8, paddingVertical: 12, paddingHorizontal: 14, gap: 6, borderWidth: 1.5, borderColor: C.card },
+  bubble: { alignSelf: SIDE_START, maxWidth: '92%', backgroundColor: C.card, borderRadius: 22, borderBottomRightRadius: 8, paddingVertical: 12, paddingHorizontal: 14, gap: 6, borderWidth: 1.5, borderColor: C.card },
   bubbleQuiet: { paddingVertical: 10, gap: 4, backgroundColor: '#FBFAF7', borderColor: '#FBFAF7' },
-  head: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  head: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   badge: { fontSize: 11, color: C.muted, borderWidth: 1, borderColor: C.track, borderRadius: 8, paddingHorizontal: 6 },
   gotIt: { borderWidth: 0, backgroundColor: C.ink, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5 },
   acked: { fontSize: 12, paddingHorizontal: 8, textDecorationLine: 'line-through' },
-  item: { flexDirection: 'row-reverse', gap: 8, paddingTop: 4 },
+  item: { flexDirection: ROW, gap: 8, paddingTop: 4 },
 });

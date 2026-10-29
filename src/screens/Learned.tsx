@@ -10,6 +10,7 @@ import { loadSettings } from '../notifications/settings';
 import { Card, PrimaryButton } from '../ui/components';
 import { C, T } from '../ui/theme';
 
+import { SIDE_END } from '../i18n';
 const HOUR = 3600000;
 
 /**
@@ -42,7 +43,7 @@ function FactRow({ f, off, onToggle }: { f: Fact; off: boolean; onToggle: () => 
       <Text style={[T.bold, { fontSize: 15 }]}>{f.title}</Text>
       <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>{f.detail}</Text>
       <Text style={[T.base, { fontSize: 13, lineHeight: 19 }]}>{off ? 'סימנת שזה לא נכון: המאמן לא משתמש בזה.' : f.effect}</Text>
-      <Pressable onPress={onToggle} hitSlop={8} style={{ alignSelf: 'flex-start' }}>
+      <Pressable onPress={onToggle} hitSlop={8} style={{ alignSelf: SIDE_END }}>
         <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>{off ? 'זה כן נכון' : 'לא נכון'}</Text>
       </Pressable>
     </View>

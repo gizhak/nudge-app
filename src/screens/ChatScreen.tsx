@@ -27,6 +27,7 @@ import SleepEntry, { hoursText } from './SleepEntry';
 import WorkoutFeel from '../train/WorkoutFeel';
 import { SLEEP_MISSING, SLEEP_MISSING2 } from '../sleep/ask';
 
+import { ROW, SIDE_END, SIDE_START, START } from '../i18n';
 const WATCH_CHANGED =
   'ככה מחברים שעון חדש:\n1. באפליקציה של השעון החדש (ל Bip Max זו Zepp) מפעילים סנכרון ל Health Connect.\n2. ב Health Connect, בהרשאות של אותה אפליקציה, מאשרים לה לכתוב שינה, צעדים, דופק ואימונים.\n3. ב Nudge, בהגדרות, מעדכנים את סוג השעון.\nמהלילה הבא הנתונים אמורים להגיע.';
 const NOTHING_CHANGED =
@@ -361,7 +362,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
 
       {note && (
         <View style={[s.note, note.bad && { backgroundColor: C.signal }]}>
-          <Text style={[T.bold, { fontSize: 14, color: '#fff', textAlign: 'right' }]}>{note.text}</Text>
+          <Text style={[T.bold, { fontSize: 14, color: '#fff', textAlign: START }]}>{note.text}</Text>
         </View>
       )}
       <View style={s.bottom}>
@@ -388,20 +389,20 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
 
 const s = StyleSheet.create({
   coachNew: { borderWidth: 2, borderColor: C.signal },
-  head: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 8 },
+  head: { flexDirection: ROW, alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 8 },
   avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
   avatarDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.signal },
   list: { paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
   stamp: { textAlign: 'center', fontSize: 12, color: '#8A847B' },
   // The coach on the right, its tail corner small; your answers on the left, dark
-  coach: { alignSelf: 'flex-end', width: '86%', backgroundColor: C.card, borderRadius: 22, borderBottomRightRadius: 8, padding: 14, gap: 6 },
-  coachShort: { alignSelf: 'flex-end', maxWidth: '80%', backgroundColor: C.card, borderRadius: 18, borderBottomRightRadius: 6, paddingVertical: 9, paddingHorizontal: 14 },
-  tag: { flexDirection: 'row-reverse', alignItems: 'center', gap: 5 },
-  btns: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8, paddingTop: 4 },
+  coach: { alignSelf: SIDE_START, width: '86%', backgroundColor: C.card, borderRadius: 22, borderBottomRightRadius: 8, padding: 14, gap: 6 },
+  coachShort: { alignSelf: SIDE_START, maxWidth: '80%', backgroundColor: C.card, borderRadius: 18, borderBottomRightRadius: 6, paddingVertical: 9, paddingHorizontal: 14 },
+  tag: { flexDirection: ROW, alignItems: 'center', gap: 5 },
+  btns: { flexDirection: ROW, flexWrap: 'wrap', gap: 8, paddingTop: 4 },
   btnDark: { backgroundColor: C.ink, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 },
   btnLight: { borderWidth: 1, borderColor: '#D9D2C7', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 14 },
-  me: { alignSelf: 'flex-start', flexDirection: 'row-reverse', alignItems: 'center', gap: 6, backgroundColor: C.ink, borderRadius: 22, borderBottomLeftRadius: 8, paddingVertical: 10, paddingHorizontal: 16 },
+  me: { alignSelf: SIDE_END, flexDirection: ROW, alignItems: 'center', gap: 6, backgroundColor: C.ink, borderRadius: 22, borderBottomLeftRadius: 8, paddingVertical: 10, paddingHorizontal: 16 },
   note: { marginHorizontal: 16, marginBottom: 6, backgroundColor: C.water, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14 },
-  bottom: { flexDirection: 'row-reverse', gap: 8, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 6 },
+  bottom: { flexDirection: ROW, gap: 8, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 6 },
   quick: { flex: 1, height: 50, borderRadius: 18, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
 });

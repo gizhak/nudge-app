@@ -35,6 +35,7 @@ import { gearFor } from '../train/library';
 import { applyDerived, derive, EditableSession, editableSessions } from '../profile/derive';
 import { loadProfile, Profile, saveProfile } from '../profile/profile';
 
+import { ROW, SIDE_START } from '../i18n';
 /** The moves of a session; a move with photos opens the how-to window */
 function ExerciseList({ list, onHow, loads }: { list: Exercise[]; onHow: (list: Exercise[], i: number) => void; loads: Record<string, Load> }) {
   return (
@@ -44,7 +45,7 @@ function ExerciseList({ list, onHow, loads }: { list: Exercise[]; onHow: (list: 
         const l = loads[loadKey(e.name)];
         return (
           <Pressable key={e.name} disabled={!how && !kindOf(e.name)} onPress={() => onHow(list, i)} style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}>
-            <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 8, flex: 1 }}>
+            <View style={{ flexDirection: ROW, alignItems: 'center', gap: 8, flex: 1 }}>
               {how && <HowMark />}
               <Text style={[T.base, s.text, { flexShrink: 1 }]}>{e.name}</Text>
             </View>
@@ -136,7 +137,7 @@ export default function TrainScreen({ openReschedule = false, onEditDays, openRu
     <Screen title="אימון" enter="train" refreshing={loading} onRefresh={load}>
       <View style={s.hero}>
         {/* A tap on the workout opens today's workout: done, another hour, another day */}
-        <Pressable onPress={() => setResched(true)} style={({ pressed }) => [{ flexDirection: 'row-reverse', alignItems: 'center', gap: 14 }, pressed && { opacity: 0.85 }]}>
+        <Pressable onPress={() => setResched(true)} style={({ pressed }) => [{ flexDirection: ROW, alignItems: 'center', gap: 14 }, pressed && { opacity: 0.85 }]}>
           {next.at && <Countdown at={next.at} />}
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={[T.bold, { fontSize: 12, color: '#BDB8B0' }]}>הבא · {next.label} · {next.session.minutes} דקות</Text>
@@ -361,7 +362,7 @@ function RetimeRow({ workout, onSave }: { workout: PlannedWorkout; onSave: (time
   return (
     <View style={{ gap: 8 }}>
       <Text style={[T.bold, { fontSize: 15 }]}>שעה אחרת, באותו יום</Text>
-      <View style={{ flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <View style={{ flexDirection: ROW, alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <TimeStepper value={time} onChange={setTime} step={15} />
         <Pressable
           disabled={time === usual}
@@ -376,23 +377,23 @@ function RetimeRow({ workout, onSave }: { workout: PlannedWorkout; onSave: (time
 }
 
 const s = StyleSheet.create({
-  week: { flexDirection: 'row-reverse', justifyContent: 'space-between' },
+  week: { flexDirection: ROW, justifyContent: 'space-between' },
   hero: { backgroundColor: C.ink, borderRadius: 28, padding: 20, gap: 8 },
-  moves: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 6 },
-  planBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.ink, borderRadius: 14, paddingVertical: 13 },
-  pickBtn: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 13 },
-  moveTag: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6, backgroundColor: '#2C2A27', borderRadius: 14, paddingVertical: 6, paddingHorizontal: 10 },
+  moves: { flexDirection: ROW, flexWrap: 'wrap', gap: 6 },
+  planBtn: { flexDirection: ROW, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff', borderWidth: 1.5, borderColor: C.ink, borderRadius: 14, paddingVertical: 13 },
+  pickBtn: { flexDirection: ROW, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 14, paddingVertical: 13 },
+  moveTag: { flexDirection: ROW, alignItems: 'center', gap: 6, backgroundColor: '#2C2A27', borderRadius: 14, paddingVertical: 6, paddingHorizontal: 10 },
   moveText: { fontFamily: T.base.fontFamily, fontSize: 13, color: '#fff' },
   move: { fontFamily: T.base.fontFamily, fontSize: 13, color: '#fff', backgroundColor: '#2C2A27', borderRadius: 12, paddingVertical: 5, paddingHorizontal: 10, overflow: 'hidden' },
   check: { position: 'absolute', top: -3, left: -3, width: 16, height: 16, borderRadius: 8, backgroundColor: C.good, alignItems: 'center', justifyContent: 'center' },
-  heroBtns: { flexDirection: 'row-reverse', gap: 8, paddingTop: 4 },
+  heroBtns: { flexDirection: ROW, gap: 8, paddingTop: 4 },
   heroBtn: { flex: 1, backgroundColor: '#fff', borderRadius: 12, paddingVertical: 12 },
   heroGhost: { flex: 1, borderWidth: 1, borderColor: '#4A4743', borderRadius: 12, paddingVertical: 12 },
-  fixedRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  fixedRow: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   day: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: C.track, justifyContent: 'center' },
-  row: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' },
+  row: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'center' },
   text: { fontSize: 15 },
-  link: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4, alignSelf: 'flex-end' },
-  openRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 20, paddingVertical: 16, paddingHorizontal: 18 },
+  link: { flexDirection: ROW, alignItems: 'center', gap: 4, alignSelf: SIDE_START },
+  openRow: { flexDirection: ROW, alignItems: 'center', gap: 10, backgroundColor: C.card, borderRadius: 20, paddingVertical: 16, paddingHorizontal: 18 },
   ghost: { borderWidth: 1, borderColor: C.track, borderRadius: 12, paddingVertical: 10, backgroundColor: C.card },
 });

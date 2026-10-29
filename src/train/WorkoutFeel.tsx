@@ -6,6 +6,7 @@ import { sessionOf } from '../config/goals';
 import { C, T } from '../ui/theme';
 import { answerOffer, Feel, Load, loadKey, loadLoads, loadText, noteFeel } from './loads';
 
+import { ROW } from '../i18n';
 const FEELS: { v: Feel; label: string; on: string; fg: string }[] = [
   { v: 'easy', label: 'קל', on: '#E6F0E9', fg: '#3E7A55' },
   { v: 'right', label: 'בדיוק', on: '#ECE7DF', fg: C.ink },
@@ -64,7 +65,7 @@ export default function WorkoutFeel({ id }: { id: string }) {
                 <Text style={[T.base, { fontSize: 14, lineHeight: 20 }]}>
                   {l.offer.dir === 'up' ? 'פעמיים ברצף קל.' : 'פעמיים ברצף קשה.'} {l.offer.dir === 'up' ? 'להעלות' : 'להוריד'} ל {loadText({ ...l, value: l.offer.to })}?
                 </Text>
-                <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
+                <View style={{ flexDirection: ROW, gap: 8 }}>
                   <Pressable onPress={() => offer(e.name, true)} style={({ pressed }) => [s.yes, pressed && { opacity: 0.85 }]}>
                     <Text style={[T.bold, { fontSize: 14, color: '#fff' }]}>כן, {l.offer.dir === 'up' ? 'להעלות' : 'להוריד'}</Text>
                   </Pressable>
@@ -84,8 +85,8 @@ export default function WorkoutFeel({ id }: { id: string }) {
 
 const s = StyleSheet.create({
   move: { gap: 6, borderTopWidth: 1, borderTopColor: '#EFEAE3', paddingTop: 8 },
-  head: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
-  feels: { flexDirection: 'row-reverse', gap: 6 },
+  head: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'baseline', gap: 8 },
+  feels: { flexDirection: ROW, gap: 6 },
   feel: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 12, borderWidth: 1.5, borderColor: '#E7E1D8' },
   offer: { backgroundColor: '#FFF6F1', borderRadius: 12, padding: 10, gap: 8, borderWidth: 1.5, borderColor: C.signal },
   yes: { backgroundColor: C.ink, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 14 },

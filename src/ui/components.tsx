@@ -6,6 +6,7 @@ import { EnterCtx, useGrow, useGrowNumber, useTabFresh } from './tabEnter';
 import { Ionicons } from '@expo/vector-icons';
 import { C, FONT, T } from './theme';
 
+import { CHEVRON_BACK, CHEVRON_ON, ROW, SIDE_START } from '../i18n';
 export function Card({ title, children, style }: { title?: string; children: ReactNode; style?: ViewStyle }) {
   return (
     <View style={[s.card, style]}>
@@ -22,7 +23,7 @@ export function Bar({ value, max, color = C.accent, height = 10 }: { value: numb
   const width = grow.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
   return (
     <View style={[s.track, { height, borderRadius: height / 2 }]}>
-      <Animated.View style={{ width, height, borderRadius: height / 2, backgroundColor: color, alignSelf: 'flex-end' }} />
+      <Animated.View style={{ width, height, borderRadius: height / 2, backgroundColor: color, alignSelf: SIDE_START }} />
     </View>
   );
 }
@@ -57,10 +58,10 @@ const s = StyleSheet.create({
   card: { backgroundColor: C.card, borderRadius: 24, padding: 18, gap: 10 },
   cardTitle: { fontSize: 15, color: C.muted },
   track: { backgroundColor: C.track, width: '100%', overflow: 'hidden' },
-  bigRow: { flexDirection: 'row-reverse', alignItems: 'baseline', gap: 6 },
+  bigRow: { flexDirection: ROW, alignItems: 'baseline', gap: 6 },
   big: { fontSize: 34, lineHeight: 40 },
   bigSuffix: { fontSize: 15 },
-  row: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center' },
+  row: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'center' },
   rowText: { fontSize: 15 },
 });
 
@@ -202,8 +203,8 @@ export function Screen({
     >
       {onBack ? (
         <View style={{ backgroundColor: C.bg, marginHorizontal: -16, marginTop: -16, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 }}>
-          <Pressable onPress={onBack} hitSlop={10} style={({ pressed }) => [{ alignSelf: 'flex-end', flexDirection: 'row-reverse', alignItems: 'center', gap: 4, height: 42, backgroundColor: C.card, borderRadius: 14, paddingHorizontal: 14 }, pressed && { opacity: 0.7 }]}>
-            <Ionicons name="chevron-forward" size={16} color={C.ink} />
+          <Pressable onPress={onBack} hitSlop={10} style={({ pressed }) => [{ alignSelf: SIDE_START, flexDirection: ROW, alignItems: 'center', gap: 4, height: 42, backgroundColor: C.card, borderRadius: 14, paddingHorizontal: 14 }, pressed && { opacity: 0.7 }]}>
+            <Ionicons name={CHEVRON_BACK} size={16} color={C.ink} />
             <Text style={[T.bold, { fontSize: 15 }]}>{backLabel}</Text>
           </Pressable>
         </View>
@@ -211,14 +212,14 @@ export function Screen({
       {brand ? (
         <Rise index={0}>
           {/* The logo, and beside it what the coach knows right now (where he is) */}
-          <View style={{ flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: ROW, alignItems: 'center', justifyContent: 'space-between' }}>
             <Wordmark animate />
             {brandSide}
           </View>
         </Rise>
       ) : null}
       <Rise index={1}>
-        <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 10 }}>
+        <View style={{ flexDirection: ROW, alignItems: 'center', gap: 10 }}>
           <View style={{ flex: 1 }}>
             {subtitle ? <Text style={[T.muted, { fontSize: 14 }]}>{subtitle}</Text> : null}
             <Text style={[T.bold, { fontSize: 28, lineHeight: 36 }]}>{title}</Text>
@@ -256,7 +257,7 @@ export function MiniBars({
   const top = Math.max(max ?? 0, target ?? 0, ...values, 1);
   return (
     <View style={{ gap: 4 }}>
-      <View style={{ flexDirection: 'row-reverse', alignItems: 'flex-end', gap: 8, height }}>
+      <View style={{ flexDirection: ROW, alignItems: 'flex-end', gap: 8, height }}>
         {values.map((v, i) => (
           <View key={i} style={{ flex: 1, height: '100%', justifyContent: 'flex-end' }}>
             <View
@@ -270,7 +271,7 @@ export function MiniBars({
           </View>
         ))}
       </View>
-      <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
+      <View style={{ flexDirection: ROW, gap: 8 }}>
         {labels.map((l, i) => (
           <Text key={i} style={[T.muted, { flex: 1, textAlign: 'center', fontSize: 12 }]}>
             {l}
@@ -319,15 +320,15 @@ export function OpenRow({ title, sub, dot, onPress, first, right, note }: { titl
         ) : null}
       </View>
       {right}
-      <Ionicons name="chevron-back" size={16} color={C.muted} />
+      <Ionicons name={CHEVRON_ON} size={16} color={C.muted} />
     </Pressable>
   );
 }
 
 const r = StyleSheet.create({
   card: { backgroundColor: C.card, borderRadius: 24, paddingHorizontal: 18 },
-  line: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, paddingVertical: 14 },
+  line: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 14 },
   sep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
-  sub: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
+  sub: { flexDirection: ROW, alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.signal },
 });

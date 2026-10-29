@@ -9,6 +9,7 @@ import { Appear, GrowText } from '../ui/grow';
 import { useGrow } from '../ui/tabEnter';
 import { Animated } from 'react-native';
 
+import { CHEVRON_ON, ROW, SIDE_START } from '../i18n';
 const when = (d: Date) => {
   const today = new Date();
   const y = new Date(today);
@@ -82,7 +83,7 @@ export default function LastWorkout({ workouts, sessionTitle }: { workouts: Work
       {workouts.length >= 3 && <History workouts={workouts} />}
       <Pressable onPress={() => setMore(true)} style={s.link} hitSlop={6}>
         <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>פרטים ואימונים קודמים</Text>
-        <Ionicons name="chevron-back" size={14} color={C.muted} />
+        <Ionicons name={CHEVRON_ON} size={14} color={C.muted} />
       </Pressable>
 
       <Sheet open={more} onClose={() => setMore(false)} title={sessionTitle ?? workoutLabel(last)}>
@@ -141,12 +142,12 @@ function HistoryBar({ h, latest, delay, label }: { h: number; latest: boolean; d
 }
 
 const s = StyleSheet.create({
-  bars: { flexDirection: 'row-reverse', alignItems: 'flex-end', gap: 8 },
+  bars: { flexDirection: ROW, alignItems: 'flex-end', gap: 8 },
   pill: { fontFamily: T.bold.fontFamily, fontSize: 11, borderRadius: 10, paddingVertical: 2, paddingHorizontal: 7, overflow: 'hidden' },
   pillUp: { color: C.good, backgroundColor: '#E4F0E7' },
   pillDown: { color: C.muted, backgroundColor: C.track },
-  grid: { flexDirection: 'row-reverse', flexWrap: 'wrap', rowGap: 10 },
+  grid: { flexDirection: ROW, flexWrap: 'wrap', rowGap: 10 },
   stat: { width: '33.3%', gap: 1 },
-  row: { flexDirection: 'row-reverse', justifyContent: 'space-between', gap: 8 },
-  link: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4, alignSelf: 'flex-end' },
+  row: { flexDirection: ROW, justifyContent: 'space-between', gap: 8 },
+  link: { flexDirection: ROW, alignItems: 'center', gap: 4, alignSelf: SIDE_START },
 });

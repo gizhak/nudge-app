@@ -8,6 +8,7 @@ import { loadPlaceCheck, PlaceCheckNote } from '../coach/tasks';
 import { Sheet } from './Sheet';
 import { C, T } from './theme';
 
+import { ROW } from '../i18n';
 const NAME: Record<PlaceId, string> = { gym: 'בחדר הכושר', home: 'בבית', office: 'בעבודה' };
 const DOT: Record<PlaceId, string> = { gym: C.signal, home: C.good, office: C.water };
 
@@ -92,10 +93,10 @@ export default function PlaceChip({ place, since, via, onChanged }: { place: Pla
 }
 
 const s = StyleSheet.create({
-  chip: { flexDirection: 'row-reverse', alignItems: 'center', gap: 7, backgroundColor: C.card, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 12 },
+  chip: { flexDirection: ROW, alignItems: 'center', gap: 7, backgroundColor: C.card, borderRadius: 999, paddingVertical: 7, paddingHorizontal: 12 },
   chipGym: { backgroundColor: C.ink },
   dot: { position: 'absolute', width: 10, height: 10, borderRadius: 5 },
-  options: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
+  options: { flexDirection: ROW, flexWrap: 'wrap', gap: 8 },
   option: { borderWidth: 1, borderColor: C.track, backgroundColor: C.bg, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 12 },
   optionOn: { backgroundColor: C.ink, borderColor: C.ink },
 });

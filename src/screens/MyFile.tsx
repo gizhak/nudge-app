@@ -9,6 +9,7 @@ import { cups, waterTarget } from '../nutrition/water';
 import { Bar, Card, PrimaryButton } from '../ui/components';
 import { C, fmt, T } from '../ui/theme';
 
+import { END, ROW } from '../i18n';
 const hhmm = (m: number) => `${pad2(Math.floor(m / 60) % 24)}:${pad2(m % 60)}`;
 const list = (xs: string[]) => (xs.length ? xs.join(', ') : 'אין');
 const L = {
@@ -195,7 +196,7 @@ export default function MyFile({
               {sec.lines.map((l) => (
                 <View key={l.label} style={s.rowBetween}>
                   <Text style={[T.muted, { fontSize: 14 }]}>{l.label}</Text>
-                  <Text style={[T.bold, { fontSize: 14, flexShrink: 1, textAlign: 'left' }, l.value === null && { color: C.signal }]}>
+                  <Text style={[T.bold, { fontSize: 14, flexShrink: 1, textAlign: END }, l.value === null && { color: C.signal }]}>
                     {l.value ?? 'חסר'}
                   </Text>
                 </View>
@@ -270,8 +271,8 @@ function Num({ label, value, how }: { label: string; value: string; how: string 
 
 const s = StyleSheet.create({
   outline: { borderWidth: 1.5, borderColor: C.ink, borderRadius: 12, paddingVertical: 11, backgroundColor: C.card },
-  head: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', backgroundColor: C.bg, marginHorizontal: -16, marginTop: -16, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-  rowBetween: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', gap: 10 },
-  titleRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  head: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'center', backgroundColor: C.bg, marginHorizontal: -16, marginTop: -16, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+  rowBetween: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'center', gap: 10 },
+  titleRow: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.signal },
 });

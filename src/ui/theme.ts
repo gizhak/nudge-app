@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 
+import { START } from '../i18n';
 export const C = {
   bg: '#F4F1EC',
   card: '#FFFFFF',
@@ -28,9 +29,9 @@ export const C = {
 export const FONT = { regular: 'Heebo_400Regular', bold: 'Heebo_700Bold', black: 'Heebo_800ExtraBold' };
 
 export const T = StyleSheet.create({
-  base: { color: C.ink, textAlign: 'right', fontFamily: FONT.regular },
-  bold: { color: C.ink, textAlign: 'right', fontFamily: FONT.bold },
-  muted: { color: C.muted, textAlign: 'right', fontFamily: FONT.regular },
+  base: { color: C.ink, textAlign: START, fontFamily: FONT.regular },
+  bold: { color: C.ink, textAlign: START, fontFamily: FONT.bold },
+  muted: { color: C.muted, textAlign: START, fontFamily: FONT.regular },
 });
 
 export const fmt = (n: number, digits = 0) => n.toLocaleString('he-IL', { maximumFractionDigits: digits });

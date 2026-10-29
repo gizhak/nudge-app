@@ -16,6 +16,7 @@ import {
   Unit,
 } from "./loads";
 
+import { ROW, SIDE_END } from '../i18n';
 type Draft = Pick<Load, "kind" | "unit" | "value" | "bar">;
 
 const HINT: Record<Load["kind"], string> = {
@@ -74,7 +75,7 @@ export default function LoadEditor({
         <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>
           המשקל שלי
         </Text>
-        <View style={{ flex: 1, alignItems: "flex-start" }}>
+        <View style={{ flex: 1, alignItems: SIDE_END }}>
           {load ? (
             <>
               <Text style={[T.bold, { fontSize: 17 }]}>{loadText(load)}</Text>
@@ -199,7 +200,7 @@ export default function LoadEditor({
           {perSide(d)}
         </Text>
       )}
-      <View style={{ flexDirection: "row-reverse", gap: 8 }}>
+      <View style={{ flexDirection: ROW, gap: 8 }}>
         <Pressable
           onPress={save}
           style={({ pressed }) => [s.save, pressed && { opacity: 0.85 }]}
@@ -228,7 +229,7 @@ export default function LoadEditor({
 
 const s = StyleSheet.create({
   row: {
-    flexDirection: "row-reverse",
+    flexDirection: ROW,
     alignItems: "center",
     gap: 12,
     backgroundColor: C.bg,
@@ -238,7 +239,7 @@ const s = StyleSheet.create({
   },
   panel: { backgroundColor: C.bg, borderRadius: 16, padding: 12, gap: 8 },
   seg: {
-    flexDirection: "row-reverse",
+    flexDirection: ROW,
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 3,
@@ -252,7 +253,7 @@ const s = StyleSheet.create({
   },
   segOn: { backgroundColor: C.ink },
   stepper: {
-    flexDirection: "row-reverse",
+    flexDirection: ROW,
     alignItems: "center",
     justifyContent: "center",
     gap: 10,

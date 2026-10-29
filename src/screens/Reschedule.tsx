@@ -12,6 +12,7 @@ import { Card } from '../ui/components';
 import { TimeStepper } from '../ui/inputs';
 import { C, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 /** "Can't make it": move to another day this week, a short home version, or skip. */
 /** compact: only the short version and skipping; moving lives in the week planner */
 export default function Reschedule({ workout, onDone, compact = false }: { workout: PlannedWorkout; onDone: () => void; compact?: boolean }) {
@@ -110,8 +111,8 @@ export default function Reschedule({ workout, onDone, compact = false }: { worko
 const s = StyleSheet.create({
   option: { borderWidth: 1, borderColor: C.track, borderRadius: 12, padding: 10, gap: 2 },
   optionOn: { backgroundColor: C.ink, borderColor: C.ink },
-  timeRow: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  row: { flexDirection: 'row-reverse', gap: 10, flexWrap: 'wrap' },
+  timeRow: { flexDirection: ROW, alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  row: { flexDirection: ROW, gap: 10, flexWrap: 'wrap' },
   btn: { backgroundColor: C.ink, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 },
   ghost: { borderWidth: 1, borderColor: C.track, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14, backgroundColor: C.card },
 });

@@ -15,6 +15,7 @@ import { TimeStepper } from '../ui/inputs';
 import { Sheet } from '../ui/Sheet';
 import { C, FONT, T } from '../ui/theme';
 
+import { CHEVRON_BACK, ROW as ROW_DIR } from '../i18n';
 type Slot = { session: string; time: number } | null;
 const ROW = 62;
 const HOLD_MS = 280;
@@ -163,7 +164,7 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
       <View style={s.screen}>
         <View style={s.top}>
           <Pressable onPress={() => onClose(false)} style={s.back} hitSlop={8} accessibilityLabel="סגור">
-            <Ionicons name="chevron-forward" size={22} color={C.ink} />
+            <Ionicons name={CHEVRON_BACK} size={22} color={C.ink} />
           </Pressable>
           {changed && (
             <Pressable onPress={() => setWeek(start)} hitSlop={8}>
@@ -252,7 +253,7 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
                 </Pressable>
               ))}
             </View>
-            <View style={{ flexDirection: 'row-reverse', gap: 10 }}>
+            <View style={{ flexDirection: ROW_DIR, gap: 10 }}>
               <Pressable onPress={() => setEdit(null)} style={[s.save, { flex: 1 }]}>
                 <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>אישור</Text>
               </Pressable>
@@ -275,13 +276,13 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg, paddingTop: 44, gap: 10 },
-  top: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
+  top: { flexDirection: ROW_DIR, alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
   back: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   hint: { backgroundColor: C.ink, borderRadius: 18, padding: 12, marginHorizontal: 16, minHeight: 66, justifyContent: 'center' },
   list: { backgroundColor: '#fff', borderRadius: 22, paddingHorizontal: 12, paddingVertical: 4, marginHorizontal: 16 },
-  row: { height: ROW, flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  row: { height: ROW, flexDirection: ROW_DIR, alignItems: 'center', gap: 10 },
   sep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
-  chip: { flex: 1, flexDirection: 'row-reverse', alignItems: 'center', gap: 8, backgroundColor: C.ink, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12 },
+  chip: { flex: 1, flexDirection: ROW_DIR, alignItems: 'center', gap: 8, backgroundColor: C.ink, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12 },
   chipLocked: { backgroundColor: C.track },
   chipTarget: { borderWidth: 2, borderColor: C.signal },
   chipLanded: { borderWidth: 2, borderColor: C.accent },
@@ -293,7 +294,7 @@ const s = StyleSheet.create({
     height: 46,
     right: 76,
     left: 12,
-    flexDirection: 'row-reverse',
+    flexDirection: ROW_DIR,
     alignItems: 'center',
     gap: 8,
     backgroundColor: C.signal,
@@ -306,13 +307,13 @@ const s = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
   },
-  scope: { flexDirection: 'row-reverse', backgroundColor: '#fff', borderRadius: 14, padding: 4, gap: 4, marginHorizontal: 16 },
+  scope: { flexDirection: ROW_DIR, backgroundColor: '#fff', borderRadius: 14, padding: 4, gap: 4, marginHorizontal: 16 },
   opt: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 11 },
   optOn: { backgroundColor: C.ink },
   foot: { marginTop: 'auto', paddingHorizontal: 16, paddingBottom: 24 },
   save: { backgroundColor: C.ink, borderRadius: 16, paddingVertical: 15 },
   remove: { borderWidth: 1.5, borderColor: C.track, borderRadius: 16, paddingVertical: 14, backgroundColor: '#fff' },
-  editRow: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' },
+  editRow: { flexDirection: ROW_DIR, alignItems: 'center', justifyContent: 'space-between' },
   kind: { borderRadius: 12, paddingVertical: 11, paddingHorizontal: 14, backgroundColor: C.bg },
   kindOn: { backgroundColor: C.ink },
 });

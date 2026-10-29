@@ -8,6 +8,7 @@ import { clockText, diagnose, hoursText, Night, nightsFrom, readSleepRecords, Sl
 import { TargetBars } from '../ui/charts';
 import { C, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 const DAYS = 14;
 
 interface Loaded {
@@ -165,10 +166,10 @@ export default function SleepView() {
 }
 
 const s = StyleSheet.create({
-  bar: { flexDirection: 'row-reverse', height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: C.track },
-  legend: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 12 },
-  legendItem: { flexDirection: 'row-reverse', alignItems: 'center', gap: 4 },
+  bar: { flexDirection: ROW, height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: C.track },
+  legend: { flexDirection: ROW, flexWrap: 'wrap', gap: 12 },
+  legendItem: { flexDirection: ROW, alignItems: 'center', gap: 4 },
   swatch: { width: 10, height: 10, borderRadius: 3 },
-  night: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, paddingVertical: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
+  night: { flexDirection: ROW, alignItems: 'center', gap: 8, paddingVertical: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
   check: { gap: 4, borderWidth: 1, borderColor: C.track, borderRadius: 14, padding: 12 },
 });

@@ -6,6 +6,7 @@ import { sourceLabel } from '../config/sources';
 import { Sheet } from '../ui/Sheet';
 import { C, fmt, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 const when = (d: Date) =>
   `${d.toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })} ${d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`;
 
@@ -107,7 +108,7 @@ export function ScaleCheckSheet({ open, onClose }: { open: boolean; onClose: () 
 }
 
 const s = StyleSheet.create({
-  status: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  status: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   row: { gap: 2, paddingVertical: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
   btn: { paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: C.track },
 });

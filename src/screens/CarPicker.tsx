@@ -3,6 +3,7 @@ import { AppState, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, Vi
 import { carState, CarState, listPairedDevices, PairedDevice, setCar } from '../../modules/night-guard';
 import { C, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 /**
  * "My car": pick it from the paired Bluetooth devices. While the phone is connected to it
  * the coach stays silent; connecting and disconnecting mark leaving and arriving.
@@ -81,7 +82,7 @@ export default function CarPicker({ compact = false }: { compact?: boolean }) {
 }
 
 const s = StyleSheet.create({
-  row: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  row: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   btn: { backgroundColor: C.ink, borderRadius: 10, paddingVertical: 7, paddingHorizontal: 12 },
   ghost: { borderWidth: 1, borderColor: C.track, borderRadius: 10, paddingVertical: 7, paddingHorizontal: 12 },
   list: { borderWidth: 1, borderColor: C.track, borderRadius: 12, padding: 8, gap: 2 },

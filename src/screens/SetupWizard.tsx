@@ -11,6 +11,7 @@ import { Choice } from '../ui/inputs';
 import CarPicker from './CarPicker';
 import { C, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 type Status = 'ok' | 'todo' | 'info';
 
 interface Row {
@@ -233,8 +234,8 @@ async function appRow(key: string, title: string, app: AppInfo, types: Parameter
 }
 
 const s = StyleSheet.create({
-  head: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  head: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  actions: { flexDirection: 'row-reverse', gap: 10, flexWrap: 'wrap' },
+  actions: { flexDirection: ROW, gap: 10, flexWrap: 'wrap' },
   btn: { backgroundColor: C.ink, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 },
 });

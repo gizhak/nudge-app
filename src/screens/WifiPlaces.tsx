@@ -9,6 +9,7 @@ import { PLACE_NAMES, PlaceId } from '../coach/store';
 import { Card } from '../ui/components';
 import { C, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 const ORDER: PlaceId[] = ['home', 'office', 'gym'];
 
 const WHY: Record<string, string> = {
@@ -171,10 +172,10 @@ export default function WifiPlaces() {
 }
 
 const s = StyleSheet.create({
-  place: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  place: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 6 },
   btn: { backgroundColor: C.ink, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12 },
-  headRow: { flexDirection: 'row-reverse', alignItems: 'center', marginTop: 6 },
-  net: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, paddingVertical: 9, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
-  chips: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 6, paddingBottom: 8 },
+  headRow: { flexDirection: ROW, alignItems: 'center', marginTop: 6 },
+  net: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 9, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
+  chips: { flexDirection: ROW, flexWrap: 'wrap', gap: 6, paddingBottom: 8 },
   chip: { borderRadius: 12, borderWidth: 1, borderColor: '#D9D2C7', paddingVertical: 6, paddingHorizontal: 12 },
 });

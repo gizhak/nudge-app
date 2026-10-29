@@ -7,6 +7,7 @@ import { DEFAULT_REPORT_PREFS, loadReportPrefs, ReportPrefs, saveReportPrefs } f
 import { Card } from '../ui/components';
 import { C, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 /** When the weekly report comes, and whether the monthly one does. */
 export default function ReportSettings() {
   const [p, setP] = useState<ReportPrefs>(DEFAULT_REPORT_PREFS);
@@ -66,8 +67,8 @@ export default function ReportSettings() {
 }
 
 const s = StyleSheet.create({
-  row: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12, paddingVertical: 4 },
-  days: { flexDirection: 'row-reverse', gap: 6 },
+  row: { flexDirection: ROW, alignItems: 'center', gap: 12, paddingVertical: 4 },
+  days: { flexDirection: ROW, gap: 6 },
   day: { flex: 1, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: C.track },
   on: { backgroundColor: C.ink, borderColor: C.ink },
   step: { width: 40, height: 36, borderRadius: 10, borderWidth: 1, borderColor: C.track, justifyContent: 'center' },

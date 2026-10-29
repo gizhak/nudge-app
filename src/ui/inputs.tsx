@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { C, FONT, T } from './theme';
 
+import { ROW, START } from '../i18n';
 export function Choice<K extends string | number>({
   options,
   value,
@@ -119,7 +120,7 @@ export function TextField({ value, onChange, placeholder }: { value: string | un
       placeholder={placeholder}
       placeholderTextColor={C.muted}
       multiline
-      style={[s.num, { width: '100%', textAlign: 'right', fontSize: 16, minHeight: 56, paddingHorizontal: 12 }]}
+      style={[s.num, { width: '100%', textAlign: START, fontSize: 16, minHeight: 56, paddingHorizontal: 12 }]}
     />
   );
 }
@@ -135,13 +136,13 @@ export function Question({ title, hint, children }: { title: string; hint?: stri
 }
 
 const s = StyleSheet.create({
-  wrap: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
+  wrap: { flexDirection: ROW, flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1.5, borderColor: C.track, backgroundColor: C.card, borderRadius: 12, paddingVertical: 9, paddingHorizontal: 14 },
   chipOn: { backgroundColor: C.accent, borderColor: C.accent },
   chipText: { fontSize: 15, textAlign: 'center' },
   field: { gap: 6 },
   label: { fontSize: 16 },
-  numRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  numRow: { flexDirection: ROW, alignItems: 'center', gap: 10 },
   num: {
     width: 110,
     borderWidth: 1,
@@ -154,6 +155,6 @@ const s = StyleSheet.create({
     color: C.ink,
     fontFamily: FONT.regular,
   },
-  stepper: { flexDirection: 'row-reverse', alignItems: 'center', gap: 6 },
+  stepper: { flexDirection: ROW, alignItems: 'center', gap: 6 },
   stepBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.track, alignItems: 'center', justifyContent: 'center' },
 });

@@ -9,6 +9,7 @@ import { choicesOf, picsOf } from './exercisePics';
 import LoadEditor from './LoadEditor';
 import { Load, loadKey, loadLoads } from './loads';
 
+import { CHEVRON_BACK, CHEVRON_ON, ROW, START } from '../i18n';
 const FLIP_MS = 900;
 
 /** Reps like "40 שניות" carry their own unit; plain numbers are repetitions */
@@ -137,7 +138,7 @@ export default function ExerciseHow({ list, start, onClose, onLoads }: { list: E
           {!editing && list.length > 1 && (
             <View style={s.nav}>
               <Pressable onPress={() => go(i - 1)} style={[s.arrow, { opacity: first ? 0.35 : 1 }]} disabled={first} accessibilityLabel="התרגיל הקודם">
-                <Ionicons name="chevron-forward" size={22} color={C.ink} />
+                <Ionicons name={CHEVRON_BACK} size={22} color={C.ink} />
               </Pressable>
               <View style={s.dots}>
                 {list.map((_, k) => (
@@ -145,7 +146,7 @@ export default function ExerciseHow({ list, start, onClose, onLoads }: { list: E
                 ))}
               </View>
               <Pressable onPress={() => go(i + 1)} style={[s.arrow, s.arrowNext, { opacity: last ? 0.35 : 1 }]} disabled={last} accessibilityLabel="התרגיל הבא">
-                <Ionicons name="chevron-back" size={22} color="#fff" />
+                <Ionicons name={CHEVRON_ON} size={22} color="#fff" />
               </Pressable>
             </View>
           )}
@@ -168,20 +169,20 @@ const s = StyleSheet.create({
   veil: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(27,26,24,0.6)' },
   center: { flex: 1, justifyContent: 'center', paddingHorizontal: 20 },
   card: { backgroundColor: '#fff', borderRadius: 28, padding: 16, gap: 12 },
-  top: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' },
+  top: { flexDirection: ROW, alignItems: 'center', justifyContent: 'space-between' },
   close: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
   photo: { height: 230, borderRadius: 20, backgroundColor: C.bg, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   img: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' },
-  toggle: { flexDirection: 'row-reverse', backgroundColor: C.bg, borderRadius: 14, padding: 4, gap: 4 },
+  toggle: { flexDirection: ROW, backgroundColor: C.bg, borderRadius: 14, padding: 4, gap: 4 },
   opt: { flex: 1, alignItems: 'center', paddingVertical: 8, paddingHorizontal: 6, borderRadius: 11 },
   optOn: { backgroundColor: C.ink },
-  nums: { flexDirection: 'row-reverse', gap: 10 },
+  nums: { flexDirection: ROW, gap: 10 },
   num: { flex: 1, backgroundColor: C.bg, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 14 },
-  big: { fontFamily: FONT.black, fontSize: 26, color: C.ink, textAlign: 'right' },
-  nav: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' },
+  big: { fontFamily: FONT.black, fontSize: 26, color: C.ink, textAlign: START },
+  nav: { flexDirection: ROW, alignItems: 'center', justifyContent: 'space-between' },
   arrow: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
   arrowNext: { backgroundColor: C.ink },
-  dots: { flexDirection: 'row-reverse', gap: 6, alignItems: 'center' },
+  dots: { flexDirection: ROW, gap: 6, alignItems: 'center' },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.track },
   dotOn: { width: 20, backgroundColor: C.ink },
 });

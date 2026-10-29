@@ -8,6 +8,7 @@ import { loadAndApply } from '../profile/bootstrap';
 import { Card, PrimaryButton } from '../ui/components';
 import { C, FONT, T } from '../ui/theme';
 
+import { START } from '../i18n';
 /** Paste a restaurant menu, get the dishes that fit the goal and the ones to skip. */
 export default function MenuAdvisor({ kcal, protein, initialText }: { kcal: number; protein: number; initialText?: string }) {
   const [text, setText] = useState(initialText ?? '');
@@ -148,7 +149,7 @@ const s = StyleSheet.create({
     padding: 10,
     fontFamily: FONT.regular,
     fontSize: 14,
-    textAlign: 'right',
+    textAlign: START,
     color: C.ink,
   },
   secondary: { borderWidth: 1.5, borderColor: C.ink, borderRadius: 12, paddingVertical: 10 },

@@ -11,6 +11,7 @@ import { Sheet } from '../ui/Sheet';
 import SleepEntry from './SleepEntry';
 import { C, FONT, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 export default function FocusCards({ tick = 0 }: { tick?: number }) {
   const [focus, setFocus] = useState<Focus | null>(null);
   const [days, setDays] = useState<(boolean | null)[]>([]);
@@ -86,7 +87,7 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
           <Text style={[T.bold, { fontSize: 12, color: C.signal }]}>המאמן מציע שינוי בתוכנית</Text>
           <Text style={[T.bold, { fontSize: 17, fontFamily: FONT.black }]}>{prop.title}</Text>
           <Text style={[T.base, { fontSize: 14, lineHeight: 21, color: '#4A453F' }]}>{prop.body}</Text>
-          <View style={{ flexDirection: 'row-reverse', gap: 8 }}>
+          <View style={{ flexDirection: ROW, gap: 8 }}>
             <Pressable onPress={() => answer(true)} style={({ pressed }) => [s.yes, pressed && { opacity: 0.85 }]}>
               <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>כן, לעדכן</Text>
             </Pressable>
@@ -160,8 +161,8 @@ export default function FocusCards({ tick = 0 }: { tick?: number }) {
 const s = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 22, padding: 14, gap: 8 },
   ask: { borderWidth: 2, borderColor: C.signal },
-  row: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'baseline' },
-  days: { flexDirection: 'row-reverse', justifyContent: 'space-between', marginTop: 2 },
+  row: { flexDirection: ROW, justifyContent: 'space-between', alignItems: 'baseline' },
+  days: { flexDirection: ROW, justifyContent: 'space-between', marginTop: 2 },
   day: { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, borderColor: C.track, alignItems: 'center', justifyContent: 'center' },
   dayHit: { backgroundColor: C.good, borderColor: C.good },
   dayMiss: { backgroundColor: '#B9B2A8', borderColor: '#B9B2A8' },

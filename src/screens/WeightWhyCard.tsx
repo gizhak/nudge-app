@@ -7,6 +7,7 @@ import { DayRow, nextStep, reconcile, WeightStory } from '../report/weightDays';
 import { Card } from '../ui/components';
 import { C, fmt, T } from '../ui/theme';
 
+import { ROW, START } from '../i18n';
 const NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const dm = (t: number) => `${new Date(t).getDate()}.${new Date(t).getMonth() + 1}`;
 const hm = (min: number) => `${Math.floor(min / 60)}:${String(Math.round(min % 60)).padStart(2, '0')}`;
@@ -148,18 +149,18 @@ export default function WeightWhyCard({
 }
 
 const s = StyleSheet.create({
-  head1: { flexDirection: 'row-reverse', alignItems: 'flex-start', gap: 10 },
-  more: { flexDirection: 'row-reverse', alignItems: 'center', gap: 3, paddingTop: 3 },
+  head1: { flexDirection: ROW, alignItems: 'flex-start', gap: 10 },
+  more: { flexDirection: ROW, alignItems: 'center', gap: 3, paddingTop: 3 },
   joined: { fontSize: 14, lineHeight: 21, backgroundColor: C.bg, borderRadius: 14, padding: 12, overflow: 'hidden' },
-  reason: { flexDirection: 'row-reverse', gap: 6, alignItems: 'flex-start' },
-  row: { flexDirection: 'row-reverse', alignItems: 'center', paddingVertical: 7, paddingHorizontal: 6, borderRadius: 10 },
+  reason: { flexDirection: ROW, gap: 6, alignItems: 'flex-start' },
+  row: { flexDirection: ROW, alignItems: 'center', paddingVertical: 7, paddingHorizontal: 6, borderRadius: 10 },
   rowOn: { backgroundColor: C.bg },
   head: { paddingVertical: 4 },
   hText: { fontSize: 11 },
-  cDay: { flex: 1.6, textAlign: 'right' },
+  cDay: { flex: 1.6, textAlign: START },
   cNum: { flex: 1, textAlign: 'center' },
   cIcon: { width: 40, alignItems: 'center', textAlign: 'center' },
   meals: { gap: 4, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 4, backgroundColor: C.bg, borderRadius: 10 },
-  meal: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  meal: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   step: { gap: 2, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track, paddingTop: 10 },
 });

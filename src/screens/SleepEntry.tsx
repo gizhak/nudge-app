@@ -8,6 +8,7 @@ import { Sheet } from '../ui/Sheet';
 import { Question, TimeStepper } from '../ui/inputs';
 import { C, FONT, T } from '../ui/theme';
 
+import { SIDE_START } from '../i18n';
 const MIN = 60000;
 const dayStart = (t: number) => {
   const d = new Date(t);
@@ -82,6 +83,6 @@ export default function SleepEntry({ open, morning, onClose, onSaved }: { open: 
 }
 
 const s = StyleSheet.create({
-  total: { backgroundColor: C.bg, borderRadius: 16, padding: 12, gap: 2, alignItems: 'flex-end' },
+  total: { backgroundColor: C.bg, borderRadius: 16, padding: 12, gap: 2, alignItems: SIDE_START },
   save: { backgroundColor: C.ink, borderRadius: 14, paddingVertical: 13 },
 });

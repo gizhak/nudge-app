@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { advise, CravingKind, findFood, Food, FOODS, KIND_LABEL, personalFoods } from '../nutrition/cravings';
 import { C, FONT, T } from '../ui/theme';
 
+import { ROW, SIDE_END, START } from '../i18n';
 const KINDS: CravingKind[] = ['sweet', 'salty', 'cold', 'savory', 'drink'];
 
 /** "I feel like something": pick or type it, and the coach says whether now is the time, and what instead. */
@@ -116,7 +117,7 @@ export default function Craving({ kcalLeft, proteinLeft, bedTime }: { kcalLeft: 
                 </Text>
               )}
             </View>
-            <View style={{ alignItems: 'flex-start', gap: 2 }}>
+            <View style={{ alignItems: SIDE_END, gap: 2 }}>
               <Text style={[T.bold, { fontSize: 15, color: no ? C.bad : C.ink }]}>{f.kcal}</Text>
               {no ? <Text style={[T.bold, { fontSize: 11, color: C.bad }]}>לא עכשיו</Text> : a.call === 'small' ? <Text style={[T.bold, { fontSize: 11, color: C.warn }]}>מנה קטנה</Text> : null}
             </View>
@@ -129,12 +130,12 @@ export default function Craving({ kcalLeft, proteinLeft, bedTime }: { kcalLeft: 
 }
 
 const s = StyleSheet.create({
-  input: { borderWidth: 1, borderColor: C.track, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, textAlign: 'right', fontFamily: FONT.regular, color: C.ink, backgroundColor: C.card },
-  kinds: { flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8 },
+  input: { borderWidth: 1, borderColor: C.track, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, textAlign: START, fontFamily: FONT.regular, color: C.ink, backgroundColor: C.card },
+  kinds: { flexDirection: ROW, flexWrap: 'wrap', gap: 8 },
   kind: { borderWidth: 1, borderColor: C.track, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: C.card },
   kindOn: { backgroundColor: C.ink, borderColor: C.ink },
-  sortRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  sortRow: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   sort: { borderWidth: 1, borderColor: C.track, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: C.card },
-  item: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
+  item: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
   verdict: { borderWidth: 1.5, borderRadius: 16, padding: 14, gap: 8 },
 });

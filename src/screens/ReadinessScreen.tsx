@@ -20,6 +20,7 @@ import {
 import { Card, PrimaryButton, Screen } from '../ui/components';
 import { C, T } from '../ui/theme';
 
+import { ROW } from '../i18n';
 const COLOR: Record<CheckStatus, string> = { ok: C.accent, warn: C.warn, error: C.bad, manual: C.warn };
 const LABEL: Record<CheckStatus, string> = { ok: 'תקין', warn: 'לבדוק', error: 'חסר', manual: 'ידני' };
 
@@ -184,9 +185,9 @@ function Item({ item, onAction }: { item: CheckItem; onAction: (k: ActionKey) =>
 const s = StyleSheet.create({
   wizard: { borderWidth: 1.5, borderColor: C.ink, borderRadius: 14, paddingVertical: 12, backgroundColor: C.card },
   item: { gap: 4, paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.track },
-  head: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  head: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   dot: { width: 10, height: 10, borderRadius: 5 },
   detail: { fontSize: 13, lineHeight: 19, marginRight: 18 },
-  actions: { flexDirection: 'row-reverse', gap: 8, marginRight: 18, marginTop: 4 },
+  actions: { flexDirection: ROW, gap: 8, marginRight: 18, marginTop: 4 },
   btn: { borderWidth: 1.5, borderColor: C.accent, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 12 },
 });

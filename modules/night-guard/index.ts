@@ -18,6 +18,9 @@ interface NativeNightGuard {
   takeInitialSharedText(): string | null;
   addListener(event: 'onSharedText', cb: (e: { text: string }) => void): { remove: () => void };
   getUnlocks(): number[];
+  getLang?(): string | null;
+  setLang?(lang: string): boolean;
+  reload?(): boolean;
   getState(): { ack: string | null; babyNights: string[]; lastAlert: number };
   listPairedDevices(): PairedDevice[] | null;
   setCar(address: string, name: string): void;
@@ -171,4 +174,40 @@ export function phoneUnlocks(): number[] {
   } catch {
     return [];
   }
+}
+
+/** The language chosen in the app; null when never chosen (or on a build without it) */
+export function appLang(): string | null {
+  try {
+    if (native?.getLang) return native.getLang();
+    // The browser preview: a stored choice, for testing
+    return (globalThis as any).localStorage?.getItem('nudge.lang') ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function setAppLang(lang: string): boolean {
+  try {
+    if (native?.setLang) return native.setLang(lang);
+    (globalThis as any).localStorage?.setItem('nudge.lang', lang);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Starts the app's screens again (a new language); false when it cannot, then he reopens the app */
+export function reloadApp(): boolean {
+  try {
+    if (native?.reload) return native.reload();
+    const loc = (globalThis as any).location;
+    if (loc?.reload) {
+      loc.reload();
+      return true;
+    }
+  } catch {
+    // fall through
+  }
+  return false;
 }

@@ -10,6 +10,7 @@ import ExerciseHow from './ExerciseHow';
 import { picsOf } from './exercisePics';
 import { checklistOf, exercisesOf, Gear, minutesOf, recommendedPicks } from './library';
 
+import { CHEVRON_BACK, ROW } from '../i18n';
 const same = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
 
 export default function PickMoves({
@@ -51,7 +52,7 @@ export default function PickMoves({
         <View style={s.head}>
           <View style={s.topRow}>
             <Pressable onPress={onClose} style={s.back} hitSlop={8} accessibilityLabel="חזרה">
-              <Ionicons name="chevron-forward" size={22} color={C.ink} />
+              <Ionicons name={CHEVRON_BACK} size={22} color={C.ink} />
             </Pressable>
             {!same(on, rec) && (
               <Pressable onPress={() => setOn(rec)} hitSlop={8}>
@@ -147,15 +148,15 @@ export default function PickMoves({
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg, paddingTop: 44 },
   head: { paddingHorizontal: 16, paddingBottom: 10, gap: 10 },
-  topRow: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' },
+  topRow: { flexDirection: ROW, alignItems: 'center', justifyContent: 'space-between' },
   back: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   sum: { backgroundColor: C.ink, borderRadius: 20, padding: 14, gap: 8 },
-  sumRow: { flexDirection: 'row-reverse', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
+  sumRow: { flexDirection: ROW, alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
   track: { height: 6, borderRadius: 3, backgroundColor: '#3A3733', overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 3 },
-  groupHead: { flexDirection: 'row-reverse', alignItems: 'baseline', justifyContent: 'space-between' },
+  groupHead: { flexDirection: ROW, alignItems: 'baseline', justifyContent: 'space-between' },
   card: { backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 10 },
-  row: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, paddingVertical: 9 },
+  row: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 9 },
   sep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
   box: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   boxOn: { backgroundColor: C.ink },
