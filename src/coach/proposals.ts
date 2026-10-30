@@ -11,6 +11,7 @@ import { metrics } from '../report/compute';
 import { context } from '../report/run';
 import { noteChange } from './replies';
 
+import { t } from '../i18n';
 const KEY = 'coach.proposal.v1';
 const DAY = 86400000;
 /** After an answer, two weeks before the next proposal: a change needs time to show */
@@ -57,12 +58,12 @@ export function decide(goal: string, weeks: (number | null)[], adherent: boolean
   const spread = Math.max(w0, w1, w2) - Math.min(w0, w1, w2);
   const list = [w2, w1, w0].map((x) => x.toFixed(1)).join(', ');
   if (goal === 'lose' || goal === 'recomp') {
-    if (w2 - w0 > 2.4) return { delta: STEP, why: `ירדת ${(w2 - w0).toFixed(1)} ק"ג בשבועיים (${list}). זה יותר מ 1.2 בשבוע, ובקצב כזה הולך גם שריר.` };
+    if (w2 - w0 > 2.4) return { delta: STEP, why: t(`ירדת ${(w2 - w0).toFixed(1)} ק"ג בשבועיים (${list}). זה יותר מ 1.2 בשבוע, ובקצב כזה הולך גם שריר.`, `You lost ${(w2 - w0).toFixed(1)} kg in two weeks (${list}). That is more than 1.2 a week, and at that pace muscle goes too.`) };
     if (goal === 'lose' && adherent && spread <= 0.4 && w0 >= w2 - 0.2)
-      return { delta: -STEP, why: `שלושה שבועות המשקל עומד (${list}), והקלוריות והאימונים היו ביעד. כנראה שהגוף התרגל.` };
+      return { delta: -STEP, why: t(`שלושה שבועות המשקל עומד (${list}), והקלוריות והאימונים היו ביעד. כנראה שהגוף התרגל.`, `Three weeks the weight is stuck (${list}), and calories and workouts were on target. The body has probably adapted.`) };
   }
   if (goal === 'gain' && adherent && spread <= 0.3 && w0 <= w2 + 0.1)
-    return { delta: STEP, why: `שלושה שבועות המשקל לא עולה (${list}), והאוכל והאימונים היו ביעד. צריך קצת יותר.` };
+    return { delta: STEP, why: t(`שלושה שבועות המשקל לא עולה (${list}), והאוכל והאימונים היו ביעד. צריך קצת יותר.`, `Three weeks the weight is not going up (${list}), and food and workouts were on target. It needs a bit more.`) };
   return null;
 }
 
@@ -97,8 +98,8 @@ export async function checkProposal(now = Date.now()): Promise<Proposal | null> 
     delta: to - from,
     from,
     to,
-    title: to < from ? `להוריד ${fmt(from - to)} קלוריות ביום?` : `להוסיף ${fmt(to - from)} קלוריות ביום?`,
-    body: `${d.why} היעד ישתנה מ ${fmt(from)} ל ${fmt(to)}. בעוד שבועיים נבדוק מה קרה.`,
+    title: to < from ? t(`להוריד ${fmt(from - to)} קלוריות ביום?`, `Cut ${fmt(from - to)} calories a day?`) : t(`להוסיף ${fmt(to - from)} קלוריות ביום?`, `Add ${fmt(to - from)} calories a day?`),
+    body: t(`${d.why} היעד ישתנה מ ${fmt(from)} ל ${fmt(to)}. בעוד שבועיים נבדוק מה קרה.`, `${d.why} The goal will change from ${fmt(from)} to ${fmt(to)}. In two weeks we will check what happened.`),
     createdAt: now,
     status: 'open',
   };
@@ -110,15 +111,15 @@ export async function checkProposal(now = Date.now()): Promise<Proposal | null> 
 export async function answerProposal(yes: boolean, now = Date.now()): Promise<string> {
   const p = await loadProposal();
   if (!p || p.status !== 'open') return '';
-  let reply = 'בסדר. נמשיך כמו עכשיו ונבדוק שוב בעוד שבועיים.';
+  let reply = t('בסדר. נמשיך כמו עכשיו ונבדוק שוב בעוד שבועיים.', 'OK. We will keep going as now and check again in two weeks.');
   if (yes) {
     const profile = await loadProfile();
     const next = { ...profile, calorieAdjust: (profile.calorieAdjust ?? 0) + p.delta };
     await saveProfile(next);
     applyDerived(derive(next));
-    reply = `סגור. מהיום היעד ${fmt(p.to)} קלוריות. בעוד שבועיים נבדוק אם המשקל זז.`;
+    reply = t(`סגור. מהיום היעד ${fmt(p.to)} קלוריות. בעוד שבועיים נבדוק אם המשקל זז.`, `Done. From today the goal is ${fmt(p.to)} calories. In two weeks we will check if the weight moved.`);
   }
   await save({ ...p, status: yes ? 'yes' : 'no', answeredAt: now });
-  await noteChange(yes ? `כן, ${p.to < p.from ? 'להוריד' : 'להוסיף'} קלוריות` : 'לא עכשיו', reply);
+  await noteChange(yes ? t(`כן, ${p.to < p.from ? 'להוריד' : 'להוסיף'} קלוריות`, `Yes, ${p.to < p.from ? 'cut' : 'add'} calories`) : t('לא עכשיו', 'Not now'), reply);
   return reply;
 }

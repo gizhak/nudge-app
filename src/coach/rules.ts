@@ -7,6 +7,8 @@ import { drinkNow, waterBehind, waterExpectedByNow, waterProgress, waterText } f
 import { graceEnd, nightMinutes, OUTING_LABEL, OUTING_TIP, OutingPlan } from './outing';
 import { CoachPrefs, hhmm, NagLevel, PlaceId } from './store';
 
+import { t } from '../i18n';
+import { moveName } from '../i18n/moves';
 /** 1 = sent at every level, 2 = normal and close, 3 = close only */
 export type Priority = 1 | 2 | 3;
 
@@ -157,8 +159,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'vacation_back',
       priority: 1,
-      title: 'ברוך השב',
-      body: 'היום שקילה. המספר יהיה כנראה גבוה ב 1 עד 2 ק"ג, בעיקר מים ומלח מהחופשה, וזה יורד תוך כמה ימים. האימון הראשון: הגרסה הקצרה. חוזרים לאט, אבל חוזרים.',
+      title: t('ברוך השב', 'Welcome back'),
+      body: t('היום שקילה. המספר יהיה כנראה גבוה ב 1 עד 2 ק"ג, בעיקר מים ומלח מהחופשה, וזה יורד תוך כמה ימים. האימון הראשון: הגרסה הקצרה. חוזרים לאט, אבל חוזרים.', 'Weigh-in today. The number will probably be 1 to 2 kg higher, mostly water and salt from the trip, and it drops within a few days. First workout: the short version. Coming back slowly, but coming back.'),
     });
   }
 
@@ -172,8 +174,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'gym_arrive',
       priority: 1,
-      title: `${pick(['בהצלחה', 'קדימה, בכל הכוח', 'יאללה, זה הזמן'])}: ${session.title}`,
-      body: session.exercises.map((e) => `${e.name} ${e.sets}×${e.reps}`).join(' · ') + (c.chronicCare ? '. דופק מתון, בלי להגיע לקוצר נשימה.' : ''),
+      title: t(`${pick(['בהצלחה', 'קדימה, בכל הכוח', 'יאללה, זה הזמן'])}: ${session.title}`, `${pick(['Good luck', 'Go, full power', 'Come on, this is the time'])}: ${session.title}`),
+      body: session.exercises.map((e) => `${e.name} ${e.sets}×${e.reps}`).join(' · ') + (c.chronicCare ? t('. דופק מתון, בלי להגיע לקוצר נשימה.', '. A moderate heart rate, without getting out of breath.') : ''),
     });
   }
 
@@ -183,8 +185,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       id: 'gym_leave',
       priority: 2,
       level: 'info',
-      title: pick(['כל הכבוד, האימון בפנים', 'עוד אימון בבנק', 'עשית את זה']),
-      body: `רשמתי את האימון. עכשיו חלבון בשעה הקרובה${proteinLeft > 0 ? `, חסרים ${proteinLeft} גרם להיום` : ''}, וכוס מים גדולה.`,
+      title: pick([t('כל הכבוד, האימון בפנים', 'Well done, the workout is in'), t('עוד אימון בבנק', 'Another workout in the bank'), t('עשית את זה', 'You did it')]),
+      body: t(`רשמתי את האימון. עכשיו חלבון בשעה הקרובה${proteinLeft > 0 ? `, חסרים ${proteinLeft} גרם להיום` : ''}, וכוס מים גדולה.`, `I logged the workout. Now protein within the hour${proteinLeft > 0 ? `, ${proteinLeft} grams still to go today` : ''}, and a big glass of water.`),
     });
   }
 
@@ -195,37 +197,37 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       id: 'place_home_out',
       priority: 2,
       level: noWeigh ? 'normal' : 'info',
-      title: noWeigh ? 'יצאת בלי להישקל' : pick(['יום טוב', 'יוצאים לדרך', 'בוקר של אלופים']),
+      title: noWeigh ? t('יצאת בלי להישקל', 'You left without weighing in') : pick([t('יום טוב', 'Have a good day'), t('יוצאים לדרך', 'Off we go'), t('בוקר של אלופים', 'A champion\'s morning')]),
       body:
-        (noWeigh ? 'מחר שקילה לפני שיוצאים, זה לוקח 10 שניות. ' : 'נשקלת, מצוין. ') +
-        (plan && !trained ? `היום ${plan.session.title} ב${pad2(plan.hour)}:${pad2(plan.minute)}.` : 'קח בקבוק מים לדרך.'),
+        (noWeigh ? t('מחר שקילה לפני שיוצאים, זה לוקח 10 שניות. ', 'Tomorrow, weigh in before you leave, it takes 10 seconds. ') : t('נשקלת, מצוין. ', 'Weighed in, excellent. ')) +
+        (plan && !trained ? t(`היום ${plan.session.title} ב${pad2(plan.hour)}:${pad2(plan.minute)}.`, `Today ${plan.session.title} at ${pad2(plan.hour)}:${pad2(plan.minute)}.`) : t('קח בקבוק מים לדרך.', 'Take a bottle of water with you.')),
     });
   }
 
   // Arriving at work
   if (places && c.event?.type === 'enter' && c.event.place === 'office' && m < at(14)) {
-    const lunch = c.prefs.mealSlots.includes('lunch') ? ` ארוחת צהריים בין ${hhmm(SLOT_BY_ID.lunch.from)} ל${hhmm(SLOT_BY_ID.lunch.to)}, עם חלבון.` : '';
-    const water = (c.prefs.waterContainer ?? 250) === 250 ? 'כוס מים עכשיו, ועוד אחת כל שעה.' : 'מלא בקבוק עכשיו, וסיים אותו עד 11:00.';
+    const lunch = c.prefs.mealSlots.includes('lunch') ? t(` ארוחת צהריים בין ${hhmm(SLOT_BY_ID.lunch.from)} ל${hhmm(SLOT_BY_ID.lunch.to)}, עם חלבון.`, ` Lunch between ${hhmm(SLOT_BY_ID.lunch.from)} and ${hhmm(SLOT_BY_ID.lunch.to)}, with protein.`) : '';
+    const water = (c.prefs.waterContainer ?? 250) === 250 ? t('כוס מים עכשיו, ועוד אחת כל שעה.', 'A glass of water now, and another every hour.') : t('מלא בקבוק עכשיו, וסיים אותו עד 11:00.', 'Fill a bottle now, and finish it by 11:00.');
     out.push({
       id: 'place_office_in',
       priority: 2,
       level: c.weighedToday === false ? 'normal' : 'info',
-      title: c.weighedToday === false ? 'הגעת לעבודה, בלי שקילה' : pick(['הגעת לעבודה', 'יום עבודה טוב', 'בעבודה']),
-      body: `${c.weighedToday === false ? 'מחר שקילה לפני שיוצאים. ' : ''}${water}${lunch}`,
+      title: c.weighedToday === false ? t('הגעת לעבודה, בלי שקילה', 'At work, without a weigh-in') : pick([t('הגעת לעבודה', 'You got to work'), t('יום עבודה טוב', 'Have a good workday'), t('בעבודה', 'At work')]),
+      body: t(`${c.weighedToday === false ? 'מחר שקילה לפני שיוצאים. ' : ''}${water}${lunch}`, `${c.weighedToday === false ? 'Tomorrow, weigh in before you leave. ' : ''}${water}${lunch}`),
     });
   }
 
   // Leaving work: what is still open today
   if (places && c.event?.type === 'exit' && c.event.place === 'office' && m >= at(13)) {
     const parts: string[] = [];
-    if (c.meals > 0) parts.push(`נשארו ${Math.max(0, Math.round(caloriesFor(c.now) - c.kcal))} קלוריות ו${proteinLeft} גרם חלבון`);
-    if (plan && !trained) parts.push(`${plan.session.title} ב${pad2(plan.hour)}:${pad2(plan.minute)}`);
+    if (c.meals > 0) parts.push(t(`נשארו ${Math.max(0, Math.round(caloriesFor(c.now) - c.kcal))} קלוריות ו${proteinLeft} גרם חלבון`, `${Math.max(0, Math.round(caloriesFor(c.now) - c.kcal))} calories and ${proteinLeft} grams of protein left`));
+    if (plan && !trained) parts.push(t(`${plan.session.title} ב${pad2(plan.hour)}:${pad2(plan.minute)}`, `${plan.session.title} at ${pad2(plan.hour)}:${pad2(plan.minute)}`));
     out.push({
       id: 'place_office_out',
       priority: 2,
       level: plan && !trained ? 'normal' : 'info',
-      title: pick(['סיימת יום עבודה', 'בדרך הביתה', 'יום העבודה מאחוריך']),
-      body: parts.length ? parts.join('. ') + '.' : 'יום טוב. ערב רגוע וארוחת ערב עם חלבון.',
+      title: pick([t('סיימת יום עבודה', 'Workday done'), t('בדרך הביתה', 'On the way home'), t('יום העבודה מאחוריך', 'The workday is behind you')]),
+      body: parts.length ? parts.join('. ') + '.' : t('יום טוב. ערב רגוע וארוחת ערב עם חלבון.', 'A good day. A calm evening and a dinner with protein.'),
     });
   }
 
@@ -241,8 +243,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'home_before_workout',
       priority: 1,
-      title: 'הגעת הביתה',
-      body: `${plan.session.title} ב${pad2(plan.hour)}:${pad2(plan.minute)}. כדאי לאכול משהו קל עכשיו, לא ארוחה כבדה.`,
+      title: t('הגעת הביתה', 'You got home'),
+      body: t(`${plan.session.title} ב${pad2(plan.hour)}:${pad2(plan.minute)}. כדאי לאכול משהו קל עכשיו, לא ארוחה כבדה.`, `${plan.session.title} at ${pad2(plan.hour)}:${pad2(plan.minute)}. Eat something light now, not a heavy meal.`),
     });
   }
 
@@ -258,19 +260,19 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     const o = c.outingPlan;
     if (o && o.leaveAt > m) {
       // Going out tonight: no dinner plan and no bedtime, the evening belongs to the outing
-      parts.push(`יוצא ב${hhmm(o.leaveAt)}: ${OUTING_LABEL[o.kind]}`);
-      if (proteinLeft > 20) parts.push(`משהו קטן עם חלבון לפני, חסרים ${proteinLeft} גרם`);
+      parts.push(t(`יוצא ב${hhmm(o.leaveAt)}: ${OUTING_LABEL[o.kind]}`, `Going out at ${hhmm(o.leaveAt)}: ${OUTING_LABEL[o.kind]}`));
+      if (proteinLeft > 20) parts.push(t(`משהו קטן עם חלבון לפני, חסרים ${proteinLeft} גרם`, `Something small with protein before, ${proteinLeft} grams to go`));
     } else {
-      if (c.meals > 0 && proteinLeft > 20) parts.push(`לארוחת ערב: חלבון, חסרים ${proteinLeft} גרם`);
-      else parts.push('ארוחת ערב טובה, בלי נשנושים אחריה');
-      if (plan && !trained && plan.start > m) parts.push(`אימון ב${pad2(plan.hour)}:${pad2(plan.minute)}`);
-      if (!o) parts.push(`לישון עד ${hhmm(c.prefs.bedTime)}`);
+      if (c.meals > 0 && proteinLeft > 20) parts.push(t(`לארוחת ערב: חלבון, חסרים ${proteinLeft} גרם`, `For dinner: protein, ${proteinLeft} grams to go`));
+      else parts.push(t('ארוחת ערב טובה, בלי נשנושים אחריה', 'A good dinner, no snacking after it'));
+      if (plan && !trained && plan.start > m) parts.push(t(`אימון ב${pad2(plan.hour)}:${pad2(plan.minute)}`, `Workout at ${pad2(plan.hour)}:${pad2(plan.minute)}`));
+      if (!o) parts.push(t(`לישון עד ${hhmm(c.prefs.bedTime)}`, `In bed by ${hhmm(c.prefs.bedTime)}`));
     }
     out.push({
       id: 'place_home_in',
       priority: 2,
       level: 'info',
-      title: pick(['הגעת הביתה', 'ערב טוב', 'בבית']),
+      title: pick([t('הגעת הביתה', 'You got home'), t('ערב טוב', 'Good evening'), t('בבית', 'At home')]),
       body: parts.join('. ') + '.',
     });
   }
@@ -281,8 +283,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'leave_office_protein',
       priority: 2,
-      title: 'בדרך הביתה',
-      body: `חסרים ${proteinLeft} גרם חלבון. ארוחת ערב עם עוף, ביצים, קוטג' או טונה תסגור את הפער.`,
+      title: t('בדרך הביתה', 'On the way home'),
+      body: t(`חסרים ${proteinLeft} גרם חלבון. ארוחת ערב עם עוף, ביצים, קוטג' או טונה תסגור את הפער.`, `${proteinLeft} grams of protein to go. A dinner with chicken, eggs, cottage cheese or tuna closes the gap.`),
     });
   }
 
@@ -291,8 +293,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'protein_evening',
       priority: 2,
-      title: `חסרים ${proteinLeft} גרם חלבון`,
-      body: 'כדאי שארוחת הערב תהיה עשירה בחלבון.',
+      title: t(`חסרים ${proteinLeft} גרם חלבון`, `${proteinLeft} grams of protein to go`),
+      body: t('כדאי שארוחת הערב תהיה עשירה בחלבון.', 'Make dinner rich in protein.'),
     });
   }
 
@@ -301,16 +303,16 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'evening_over',
       priority: 1,
-      title: 'עברת את יעד הקלוריות',
-      body: `${Math.round(c.kcal - caloriesFor(c.now))} קלוריות מעל היעד. יום אחד לא משנה מגמה; מחר חוזרים לקצב.`,
+      title: t('עברת את יעד הקלוריות', 'You passed the calorie goal'),
+      body: t(`${Math.round(c.kcal - caloriesFor(c.now))} קלוריות מעל היעד. יום אחד לא משנה מגמה; מחר חוזרים לקצב.`, `${Math.round(c.kcal - caloriesFor(c.now))} calories over the goal. One day does not change a trend; tomorrow we are back on pace.`),
     });
   }
   if (c.meals >= 2 && between(m, at(20), at(21, 30)) && c.kcal < caloriesFor(c.now) * 0.6) {
     out.push({
       id: 'evening_under',
       priority: 2,
-      title: 'אכלת מעט היום',
-      body: `${Math.round(c.kcal)} מתוך ${caloriesFor(c.now)} קלוריות. גירעון גדול מדי פוגע בשריר. כדאי ארוחה קטנה עם חלבון.`,
+      title: t('אכלת מעט היום', 'You ate little today'),
+      body: t(`${Math.round(c.kcal)} מתוך ${caloriesFor(c.now)} קלוריות. גירעון גדול מדי פוגע בשריר. כדאי ארוחה קטנה עם חלבון.`, `${Math.round(c.kcal)} of ${caloriesFor(c.now)} calories. Too big a deficit hurts muscle. Have a small meal with protein.`),
     });
   }
 
@@ -322,14 +324,14 @@ export function evaluate(c: CoachContext): CoachMessage[] {
         ? {
             id: 'missed_workout',
             priority: 1,
-            title: 'התאמנת היום?',
-            body: `אם כן, לחץ "התאמנתי". אם עוד לא: אפשר להזיז לשעה אחרת או למחר, או 10 דקות בבית: ${MINIMUM_WORKOUT.map((e) => e.name).join(', ')}.`,
+            title: t('התאמנת היום?', 'Did you train today?'),
+            body: t(`אם כן, לחץ "התאמנתי". אם עוד לא: אפשר להזיז לשעה אחרת או למחר, או 10 דקות בבית: ${MINIMUM_WORKOUT.map((e) => e.name).join(', ')}.`, `If so, tap "I trained". If not yet: you can move it to another time or to tomorrow, or 10 minutes at home: ${MINIMUM_WORKOUT.map((e) => moveName(e.name)).join(', ')}.`),
           }
         : {
             id: 'missed_workout',
             priority: 1,
-            title: 'נראה שעוד לא התאמנת',
-            body: `להזיז לשעה מאוחרת יותר, למחר, או לוותר היום? ואם כן התאמנת, לחץ "התאמנתי". אפשר גם 10 דקות בבית: ${MINIMUM_WORKOUT.map((e) => e.name).join(', ')}.`,
+            title: t('נראה שעוד לא התאמנת', 'Looks like you have not trained yet'),
+            body: t(`להזיז לשעה מאוחרת יותר, למחר, או לוותר היום? ואם כן התאמנת, לחץ "התאמנתי". אפשר גם 10 דקות בבית: ${MINIMUM_WORKOUT.map((e) => e.name).join(', ')}.`, `Move it later, to tomorrow, or skip today? And if you did train, tap "I trained". There is also 10 minutes at home: ${MINIMUM_WORKOUT.map((e) => moveName(e.name)).join(', ')}.`),
           },
     );
   }
@@ -339,19 +341,19 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     const h = `${Math.floor(c.sleepMinutes / 60)}:${pad2(Math.round(c.sleepMinutes % 60))}`;
     out.push(
       c.outingLastNight
-        ? { id: 'short_sleep', priority: 2, title: `לילה ארוך, ${h} שעות`, body: 'היום מים, חלבון והליכה. אימון רק אם הוא קל.' }
+        ? { id: 'short_sleep', priority: 2, title: t(`לילה ארוך, ${h} שעות`, `A long night, ${h} hours`), body: t('היום מים, חלבון והליכה. אימון רק אם הוא קל.', 'Today water, protein and a walk. A workout only if it is light.') }
         : c.brokenNight
         ? {
             id: 'short_sleep',
             priority: 2,
-            title: `${c.brokenNightLabel ?? 'לילה קטוע'}, ${h} שעות`,
+            title: t(`${c.brokenNightLabel ?? 'לילה קטוע'}, ${h} שעות`, `${c.brokenNightLabel ?? 'A broken night'}, ${h} hours`),
             body: plan
-              ? 'אימון קל היום: 2 סטים במקום 3. מים וחלבון חשובים היום יותר מתמיד.'
-              : 'אם אפשר, נמנום של 20 דקות בצהריים. הלילה במיטה מוקדם.',
+              ? t('אימון קל היום: 2 סטים במקום 3. מים וחלבון חשובים היום יותר מתמיד.', 'A light workout today: 2 sets instead of 3. Water and protein matter more than ever today.')
+              : t('אם אפשר, נמנום של 20 דקות בצהריים. הלילה במיטה מוקדם.', 'If you can, a 20 minute nap at midday. Early to bed tonight.'),
           }
         : plan
-          ? { id: 'short_sleep', priority: 1, title: `ישנת ${h} שעות`, body: 'היום אימון קל: 2 סטים במקום 3, ובלי אינטרוולים.' }
-          : { id: 'short_sleep', priority: 3, title: `ישנת ${h} שעות`, body: 'נסה ללכת לישון מוקדם יותר הלילה.' },
+          ? { id: 'short_sleep', priority: 1, title: t(`ישנת ${h} שעות`, `You slept ${h} hours`), body: t('היום אימון קל: 2 סטים במקום 3, ובלי אינטרוולים.', 'A light workout today: 2 sets instead of 3, and no intervals.') }
+          : { id: 'short_sleep', priority: 3, title: t(`ישנת ${h} שעות`, `You slept ${h} hours`), body: t('נסה ללכת לישון מוקדם יותר הלילה.', 'Try to go to bed earlier tonight.') },
     );
   }
 
@@ -362,8 +364,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'bedtime',
       priority: 2,
-      title: 'זמן להתארגן לשינה',
-      body: `במיטה ב${hhmm(c.prefs.bedTime)} נותן ${GOALS.sleepHours} שעות עד ${hhmm(c.prefs.wakeTime)}.`,
+      title: t('זמן להתארגן לשינה', 'Time to get ready for bed'),
+      body: t(`במיטה ב${hhmm(c.prefs.bedTime)} נותן ${GOALS.sleepHours} שעות עד ${hhmm(c.prefs.wakeTime)}.`, `In bed at ${hhmm(c.prefs.bedTime)} gives ${GOALS.sleepHours} hours until ${hhmm(c.prefs.wakeTime)}.`),
     });
   }
 
@@ -372,8 +374,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'steps_afternoon',
       priority: 3,
-      title: `${Math.round(c.steps)} צעדים עד עכשיו`,
-      body: 'הליכה של 15 דקות תוסיף כ1,500 צעדים.',
+      title: t(`${Math.round(c.steps)} צעדים עד עכשיו`, `${Math.round(c.steps)} steps so far`),
+      body: t('הליכה של 15 דקות תוסיף כ1,500 צעדים.', 'A 15 minute walk adds about 1,500 steps.'),
     });
   }
 
@@ -393,8 +395,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       out.push({
         id: `meal_reminder_${id}`,
         priority: 2,
-        title: atOffice ? 'אל תשכח לאכול' : `${slot.label}?`,
-        body: `${atOffice ? 'אתה במשרד ועוד לא נרשמה ארוחת צהריים. ' : 'עוד לא נרשמה. '}${MEAL_IDEAS(id, !!c.vegetarian)} ${c.foodAppName === 'Zepp' ? 'צלם ב Zepp' : c.foodAppName ? `רשום ב ${c.foodAppName}` : 'רשום באפליקציית האוכל'} כשאתה אוכל.`,
+        title: atOffice ? t('אל תשכח לאכול', 'Don\'t forget to eat') : `${slot.label}?`,
+        body: t(`${atOffice ? 'אתה במשרד ועוד לא נרשמה ארוחת צהריים. ' : 'עוד לא נרשמה. '}${MEAL_IDEAS(id, !!c.vegetarian)} ${c.foodAppName === 'Zepp' ? 'צלם ב Zepp' : c.foodAppName ? `רשום ב ${c.foodAppName}` : 'רשום באפליקציית האוכל'} כשאתה אוכל.`, `${atOffice ? 'You are at the office and no lunch is logged yet. ' : 'Not logged yet. '}${MEAL_IDEAS(id, !!c.vegetarian)} ${c.foodAppName === 'Zepp' ? 'Snap it in Zepp' : c.foodAppName ? `Log it in ${c.foodAppName}` : 'Log it in the food app'} when you eat.`),
       });
     }
   }
@@ -407,8 +409,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       out.push({
         id: 'pre_workout_snack',
         priority: 2,
-        title: 'ביניים לפני האימון',
-        body: `האימון ב${pad2(plan.hour)}:${pad2(plan.minute)}. משהו קטן עכשיו, כמו פרי ויוגורט, ייתן אנרגיה בלי כבדות.`,
+        title: t('ביניים לפני האימון', 'A snack before the workout'),
+        body: t(`האימון ב${pad2(plan.hour)}:${pad2(plan.minute)}. משהו קטן עכשיו, כמו פרי ויוגורט, ייתן אנרגיה בלי כבדות.`, `The workout is at ${pad2(plan.hour)}:${pad2(plan.minute)}. Something small now, like fruit and yogurt, gives energy without heaviness.`),
       });
     }
   }
@@ -428,13 +430,13 @@ export function evaluate(c: CoachContext): CoachMessage[] {
         priority: v.good ? 2 : 1,
         title: v.good
           ? v.verdict === 'protein_rich'
-            ? 'כל הכבוד'
+            ? t('כל הכבוד', 'Well done')
             : v.verdict === 'light'
-              ? 'נשנוש קל'
-              : 'ארוחה מאוזנת'
+              ? t('נשנוש קל', 'A light snack')
+              : t('ארוחה מאוזנת', 'A balanced meal')
           : v.verdict === 'sweet'
-            ? 'לא בשביל המטרה שלך'
-            : 'על הארוחה האחרונה',
+            ? t('לא בשביל המטרה שלך', 'Not for your goal')
+            : t('על הארוחה האחרונה', 'About the last meal'),
         body: v.message,
         meal: { name: meal.name, kcal: meal.kcal, protein: meal.protein, good: v.good },
       });
@@ -453,10 +455,10 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       id: c.unlocked ? `weigh_in@${bucket(40)}` : `weigh_in@${bucket(120)}`,
       priority: 1,
       level: d === null || d >= 2 ? 'urgent' : 'normal',
-      title: d === null ? 'אין לי אף שקילה שלך' : d >= 2 ? `לא נשקלת ${d} ימים` : 'עוד לא נשקלת היום',
+      title: d === null ? t('אין לי אף שקילה שלך', 'I don\'t have a single weigh-in from you') : d >= 2 ? t(`לא נשקלת ${d} ימים`, `Not weighed for ${d} days`) : t('עוד לא נשקלת היום', 'Not weighed today yet'),
       body: c.outingLastNight
-        ? 'אחרי יציאה השקילה לא מייצגת, אבל נשקלים בכל זאת. הרצף חשוב יותר מהמספר.'
-        : 'עלה על המשקל לפני אוכל ושתייה, ולחץ כאן כדי להזין. מיד אחרי זה חצי ליטר מים, לפני הקפה.',
+        ? t('אחרי יציאה השקילה לא מייצגת, אבל נשקלים בכל זאת. הרצף חשוב יותר מהמספר.', 'After a night out the weigh-in is not representative, but weigh in anyway. The streak matters more than the number.')
+        : t('עלה על המשקל לפני אוכל ושתייה, ולחץ כאן כדי להזין. מיד אחרי זה חצי ליטר מים, לפני הקפה.', 'Step on the scale before food and drink, and tap here to enter it. Right after, half a liter of water, before coffee.'),
     });
   }
   // Right after the weigh-in: half a liter of water before coffee, the body comes out of a night without drinking
@@ -466,8 +468,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       id: `water_morning@${bucket(40)}`,
       priority: 1,
       level: 'urgent',
-      title: c.weighedToday ? 'נשקלת. עכשיו מים, לפני הקפה' : 'מים לפני הקפה',
-      body: `${drinkNow(500, c.prefs.waterContainer)} עכשיו, לפני הקפה והאוכל. הגוף יוצא מלילה שלם בלי שתייה, והקפה רק מייבש עוד. לחץ על הכפתור כשסיימת.`,
+      title: c.weighedToday ? t('נשקלת. עכשיו מים, לפני הקפה', 'Weighed in. Now water, before coffee') : t('מים לפני הקפה', 'Water before coffee'),
+      body: t(`${drinkNow(500, c.prefs.waterContainer)} עכשיו, לפני הקפה והאוכל. הגוף יוצא מלילה שלם בלי שתייה, והקפה רק מייבש עוד. לחץ על הכפתור כשסיימת.`, `${drinkNow(500, c.prefs.waterContainer)} now, before coffee and food. The body comes out of a whole night without drinking, and coffee only dries it more. Tap the button when you are done.`),
     });
   }
   // Every four weeks, Sunday morning after the weigh-in: photos and waist
@@ -475,8 +477,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'checkpoint_due',
       priority: 2,
-      title: 'ביקורת 4 שבועות',
-      body: 'שתי תמונות באותו מקום ובאותה תאורה כמו בפעם הקודמת, והיקף מותן. 3 דקות. לחץ כאן.',
+      title: t('ביקורת 4 שבועות', '4-week check-in'),
+      body: t('שתי תמונות באותו מקום ובאותה תאורה כמו בפעם הקודמת, והיקף מותן. 3 דקות. לחץ כאן.', 'Two photos in the same place and light as last time, and your waist. 3 minutes. Tap here.'),
     });
   }
   // Once a week, Sunday morning after the weigh-in, when the checkpoint is not asking for it anyway
@@ -484,12 +486,12 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'waist_week',
       priority: 2,
-      title: 'היקף מותניים, 30 שניות',
-      body: 'סרט מדידה בגובה הטבור, אחרי נשיפה רגילה, צמוד ולא לוחץ. כמו בפעם הקודמת. לחץ כאן כדי לרשום.',
+      title: t('היקף מותניים, 30 שניות', 'Waist, 30 seconds'),
+      body: t('סרט מדידה בגובה הטבור, אחרי נשיפה רגילה, צמוד ולא לוחץ. כמו בפעם הקודמת. לחץ כאן כדי לרשום.', 'A tape measure at navel height, after a normal breath out, snug, not tight. As last time. Tap here to log it.'),
     });
   }
   if (c.weighedToday === false && between(m, at(19), at(21))) {
-    out.push({ id: 'weigh_tomorrow', priority: 2, title: 'לא נשקלת היום', body: 'מחר בבוקר, ראשון דבר אחרי השירותים ולפני הקפה.' });
+    out.push({ id: 'weigh_tomorrow', priority: 2, title: t('לא נשקלת היום', 'Not weighed today'), body: t('מחר בבוקר, ראשון דבר אחרי השירותים ולפני הקפה.', 'Tomorrow morning, first thing after the toilet and before coffee.') });
   }
 
   // Training day: tell him in the morning, and push at start time
@@ -497,18 +499,18 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'workout_today',
       priority: 2,
-      title: `היום אימון ב${pad2(plan.hour)}:${pad2(plan.minute)}`,
+      title: t(`היום אימון ב${pad2(plan.hour)}:${pad2(plan.minute)}`, `Workout today at ${pad2(plan.hour)}:${pad2(plan.minute)}`),
       body:
-        `${plan.session.title}, ${plan.session.minutes} דקות. תכנן את היום סביבו, זה לא אופציונלי.` +
-        (c.kidsToday ? ' הילדים אצלך היום: אם לא מסתדר, 20 דקות בבית אחרי שהם נרדמים.' : ''),
+        t(`${plan.session.title}, ${plan.session.minutes} דקות. תכנן את היום סביבו, זה לא אופציונלי.`, `${plan.session.title}, ${plan.session.minutes} minutes. Plan the day around it, it is not optional.`) +
+        (c.kidsToday ? t(' הילדים אצלך היום: אם לא מסתדר, 20 דקות בבית אחרי שהם נרדמים.', ' The kids are with you today: if it does not work out, 20 minutes at home after they fall asleep.') : ''),
     });
   }
   if (plan && !trained && c.place !== 'gym' && c.event?.place !== 'gym' && between(m, plan.start - 15, plan.start + 30)) {
     out.push({
       id: 'workout_now',
       priority: 1,
-      title: 'זמן אימון',
-      body: `${plan.session.title} מתחיל ב${pad2(plan.hour)}:${pad2(plan.minute)}. נעליים, בקבוק מים, יוצאים.`,
+      title: t('זמן אימון', 'Workout time'),
+      body: t(`${plan.session.title} מתחיל ב${pad2(plan.hour)}:${pad2(plan.minute)}. נעליים, בקבוק מים, יוצאים.`, `${plan.session.title} starts at ${pad2(plan.hour)}:${pad2(plan.minute)}. Shoes, a bottle of water, out the door.`),
     });
   }
 
@@ -520,10 +522,10 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       out.push({
         id: 'week_behind',
         priority: 1,
-        title: `השבוע ${c.workoutDaysThisWeek} אימונים מתוך ${due} שתוכננו עד עכשיו`,
+        title: t(`השבוע ${c.workoutDaysThisWeek} אימונים מתוך ${due} שתוכננו עד עכשיו`, `This week ${c.workoutDaysThisWeek} workouts of ${due} planned so far`),
         body: (left
-          ? `נשארו ${left} אימונים בתוכנית. כדי להשלים, הוסף אימון קצר ביום פנוי.`
-          : 'לא נשארו אימונים בתוכנית השבוע. אימון בית של 20 דקות היום יציל את השבוע.') + quote(c.whyNow),
+          ? t(`נשארו ${left} אימונים בתוכנית. כדי להשלים, הוסף אימון קצר ביום פנוי.`, `${left} workouts left in the plan. To catch up, add a short workout on a free day.`)
+          : t('לא נשארו אימונים בתוכנית השבוע. אימון בית של 20 דקות היום יציל את השבוע.', 'No workouts left in this week\'s plan. A 20 minute home workout today will save the week.')) + quote(c.whyNow),
       });
     }
   }
@@ -534,8 +536,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: `long_break@${bucket(240)}`,
       priority: 1,
-      title: breakDays >= 14 ? 'שבועיים בלי אימון' : `${breakDays} ימים בלי אימון`,
-      body: `${STOP_LINES[c.stopReason ?? 'never'] ?? ''}20 דקות היום עדיפות על כלום: ${MINIMUM_WORKOUT.map((e) => e.name).join(', ')}.${quote(c.whyNow)}`,
+      title: breakDays >= 14 ? t('שבועיים בלי אימון', 'Two weeks without a workout') : t(`${breakDays} ימים בלי אימון`, `${breakDays} days without a workout`),
+      body: t(`${STOP_LINES[c.stopReason ?? 'never'] ?? ''}20 דקות היום עדיפות על כלום: ${MINIMUM_WORKOUT.map((e) => e.name).join(', ')}.${quote(c.whyNow)}`, `${STOP_LINES[c.stopReason ?? 'never'] ?? ''}20 minutes today beats nothing: ${MINIMUM_WORKOUT.map((e) => moveName(e.name)).join(', ')}.${quote(c.whyNow)}`),
     });
   }
 
@@ -544,8 +546,8 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: `hc_broken@${bucket(240)}`,
       priority: 1,
-      title: 'אני עיוור: אין חיבור לנתונים',
-      body: 'המאמן לא מצליח לקרוא מ Health Connect. פתח את האפליקציה, לשונית מאמן, בדיקת מוכנות.',
+      title: t('אני עיוור: אין חיבור לנתונים', 'I am blind: no data connection'),
+      body: t('המאמן לא מצליח לקרוא מ Health Connect. פתח את האפליקציה, לשונית מאמן, בדיקת מוכנות.', 'The coach cannot read from Health Connect. Open the app, the coach tab, readiness check.'),
     });
   }
   if (c.hcOk && c.lastStepsAt !== undefined && between(m, at(11), at(22))) {
@@ -554,12 +556,12 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       out.push({
         id: `sync_steps@${bucket(240)}`,
         priority: 2,
-        title: c.hasWatch === false ? 'הטלפון לא סופר צעדים' : 'השעון לא מסנכרן',
+        title: c.hasWatch === false ? t('הטלפון לא סופר צעדים', 'The phone is not counting steps') : t('השעון לא מסנכרן', 'The watch is not syncing'),
         body:
-          (c.lastStepsAt ? `אין צעדים חדשים מאז ${hhmm(minutesOfDay(c.lastStepsAt))}. ` : 'לא הגיעו צעדים היום. ') +
+          (c.lastStepsAt ? t(`אין צעדים חדשים מאז ${hhmm(minutesOfDay(c.lastStepsAt))}. `, `No new steps since ${hhmm(minutesOfDay(c.lastStepsAt))}. `) : t('לא הגיעו צעדים היום. ', 'No steps arrived today. ')) +
           (c.hasWatch === false
-            ? 'בדוק בהגדרות Health Connect שספירת הצעדים בטלפון פעילה.'
-            : `פתח את ${c.activityAppName ?? 'אפליקציית השעון'} ובדוק שהשעון מחובר.`),
+            ? t('בדוק בהגדרות Health Connect שספירת הצעדים בטלפון פעילה.', 'Check in the Health Connect settings that step counting on the phone is on.')
+            : t(`פתח את ${c.activityAppName ?? 'אפליקציית השעון'} ובדוק שהשעון מחובר.`, `Open ${c.activityAppName ?? 'the watch app'} and check the watch is connected.`)),
       });
     }
   }
@@ -567,16 +569,16 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'sync_sleep',
       priority: 2,
-      title: 'אין נתוני שינה מהלילה',
-      body: `ישנת עם השעון? פתח את ${c.activityAppName ?? 'אפליקציית השעון'} כדי לסנכרן. בלי שינה אני לא יודע כמה לדחוף היום.`,
+      title: t('אין נתוני שינה מהלילה', 'No sleep data from last night'),
+      body: t(`ישנת עם השעון? פתח את ${c.activityAppName ?? 'אפליקציית השעון'} כדי לסנכרן. בלי שינה אני לא יודע כמה לדחוף היום.`, `Did you sleep with the watch? Open ${c.activityAppName ?? 'the watch app'} to sync. Without sleep I don't know how hard to push today.`),
     });
   }
   if (c.hcOk && c.meals === 0 && between(m, at(14), at(21))) {
     out.push({
       id: `food_none@${bucket(180)}`,
       priority: 1,
-      title: 'לא נרשמה אף ארוחה היום',
-      body: `${c.foodAppName ? `בלי רישום ב ${c.foodAppName}` : 'בלי רישום ארוחות'} אני לא יכול לאמן אותך בתזונה. רשום את הארוחה הבאה, גם אם היא קטנה.`,
+      title: t('לא נרשמה אף ארוחה היום', 'No meal logged today'),
+      body: t(`${c.foodAppName ? `בלי רישום ב ${c.foodAppName}` : 'בלי רישום ארוחות'} אני לא יכול לאמן אותך בתזונה. רשום את הארוחה הבאה, גם אם היא קטנה.`, `${c.foodAppName ? `Without logging in ${c.foodAppName}` : 'Without logging meals'} I cannot coach your food. Log the next meal, even a small one.`),
     });
   }
 
@@ -586,21 +588,21 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     const expected = waterExpectedByNow(c.waterTarget, m, wake, c.prefs.bedTime);
     const gap = expected - c.waterMl;
     const left = c.waterTarget - c.waterMl;
-    const cupNow = `${drinkNow(250, c.prefs.waterContainer)} עכשיו`;
+    const cupNow = t(`${drinkNow(250, c.prefs.waterContainer)} עכשיו`, `${drinkNow(250, c.prefs.waterContainer)} now`);
     if (between(mm, bed - 150, bed - 90) && left > 500) {
       out.push({
         id: 'water@close',
         priority: 1,
-        title: `חסרים ${waterText(left, c.prefs.waterContainer)} להיום`,
-        body: `זו ההזדמנות האחרונה, אחר כך זה כבר קימות בלילה. ${drinkNow(500, c.prefs.waterContainer)} עכשיו, ולחץ על הכפתור כאן.`,
+        title: t(`חסרים ${waterText(left, c.prefs.waterContainer)} להיום`, `${waterText(left, c.prefs.waterContainer)} still to go today`),
+        body: t(`זו ההזדמנות האחרונה, אחר כך זה כבר קימות בלילה. ${drinkNow(500, c.prefs.waterContainer)} עכשיו, ולחץ על הכפתור כאן.`, `This is the last chance, after that it means getting up at night. ${drinkNow(500, c.prefs.waterContainer)} now, and tap the button here.`),
       });
     } else if (between(mm, wake + 60, bed - 150) && waterBehind(c.waterMl, expected)) {
       const far = gap >= 750;
       out.push({
         id: `water@${bucket(120)}`,
         priority: far ? 1 : 2,
-        title: c.waterMl === 0 ? 'עוד לא שתית היום' : far ? `חסרים לך ${waterText(gap, c.prefs.waterContainer)} מים` : `שתית ${waterText(c.waterMl, c.prefs.waterContainer)}`,
-        body: `עד עכשיו היית צריך ${waterProgress(expected, c.waterTarget, c.prefs.waterContainer)}. ${far ? 'לא לדחות לערב, ' : ''}${cupNow}, ולחץ על הכפתור כאן.`,
+        title: c.waterMl === 0 ? t('עוד לא שתית היום', 'You have not drunk anything today') : far ? t(`חסרים לך ${waterText(gap, c.prefs.waterContainer)} מים`, `You are ${waterText(gap, c.prefs.waterContainer)} of water behind`) : t(`שתית ${waterText(c.waterMl, c.prefs.waterContainer)}`, `You drank ${waterText(c.waterMl, c.prefs.waterContainer)}`),
+        body: t(`עד עכשיו היית צריך ${waterProgress(expected, c.waterTarget, c.prefs.waterContainer)}. ${far ? 'לא לדחות לערב, ' : ''}${cupNow}, ולחץ על הכפתור כאן.`, `By now you should have had ${waterProgress(expected, c.waterTarget, c.prefs.waterContainer)}. ${far ? 'Do not leave it for the evening, ' : ''}${cupNow}, and tap the button here.`),
       });
     }
   }
@@ -612,7 +614,7 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       out.push({
         id: 'outing_prep',
         priority: 1,
-        title: `יוצא ב${hhmm(o.leaveAt)}: ${OUTING_LABEL[o.kind]}`,
+        title: t(`יוצא ב${hhmm(o.leaveAt)}: ${OUTING_LABEL[o.kind]}`, `Going out at ${hhmm(o.leaveAt)}: ${OUTING_LABEL[o.kind]}`),
         body: OUTING_TIP[o.kind],
       });
     }
@@ -622,11 +624,11 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       out.push({
         id: 'outing_workout',
         priority: 1,
-        title: 'היציאה מתנגשת באימון',
+        title: t('היציאה מתנגשת באימון', 'The outing clashes with the workout'),
         body:
           early >= at(16)
-            ? `האימון ב${pad2(plan.hour)}:${pad2(plan.minute)} והיציאה ב${hhmm(o.leaveAt)}. הקדם את האימון ל${hhmm(early)}, או 20 דקות בבית לפני שיוצאים.`
-            : `האימון ב${pad2(plan.hour)}:${pad2(plan.minute)} והיציאה ב${hhmm(o.leaveAt)}. 20 דקות בבית לפני שיוצאים: ${MINIMUM_WORKOUT.map((e) => e.name).join(', ')}.`,
+            ? t(`האימון ב${pad2(plan.hour)}:${pad2(plan.minute)} והיציאה ב${hhmm(o.leaveAt)}. הקדם את האימון ל${hhmm(early)}, או 20 דקות בבית לפני שיוצאים.`, `The workout is at ${pad2(plan.hour)}:${pad2(plan.minute)} and you leave at ${hhmm(o.leaveAt)}. Move the workout up to ${hhmm(early)}, or 20 minutes at home before you go.`)
+            : t(`האימון ב${pad2(plan.hour)}:${pad2(plan.minute)} והיציאה ב${hhmm(o.leaveAt)}. 20 דקות בבית לפני שיוצאים: ${MINIMUM_WORKOUT.map((e) => e.name).join(', ')}.`, `The workout is at ${pad2(plan.hour)}:${pad2(plan.minute)} and you leave at ${hhmm(o.leaveAt)}. 20 minutes at home before you go: ${MINIMUM_WORKOUT.map((e) => moveName(e.name)).join(', ')}.`),
       });
     }
   }
@@ -637,16 +639,16 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: 'evening_guard',
       priority: 2,
-      title: 'זו השעה שהכי קשה לך',
-      body: `${left > 0 ? `נשארו ${left} קלוריות. ` : ''}אם רעב, משהו עם חלבון, לא מהמזווה. המטבח נסגר ב${hhmm((c.prefs.bedTime - 120 + 1440) % 1440)}.`,
+      title: t('זו השעה שהכי קשה לך', 'This is your hardest hour'),
+      body: t(`${left > 0 ? `נשארו ${left} קלוריות. ` : ''}אם רעב, משהו עם חלבון, לא מהמזווה. המטבח נסגר ב${hhmm((c.prefs.bedTime - 120 + 1440) % 1440)}.`, `${left > 0 ? `${left} calories left. ` : ''}If you are hungry, something with protein, not from the pantry. The kitchen closes at ${hhmm((c.prefs.bedTime - 120 + 1440) % 1440)}.`),
     });
   }
   if (c.hardTimes?.includes('weekend') && c.now.getDay() === (weekendStart() + 6) % 7 && between(m, at(18), at(20))) {
     out.push({
       id: 'weekend_guard',
       priority: 2,
-      title: 'סוף השבוע מתחיל',
-      body: 'אמרת שזה הזמן הכי קשה לך. ארוחה חופשית אחת, לא שלושה ימים. ומים כרגיל.',
+      title: t('סוף השבוע מתחיל', 'The weekend begins'),
+      body: t('אמרת שזה הזמן הכי קשה לך. ארוחה חופשית אחת, לא שלושה ימים. ומים כרגיל.', 'You said this is your hardest time. One free meal, not three days. And water as usual.'),
     });
   }
 
@@ -663,12 +665,12 @@ export function evaluate(c: CoachContext): CoachMessage[] {
     out.push({
       id: `go_to_sleep@${bucket(30)}`,
       priority: 1,
-      title: c.outingPlan ? 'חזרת? לך לישון' : sinceBed < 5 ? 'זמן לישון' : `עברו ${fmtLate(sinceBed)} משעת השינה`,
+      title: c.outingPlan ? t('חזרת? לך לישון', 'Back? Go to sleep') : sinceBed < 5 ? t('זמן לישון', 'Time to sleep') : t(`עברו ${fmtLate(sinceBed)} משעת השינה`, `${fmtLate(sinceBed)} past your bedtime`),
       body:
-        `אם תירדם עכשיו תישן ${hrs} שעות עד ${hhmm(c.prefs.wakeTime)}` +
-        (short ? `, פחות מהיעד של ${GOALS.sleepHours}.` : '.') +
-        (tomorrow && short ? ` ${m < at(12) ? 'היום' : 'מחר'} ${sessionOf(tomorrow.session).title}, ועייפות תפגע בו.` : '') +
-        ' הנח את הטלפון.',
+        t(`אם תירדם עכשיו תישן ${hrs} שעות עד ${hhmm(c.prefs.wakeTime)}`, `If you fall asleep now you will sleep ${hrs} hours until ${hhmm(c.prefs.wakeTime)}`) +
+        (short ? t(`, פחות מהיעד של ${GOALS.sleepHours}.`, `, less than the ${GOALS.sleepHours} hour goal.`) : '.') +
+        (tomorrow && short ? t(` ${m < at(12) ? 'היום' : 'מחר'} ${sessionOf(tomorrow.session).title}, ועייפות תפגע בו.`, ` ${m < at(12) ? 'Today' : 'Tomorrow'} is ${sessionOf(tomorrow.session).title}, and tiredness will hurt it.`) : '') +
+        t(' הנח את הטלפון.', ' Put the phone down.'),
     });
   }
 
@@ -676,27 +678,27 @@ export function evaluate(c: CoachContext): CoachMessage[] {
 }
 
 const minutesUntil = (m: number, target: number) => (target - m + 1440) % 1440;
-const quote = (why?: string) => (why?.trim() ? ` אמרת: "${why.trim()}".` : '');
+const quote = (why?: string) => (why?.trim() ? t(` אמרת: "${why.trim()}".`, ` You said: "${why.trim()}".`) : '');
 const STOP_LINES: Record<string, string> = {
-  work: 'בפעם הקודמת עומס בעבודה הפיל אותך. לא הפעם. ',
-  family: 'בפעם הקודמת המשפחה דחקה את האימונים. ',
-  motivation: 'בפעם הקודמת המוטיבציה נגמרה. היא לא חוזרת לבד, היא חוזרת מאימון. ',
-  injury: 'אם משהו כואב, אימון ניידות קל עדיף על הפסקה. ',
+  work: t('בפעם הקודמת עומס בעבודה הפיל אותך. לא הפעם. ', 'Last time a heavy workload knocked you off. Not this time. '),
+  family: t('בפעם הקודמת המשפחה דחקה את האימונים. ', 'Last time family pushed the workouts aside. '),
+  motivation: t('בפעם הקודמת המוטיבציה נגמרה. היא לא חוזרת לבד, היא חוזרת מאימון. ', 'Last time the motivation ran out. It does not come back by itself, it comes back from a workout. '),
+  injury: t('אם משהו כואב, אימון ניידות קל עדיף על הפסקה. ', 'If something hurts, a light mobility workout beats a break. '),
 };
-const fmtLate = (min: number) => (min < 60 ? `${min} דקות` : `${Math.floor(min / 60)}:${pad2(min % 60)} שעות`);
+const fmtLate = (min: number) => (min < 60 ? t(`${min} דקות`, `${min} minutes`) : t(`${Math.floor(min / 60)}:${pad2(min % 60)} שעות`, `${Math.floor(min / 60)}:${pad2(min % 60)} hours`));
 
 function MEAL_IDEAS(id: string, vegetarian: boolean): string {
-  const protein = vegetarian ? 'ביצים, קוטג\', טופו או עדשים' : 'ביצים, קוטג\', עוף או טונה';
+  const protein = vegetarian ? t('ביצים, קוטג\', טופו או עדשים', 'eggs, cottage cheese, tofu or lentils') : t('ביצים, קוטג\', עוף או טונה', 'eggs, cottage cheese, chicken or tuna');
   switch (id) {
     case 'breakfast':
-      return 'רעיון: ביצים או יוגורט עם לחם מלא וירק.';
+      return t('רעיון: ביצים או יוגורט עם לחם מלא וירק.', 'Idea: eggs or yogurt with whole-grain bread and a vegetable.');
     case 'snack_am':
     case 'snack_pm':
-      return 'רעיון: יוגורט חלבון, פרי עם קומץ אגוזים, או חטיף חלבון.';
+      return t('רעיון: יוגורט חלבון, פרי עם קומץ אגוזים, או חטיף חלבון.', 'Idea: protein yogurt, fruit with a handful of nuts, or a protein bar.');
     case 'night':
-      return 'אם רעב: משהו קטן עם חלבון, כמו יוגורט או קוטג\'.';
+      return t('אם רעב: משהו קטן עם חלבון, כמו יוגורט או קוטג\'.', 'If hungry: something small with protein, like yogurt or cottage cheese.');
     default:
-      return `רעיון: חלבון (${protein}), פחמימה ומנת ירקות.`;
+      return t(`רעיון: חלבון (${protein}), פחמימה ומנת ירקות.`, `Idea: protein (${protein}), a carb and a portion of vegetables.`);
   }
 }
 
@@ -731,12 +733,12 @@ export function combineMeals(candidates: CoachMessage[], sentIds: string[]): Coa
   const protein = Math.round(fresh.reduce((a, c) => a + c.meal!.protein, 0));
   const names = fresh.map((c) => c.meal!.name).join(', ');
   const bad = fresh.filter((c) => !c.meal!.good);
-  const sum = `${names}: ${kcal} קלוריות, ${protein} גרם חלבון.`;
+  const sum = t(`${names}: ${kcal} קלוריות, ${protein} גרם חלבון.`, `${names}: ${kcal} calories, ${protein} grams of protein.`);
   const merged: CoachMessage = {
     id: fresh[0].id,
     also: fresh.slice(1).map((c) => c.id),
     priority: Math.min(...fresh.map((c) => c.priority)) as Priority,
-    title: bad.length ? bad[0].title : protein >= 25 ? 'כל הכבוד' : 'נרשם',
+    title: bad.length ? bad[0].title : protein >= 25 ? t('כל הכבוד', 'Well done') : t('נרשם', 'Logged'),
     body: bad.length ? `${sum} ${bad[0].body}` : sum,
   };
   return [...rest, merged];
@@ -803,19 +805,19 @@ export function select(
 
 // Encouraging tone: same facts, softer framing
 const ENCOURAGE: Record<string, string> = {
-  gym_arrive: 'כל הכבוד שהגעת. ',
-  home_before_workout: 'יום טוב לאימון. ',
-  missed_workout: 'קורה לכולם, העיקר לא לשבור את הרצף. ',
-  evening_over: 'לא נורא בכלל. ',
-  evening_under: 'שמתי לב שאכלת מעט היום. ',
-  short_sleep: 'לילה קשה, זה בסדר. ',
-  weigh_in: 'בוקר טוב. ',
-  long_break: 'הכי קשה זה לחזור, ואתה יכול. ',
-  week_behind: 'עוד אפשר להציל את השבוע. ',
-  water: 'תזכורת קטנה. ',
-  go_to_sleep: 'יום ארוך, מגיע לך לנוח. ',
-  food_none: 'רק תזכורת. ',
-  protein_evening: 'אתה קרוב. ',
+  gym_arrive: t('כל הכבוד שהגעת. ', 'Well done for getting here. '),
+  home_before_workout: t('יום טוב לאימון. ', 'A good day for a workout. '),
+  missed_workout: t('קורה לכולם, העיקר לא לשבור את הרצף. ', 'It happens to everyone, the main thing is not to break the streak. '),
+  evening_over: t('לא נורא בכלל. ', 'Not a big deal at all. '),
+  evening_under: t('שמתי לב שאכלת מעט היום. ', 'I noticed you ate little today. '),
+  short_sleep: t('לילה קשה, זה בסדר. ', 'A hard night, that is OK. '),
+  weigh_in: t('בוקר טוב. ', 'Good morning. '),
+  long_break: t('הכי קשה זה לחזור, ואתה יכול. ', 'Coming back is the hardest part, and you can. '),
+  week_behind: t('עוד אפשר להציל את השבוע. ', 'The week can still be saved. '),
+  water: t('תזכורת קטנה. ', 'A small reminder. '),
+  go_to_sleep: t('יום ארוך, מגיע לך לנוח. ', 'A long day, you deserve a rest. '),
+  food_none: t('רק תזכורת. ', 'Just a reminder. '),
+  protein_evening: t('אתה קרוב. ', 'You are close. '),
 };
 
 export function applyTone(m: CoachMessage, tone: CoachPrefs['tone']): CoachMessage {

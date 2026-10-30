@@ -3,6 +3,7 @@
 import { readSleepByNight } from '../health/history';
 import type { CoachMessage } from '../coach/rules';
 
+import { t } from '../i18n';
 /** Message ids, by topic */
 export const SLEEP_MISSING = 'sleep_missing';
 export const SLEEP_MISSING2 = 'sleep_missing2';
@@ -20,6 +21,6 @@ export async function sleepMessages(now: Date, wakeTime: number): Promise<CoachM
   if (nights.filter((n) => n.minutes != null && !n.manual).length < 3) return [];
   const day = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
   if (prev.minutes == null)
-    return [{ id: `${SLEEP_MISSING2}@${day}`, priority: 1, title: 'שני לילות בלי נתון שינה', body: 'זה כבר לא שעון שנשכח על השולחן. החלפת שעון או שינית משהו בהגדרות שלו?' }];
-  return [{ id: `${SLEEP_MISSING}@${day}`, priority: 1, title: 'לא קיבלתי נתון שינה על הלילה', body: 'מה קרה?' }];
+    return [{ id: `${SLEEP_MISSING2}@${day}`, priority: 1, title: t('שני לילות בלי נתון שינה', 'Two nights without sleep data'), body: t('זה כבר לא שעון שנשכח על השולחן. החלפת שעון או שינית משהו בהגדרות שלו?', 'This is no longer a watch left on the table. Did you change watches, or change something in its settings?') }];
+  return [{ id: `${SLEEP_MISSING}@${day}`, priority: 1, title: t('לא קיבלתי נתון שינה על הלילה', 'I got no sleep data for last night'), body: t('מה קרה?', 'What happened?') }];
 }

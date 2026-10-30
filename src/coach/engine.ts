@@ -39,6 +39,7 @@ import { loadNightState, loadPlaces, loadSnoozes, loadUnlogged, nightKey } from 
 import { interruptLabels } from '../profile/profile';
 import { appendLog, claimRun, dayKey, loadLog, loggedIds, releaseRun, loadPlaceState, loadPrefs, PlaceId, savePlaceState } from './store';
 
+import { t as tr } from '../i18n';
 export const COACH_CHANNEL = 'coach';
 export const NIGHT_CATEGORY = 'night';
 export { categoryFor } from './category';
@@ -213,13 +214,13 @@ async function runOnce(
       const lastDone = [...hf.workouts].reverse().find((w) => !w.run && w.minutes >= 10);
       if (lastDone && now.getTime() - lastDone.end < 3 * 3600000 && now.getTime() >= lastDone.end) {
         const planned = plan ? sessionOf(plan.session).minutes : null;
-        const vsPlan = planned == null ? '' : lastDone.minutes >= planned + 10 ? ` ארוך מהתוכנית ב ${lastDone.minutes - planned} דקות.` : lastDone.minutes <= planned - 10 ? ` קצר מהתוכנית ב ${planned - lastDone.minutes} דקות, בפעם הבאה עד הסוף.` : ' בדיוק לפי התוכנית.';
-        const vsPrev = hf.prevWorkout ? (lastDone.minutes > hf.prevWorkout.minutes + 5 ? ` ${lastDone.minutes - hf.prevWorkout.minutes} דקות יותר מהאימון הקודם.` : '') : '';
+        const vsPlan = planned == null ? '' : lastDone.minutes >= planned + 10 ? tr(` ארוך מהתוכנית ב ${lastDone.minutes - planned} דקות.`, ` ${lastDone.minutes - planned} minutes longer than planned.`) : lastDone.minutes <= planned - 10 ? tr(` קצר מהתוכנית ב ${planned - lastDone.minutes} דקות, בפעם הבאה עד הסוף.`, ` ${planned - lastDone.minutes} minutes shorter than planned, next time all the way.`) : tr(' בדיוק לפי התוכנית.', ' Exactly as planned.');
+        const vsPrev = hf.prevWorkout ? (lastDone.minutes > hf.prevWorkout.minutes + 5 ? tr(` ${lastDone.minutes - hf.prevWorkout.minutes} דקות יותר מהאימון הקודם.`, ` ${lastDone.minutes - hf.prevWorkout.minutes} minutes more than the last workout.`) : '') : '';
         candidates.push({
           id: `workout_done@${lastDone.start}`,
           priority: 2,
-          title: plan ? 'אימון בפנים' : 'אימון בונוס',
-          body: `${lastDone.minutes} דקות.${vsPlan}${vsPrev} עכשיו ארוחה עם 30 גרם חלבון בתוך שעתיים, והרבה מים.`,
+          title: plan ? tr('אימון בפנים', 'Workout in') : tr('אימון בונוס', 'Bonus workout'),
+          body: tr(`${lastDone.minutes} דקות.${vsPlan}${vsPrev} עכשיו ארוחה עם 30 גרם חלבון בתוך שעתיים, והרבה מים.`, `${lastDone.minutes} minutes.${vsPlan}${vsPrev} Now a meal with 30 grams of protein within two hours, and plenty of water.`),
         });
         // How the weights felt, for the moves he set a weight for: his answers move the weights over time
         if (plan) {
@@ -228,8 +229,8 @@ async function runOnce(
             candidates.push({
               id: `workout_feel@${lastDone.start}:${plan.session}`,
               priority: 1,
-              title: 'איך היו המשקלים?',
-              body: 'לכל תרגיל: קל, בדיוק או קשה. פעמיים ברצף אותה תשובה, ואציע לשנות את המשקל.',
+              title: tr('איך היו המשקלים?', 'How were the weights?'),
+              body: tr('לכל תרגיל: קל, בדיוק או קשה. פעמיים ברצף אותה תשובה, ואציע לשנות את המשקל.', 'For each exercise: easy, right or hard. The same answer twice in a row, and I will suggest changing the weight.'),
             });
         }
       }
@@ -273,8 +274,8 @@ async function runOnce(
     candidates.push({
       id: 'wifi_guess',
       priority: 2,
-      title: 'אתה בחדר כושר?',
-      body: `אני רואה רשת חזקה בשם "${guess.ssid}". זה חדר הכושר שלך? אם כן, מעכשיו אזהה אותו לבד. אם לא, לא אשאל עליה שוב.`,
+      title: tr('אתה בחדר כושר?', 'Are you at the gym?'),
+      body: tr(`אני רואה רשת חזקה בשם "${guess.ssid}". זה חדר הכושר שלך? אם כן, מעכשיו אזהה אותו לבד. אם לא, לא אשאל עליה שוב.`, `I see a strong network called "${guess.ssid}". Is it your gym? If so, from now I will recognize it myself. If not, I will not ask about it again.`),
     });
   }
 
@@ -376,14 +377,14 @@ async function runOnce(
         ? {
             id: `status_${now.getTime()}`,
             priority: 1,
-            title: `${open.length} דברים עוד פתוחים`,
+            title: tr(`${open.length} דברים עוד פתוחים`, `${open.length} things still open`),
             body: open.map((i) => `${i.label}: ${i.detail}`).join('. ') + '.',
           }
         : {
             id: `status_${now.getTime()}`,
             priority: 1,
-            title: 'הכל סגור כרגע',
-            body: `האימון הבא: ${next.session.title} ${next.label}. אל תנוח על זרי הדפנה.`,
+            title: tr('הכל סגור כרגע', 'All closed for now'),
+            body: tr(`האימון הבא: ${next.session.title} ${next.label}. אל תנוח על זרי הדפנה.`, `Next workout: ${next.session.title} ${next.label}. Don't rest on your laurels.`),
           },
     );
   }

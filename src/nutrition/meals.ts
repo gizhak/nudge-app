@@ -76,7 +76,7 @@ export interface MealLike {
 // Sweet snacks by name, for when the food app does not report sugar
 const SWEET_WORDS = /(קינדר|שוקולד|וופל|עוגה|עוגיה|עוגיות|במבה|ביסלי|צ'יפס|גלידה|ממתק|סוכריה|קרמבו|בורקס|דונאט|סופגני|kinder|choco|snickers|mars|twix|oreo|nutella|cookie|wafer|chips|candy|donut|cake)/i;
 
-const NEXT_TIME = 'בפעם הבאה: יוגורט חלבון, או פרי עם קומץ אגוזים.';
+const NEXT_TIME = t('בפעם הבאה: יוגורט חלבון, או פרי עם קומץ אגוזים.', 'Next time: protein yogurt, or fruit with a handful of nuts.');
 
 /**
  * Judges one meal. Protein share of calories is the main signal for a
@@ -125,16 +125,16 @@ export function judgeMeal(meal: MealLike, slotBudget: number): MealVerdict {
     return {
       verdict: 'late_heavy',
       good: false,
-      label: 'מאוחר וכבד',
-      message: `${name} בשעה מאוחרת, ${Math.round(kcal)} קלוריות. ארוחה כבדה לפני שינה פוגעת באיכות השינה; עדיף משהו קטן עם חלבון, כמו יוגורט.`,
+      label: t('מאוחר וכבד', 'Late and heavy'),
+      message: t(`${name} בשעה מאוחרת, ${Math.round(kcal)} קלוריות. ארוחה כבדה לפני שינה פוגעת באיכות השינה; עדיף משהו קטן עם חלבון, כמו יוגורט.`, `${name} late in the day, ${Math.round(kcal)} calories. A heavy meal before bed hurts sleep quality; better something small with protein, like yogurt.`),
     };
   }
   if (kcal > slotBudget * 1.6 && kcal > 450) {
     return {
       verdict: 'heavy',
       good: false,
-      label: 'כבדה',
-      message: `${name}: ${Math.round(kcal)} קלוריות, הרבה מעבר לתקציב של הארוחה (כ${Math.round(slotBudget)}). לא נורא, אבל שאר היום צריך להיות קל יותר.`,
+      label: t('כבדה', 'Heavy'),
+      message: t(`${name}: ${Math.round(kcal)} קלוריות, הרבה מעבר לתקציב של הארוחה (כ${Math.round(slotBudget)}). לא נורא, אבל שאר היום צריך להיות קל יותר.`, `${name}: ${Math.round(kcal)} calories, well over the meal's budget (about ${Math.round(slotBudget)}). Not a big deal, but the rest of the day should be lighter.`),
     };
   }
   // A sweet snack: mostly sugar, or a known sweet by name, with little protein
@@ -143,35 +143,37 @@ export function judgeMeal(meal: MealLike, slotBudget: number): MealVerdict {
     return {
       verdict: 'sweet',
       good: false,
-      label: 'חטיף מתוק',
-      message: `זו לא מנה שאתה צריך. ${name}: ${Math.round(kcal)} קלוריות, ${Math.round(meal.protein)} גרם חלבון${
+      label: t('חטיף מתוק', 'Sweet snack'),
+      message: t(`זו לא מנה שאתה צריך. ${name}: ${Math.round(kcal)} קלוריות, ${Math.round(meal.protein)} גרם חלבון${
         meal.sugar ? ` ו${Math.round(meal.sugar)} גרם סוכר` : ''
-      }. ${NEXT_TIME}`,
+      }. ${NEXT_TIME}`, `Not a dish you need. ${name}: ${Math.round(kcal)} calories, ${Math.round(meal.protein)} grams of protein${
+        meal.sugar ? ` and ${Math.round(meal.sugar)} grams of sugar` : ''
+      }. ${NEXT_TIME}`),
     };
   }
   if (proteinPct >= 28 && meal.protein >= 15) {
     return {
       verdict: 'protein_rich',
       good: true,
-      label: 'עשירה בחלבון',
-      message: `כל הכבוד: ${name} עם ${Math.round(meal.protein)} גרם חלבון. בדיוק מה שצריך לבניית שריר.`,
+      label: t('עשירה בחלבון', 'Rich in protein'),
+      message: t(`כל הכבוד: ${name} עם ${Math.round(meal.protein)} גרם חלבון. בדיוק מה שצריך לבניית שריר.`, `Well done: ${name} with ${Math.round(meal.protein)} grams of protein. Exactly what building muscle needs.`),
     };
   }
   if (proteinPct < 12 && kcal >= 150) {
     return {
       verdict: 'low_protein',
       good: false,
-      label: 'דלת חלבון',
-      message: `זו לא מנה שמקדמת את המטרה. ${name}: ${Math.round(kcal)} קלוריות ורק ${Math.round(meal.protein)} גרם חלבון. בפעם הבאה הוסף מקור חלבון.`,
+      label: t('דלת חלבון', 'Low in protein'),
+      message: t(`זו לא מנה שמקדמת את המטרה. ${name}: ${Math.round(kcal)} קלוריות ורק ${Math.round(meal.protein)} גרם חלבון. בפעם הבאה הוסף מקור חלבון.`, `Not a dish that moves the goal. ${name}: ${Math.round(kcal)} calories and only ${Math.round(meal.protein)} grams of protein. Next time add a protein source.`),
     };
   }
   if (kcal < 120) {
-    return { verdict: 'light', good: true, label: 'קלה', message: `${name}: נשנוש קל, ${Math.round(kcal)} קלוריות.` };
+    return { verdict: 'light', good: true, label: t('קלה', 'Light'), message: t(`${name}: נשנוש קל, ${Math.round(kcal)} קלוריות.`, `${name}: a light snack, ${Math.round(kcal)} calories.`) };
   }
   return {
     verdict: 'balanced',
     good: true,
-    label: 'מאוזנת',
-    message: `${name}: ארוחה מאוזנת, ${Math.round(meal.protein)} גרם חלבון ב${Math.round(kcal)} קלוריות.`,
+    label: t('מאוזנת', 'Balanced'),
+    message: t(`${name}: ארוחה מאוזנת, ${Math.round(meal.protein)} גרם חלבון ב${Math.round(kcal)} קלוריות.`, `${name}: a balanced meal, ${Math.round(meal.protein)} grams of protein in ${Math.round(kcal)} calories.`),
   };
 }

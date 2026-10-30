@@ -1,6 +1,7 @@
 // Learning the user from what he does, not from what he said at setup. Pure: plain inputs in,
 // facts out, so every rule is tested without a phone.
 
+import { t as tr } from '../i18n';
 export interface Fact {
   key: string;
   title: string;
@@ -58,12 +59,12 @@ export function weighTime(weights: number[], now: number, weekend: (day: number)
   const possible = Array.from({ length: 21 }, (_, i) => new Date(now - i * DAY).getDay()).filter((d) => weekend(d) === onWeekend).length;
   if (n < (onWeekend ? 3 : 6)) return null;
   const m = Math.round(median([...firsts.values()]) / 5) * 5;
-  const when = onWeekend ? 'בסוף השבוע' : 'באמצע השבוע';
+  const when = onWeekend ? tr('בסוף השבוע', 'on weekends') : tr('באמצע השבוע', 'midweek');
   return {
     key: onWeekend ? 'weigh_time_weekend' : 'weigh_time_weekday',
-    title: `שוקל ${when} בסביבות ${hhmm(m)}`,
-    detail: `${n} מתוך ${possible} בקרים ב 3 השבועות האחרונים.`,
-    effect: `תזכורת השקילה ${when} תגיע ב ${hhmm(Math.max(0, m - 10))}, רגע לפני.`,
+    title: tr(`שוקל ${when} בסביבות ${hhmm(m)}`, `Weighs in ${when} around ${hhmm(m)}`),
+    detail: tr(`${n} מתוך ${possible} בקרים ב 3 השבועות האחרונים.`, `${n} of ${possible} mornings in the last 3 weeks.`),
+    effect: tr(`תזכורת השקילה ${when} תגיע ב ${hhmm(Math.max(0, m - 10))}, רגע לפני.`, `The weigh-in reminder ${when} will come at ${hhmm(Math.max(0, m - 10))}, just before.`),
     confidence: Math.min(1, n / possible),
     value: m,
   };
@@ -79,9 +80,9 @@ export function wakeTime(sleeps: { start: number; end: number }[], now: number):
   const m = Math.round(median(ends) / 5) * 5;
   return {
     key: 'wake_time',
-    title: `קם בדרך כלל ב ${hhmm(m)}`,
-    detail: `לפי השעון, ${ends.length} בקרים ב 3 השבועות האחרונים.`,
-    effect: 'הודעות הבוקר מתחילות מהשעה הזו, ולא מהשעה שהוגדרה בהתחלה.',
+    title: tr(`קם בדרך כלל ב ${hhmm(m)}`, `Usually gets up at ${hhmm(m)}`),
+    detail: tr(`לפי השעון, ${ends.length} בקרים ב 3 השבועות האחרונים.`, `By the watch, ${ends.length} mornings in the last 3 weeks.`),
+    effect: tr('הודעות הבוקר מתחילות מהשעה הזו, ולא מהשעה שהוגדרה בהתחלה.', 'Morning messages start from this time, not the one set at the start.'),
     confidence: Math.min(1, ends.length / 18),
     value: m,
   };
@@ -89,25 +90,25 @@ export function wakeTime(sleeps: { start: number; end: number }[], now: number):
 
 /** Which action answers each kind of message, and how long it has to happen. */
 export const ACTION_OF: Record<string, { kind: keyof Omit<Events, 'sleeps'> | 'sleep'; minutes: number; label: string }> = {
-  water: { kind: 'water', minutes: 45, label: 'תזכורת מים' },
-  weigh_in: { kind: 'weights', minutes: 180, label: 'תזכורת שקילה' },
-  protein_evening: { kind: 'meals', minutes: 120, label: 'השלמת חלבון בערב' },
-  leave_office_protein: { kind: 'meals', minutes: 120, label: 'חלבון ביציאה מהעבודה' },
-  food_none: { kind: 'meals', minutes: 120, label: 'עוד לא נרשם אוכל' },
-  pre_workout_snack: { kind: 'meals', minutes: 90, label: 'ביניים לפני אימון' },
-  workout_now: { kind: 'workouts', minutes: 240, label: 'עכשיו אימון' },
-  missed_workout: { kind: 'workouts', minutes: 600, label: 'פספסת אימון' },
-  home_before_workout: { kind: 'workouts', minutes: 240, label: 'הביתה לפני אימון' },
-  week_behind: { kind: 'workouts', minutes: 1440, label: 'השבוע מאחור' },
-  long_break: { kind: 'workouts', minutes: 1440, label: 'הפסקה ארוכה' },
-  go_to_sleep: { kind: 'sleep', minutes: 75, label: 'הולכים לישון' },
+  water: { kind: 'water', minutes: 45, label: tr('תזכורת מים', 'Water reminder') },
+  weigh_in: { kind: 'weights', minutes: 180, label: tr('תזכורת שקילה', 'Weigh-in reminder') },
+  protein_evening: { kind: 'meals', minutes: 120, label: tr('השלמת חלבון בערב', 'Evening protein top-up') },
+  leave_office_protein: { kind: 'meals', minutes: 120, label: tr('חלבון ביציאה מהעבודה', 'Protein when leaving work') },
+  food_none: { kind: 'meals', minutes: 120, label: tr('עוד לא נרשם אוכל', 'No food logged yet') },
+  pre_workout_snack: { kind: 'meals', minutes: 90, label: tr('ביניים לפני אימון', 'Snack before a workout') },
+  workout_now: { kind: 'workouts', minutes: 240, label: tr('עכשיו אימון', 'Workout now') },
+  missed_workout: { kind: 'workouts', minutes: 600, label: tr('פספסת אימון', 'Missed workout') },
+  home_before_workout: { kind: 'workouts', minutes: 240, label: tr('הביתה לפני אימון', 'Home before a workout') },
+  week_behind: { kind: 'workouts', minutes: 1440, label: tr('השבוע מאחור', 'Behind this week') },
+  long_break: { kind: 'workouts', minutes: 1440, label: tr('הפסקה ארוכה', 'A long break') },
+  go_to_sleep: { kind: 'sleep', minutes: 75, label: tr('הולכים לישון', 'Going to sleep') },
 };
 
 export const bucketOf = (t: number) => {
   const h = new Date(t).getHours();
   return h < 12 ? 'morning' : h < 17 ? 'noon' : 'evening';
 };
-const BUCKET_LABEL: Record<string, string> = { morning: 'בבוקר', noon: 'בצהריים', evening: 'בערב' };
+const BUCKET_LABEL: Record<string, string> = { morning: tr('בבוקר', 'in the morning'), noon: tr('בצהריים', 'at midday'), evening: tr('בערב', 'in the evening') };
 
 export interface Effect {
   topic: string;
@@ -152,17 +153,17 @@ export function effectFacts(effects: Effect[]): Fact[] {
     const best = buckets.sort((a, b) => b[1].acted / b[1].n - a[1].acted / a[1].n)[0];
     const worst = buckets[buckets.length - 1];
     let effect: string;
-    if (e.rate >= 0.5) effect = 'עובד עליך: ההודעה הזו מקבלת עדיפות, ותחזור אם לא בוצע.';
-    else if (e.rate < 0.15 && e.n >= 6) effect = 'כמעט לא עובד עליך: ההודעה הזו תבוא פחות, כדי שלא תתרגל להתעלם מהמאמן.';
-    else effect = 'בינוני: נשאר כמו שהוא.';
+    if (e.rate >= 0.5) effect = tr('עובד עליך: ההודעה הזו מקבלת עדיפות, ותחזור אם לא בוצע.', 'Works on you: this message gets priority, and comes back if not done.');
+    else if (e.rate < 0.15 && e.n >= 6) effect = tr('כמעט לא עובד עליך: ההודעה הזו תבוא פחות, כדי שלא תתרגל להתעלם מהמאמן.', 'Barely works on you: this message will come less, so you don\'t get used to ignoring the coach.');
+    else effect = tr('בינוני: נשאר כמו שהוא.', 'Medium: stays as it is.');
     if (best && worst && best !== worst && best[1].acted / best[1].n - worst[1].acted / worst[1].n >= 0.35) {
-      effect += ` עובד יותר ${BUCKET_LABEL[best[0]]} מאשר ${BUCKET_LABEL[worst[0]]}, אז ${BUCKET_LABEL[worst[0]]} היא תבוא פחות.`;
+      effect += tr(` עובד יותר ${BUCKET_LABEL[best[0]]} מאשר ${BUCKET_LABEL[worst[0]]}, אז ${BUCKET_LABEL[worst[0]]} היא תבוא פחות.`, ` Works better ${BUCKET_LABEL[best[0]]} than ${BUCKET_LABEL[worst[0]]}, so ${BUCKET_LABEL[worst[0]]} it will come less.`);
     }
     out.push({
       key: `eff_${e.topic}`,
       topic: e.topic,
-      title: `${label}: פעלת אחריה ב ${pct}% מהפעמים`,
-      detail: `${e.acted} מתוך ${e.n} פעמים ב 3 השבועות האחרונים.`,
+      title: tr(`${label}: פעלת אחריה ב ${pct}% מהפעמים`, `${label}: you acted on it ${pct}% of the time`),
+      detail: tr(`${e.acted} מתוך ${e.n} פעמים ב 3 השבועות האחרונים.`, `${e.acted} of ${e.n} times in the last 3 weeks.`),
       effect,
       confidence: Math.min(1, e.n / 10),
       value: e.rate,

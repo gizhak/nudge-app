@@ -33,6 +33,10 @@ object NightPrefs {
 
   fun get(ctx: Context): SharedPreferences = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
+  /** The app's language, chosen in its settings: the night messages follow it */
+  fun en(ctx: Context): Boolean = get(ctx).getString("lang", null) == "en"
+  fun tr(ctx: Context, he: String, en: String): String = if (en(ctx)) en else he
+
   /** The night a moment belongs to: before noon counts as the previous evening. Same format as the JS dayKey. */
   fun nightKey(now: Calendar = Calendar.getInstance()): String {
     val c = now.clone() as Calendar

@@ -1,6 +1,7 @@
 // Moving, shortening or skipping one workout this week. Pure.
 import { DAY_NAMES, pad2, PlannedWorkout, planThisWeek, SHORT_SESSION_ID, WeekOverrides, weekStartKey, isWeekend, WEEKLY_PLAN } from '../config/goals';
 
+import { t } from '../i18n';
 export interface Suggestion {
   day: number;
   time: number;
@@ -33,11 +34,11 @@ export function suggestDays(
     const gap = others.length ? Math.min(...others.map((w) => Math.abs(w.day - d))) : 7;
     const kids = opts.kidsDays?.includes(d) ?? false;
     const score = (gap >= 2 ? 0 : 10) + (kids ? 5 : 0) + (d - today);
-    const why = [gap >= 2 ? 'יום מנוחה לפני ואחרי' : 'צמוד לאימון אחר, פחות התאוששות', kids ? 'הילדים אצלך' : '']
+    const why = [gap >= 2 ? t('יום מנוחה לפני ואחרי', 'A rest day before and after') : t('צמוד לאימון אחר, פחות התאוששות', 'Right next to another workout, less recovery'), kids ? t('הילדים אצלך', 'The kids are with you') : '']
       .filter(Boolean)
       .join(', ');
-    const when = d === today ? 'היום' : d === today + 1 ? 'מחר' : `יום ${DAY_NAMES[d]}`;
-    out.push({ day: d, time, label: `${when} ב${pad2(Math.floor(time / 60))}:${pad2(time % 60)}`, why, score });
+    const when = d === today ? t('היום', 'Today') : d === today + 1 ? t('מחר', 'Tomorrow') : t(`יום ${DAY_NAMES[d]}`, `${DAY_NAMES[d]}`);
+    out.push({ day: d, time, label: t(`${when} ב${pad2(Math.floor(time / 60))}:${pad2(time % 60)}`, `${when} at ${pad2(Math.floor(time / 60))}:${pad2(time % 60)}`), why, score });
   }
   return out.sort((a, b) => a.score - b.score).slice(0, 3).map(({ score, ...s }) => s);
 }
@@ -125,6 +126,6 @@ export function swapWithNext(ov: WeekOverrides, now: Date, w: PlannedWorkout, ba
 /** "Thursday B, Friday C": the order from today on, for showing before saving */
 export function orderText(ov: WeekOverrides, now: Date, sessionName: (id: string) => string, base: PlannedWorkout[] = WEEKLY_PLAN): string {
   return realSessions(planThisWeek(now, base, ov), now)
-    .map((w) => `${w.day === now.getDay() ? 'היום' : DAY_NAMES[w.day]}: ${sessionName(w.session)}`)
+    .map((w) => t(`${w.day === now.getDay() ? 'היום' : DAY_NAMES[w.day]}: ${sessionName(w.session)}`, `${w.day === now.getDay() ? 'today' : DAY_NAMES[w.day]}: ${sessionName(w.session)}`))
     .join(' · ');
 }

@@ -32,8 +32,8 @@ class NightGuardService : Service() {
     ensureChannels(this)
     val notification = NotificationCompat.Builder(this, GUARD_CHANNEL)
       .setSmallIcon(smallIcon(this))
-      .setContentTitle("Nudge שומר על הלילה שלך")
-      .setContentText("אם תפתח את הטלפון אחרי שעת השינה, אני אגיד לך")
+      .setContentTitle(NightPrefs.tr(this, "Nudge שומר על הלילה שלך", "Nudge is guarding your night"))
+      .setContentText(NightPrefs.tr(this, "אם תפתח את הטלפון אחרי שעת השינה, אני אגיד לך", "If you open the phone after bedtime, I will tell you"))
       .setOngoing(true)
       .setPriority(NotificationCompat.PRIORITY_MIN)
       .setContentIntent(openAppIntent(this))
@@ -128,10 +128,10 @@ class NightGuardService : Service() {
       if (Build.VERSION.SDK_INT < 26) return
       val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
       if (nm.getNotificationChannel(GUARD_CHANNEL) == null) {
-        nm.createNotificationChannel(NotificationChannel(GUARD_CHANNEL, "שומר הלילה", NotificationManager.IMPORTANCE_MIN))
+        nm.createNotificationChannel(NotificationChannel(GUARD_CHANNEL, NightPrefs.tr(ctx, "שומר הלילה", "Night guard"), NotificationManager.IMPORTANCE_MIN))
       }
       if (nm.getNotificationChannel(COACH_CHANNEL) == null) {
-        nm.createNotificationChannel(NotificationChannel(COACH_CHANNEL, "Nudge: חשוב", NotificationManager.IMPORTANCE_HIGH))
+        nm.createNotificationChannel(NotificationChannel(COACH_CHANNEL, NightPrefs.tr(ctx, "Nudge: חשוב", "Nudge: important"), NotificationManager.IMPORTANCE_HIGH))
       }
     }
 
@@ -184,8 +184,13 @@ class NightGuardService : Service() {
 
       ensureChannels(ctx)
       val hours = "${untilWake / 60}:${(untilWake % 60).toString().padStart(2, '0')}"
-      val title = if (sinceBed < 5) "זמן לישון" else if (sinceBed < 60) "עברו $sinceBed דקות משעת השינה" else "עברו ${sinceBed / 60}:${(sinceBed % 60).toString().padStart(2, '0')} שעות משעת השינה"
-      val body = "פתחת את הטלפון. אם תירדם עכשיו תישן $hours שעות. הנח את הטלפון."
+      val en = NightPrefs.en(ctx)
+      val title = if (en) {
+        if (sinceBed < 5) "Time to sleep" else if (sinceBed < 60) "$sinceBed minutes past bedtime" else "${sinceBed / 60}:${(sinceBed % 60).toString().padStart(2, '0')} hours past bedtime"
+      } else {
+        if (sinceBed < 5) "זמן לישון" else if (sinceBed < 60) "עברו $sinceBed דקות משעת השינה" else "עברו ${sinceBed / 60}:${(sinceBed % 60).toString().padStart(2, '0')} שעות משעת השינה"
+      }
+      val body = if (en) "You opened the phone. If you fall asleep now you will sleep $hours hours. Put the phone down." else "פתחת את הטלפון. אם תירדם עכשיו תישן $hours שעות. הנח את הטלפון."
       val builder = NotificationCompat.Builder(ctx, COACH_CHANNEL)
         .setSmallIcon(smallIcon(ctx))
         .setColor(0xFFFF4D2E.toInt())
@@ -195,7 +200,7 @@ class NightGuardService : Service() {
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setAutoCancel(true)
         .setDeleteIntent(actionIntent(ctx, NightActionReceiver.SEEN, 3))
-        .addAction(0, "ידוע לי, זה בסדר", actionIntent(ctx, NightActionReceiver.ACK, 1))
+        .addAction(0, NightPrefs.tr(ctx, "ידוע לי, זה בסדר", "I know, it's fine"), actionIntent(ctx, NightActionReceiver.ACK, 1))
       // Second button only for people who said they have broken nights (baby, kids, waking up)
       val label = prefs.getString(NightPrefs.LABEL, "") ?: ""
       if (label.isNotEmpty()) builder.addAction(0, label, actionIntent(ctx, NightActionReceiver.BABY, 2))

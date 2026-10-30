@@ -8,6 +8,7 @@ import { onVacation, Vacation } from '../coach/vacation';
 import { loadPrefs } from '../coach/store';
 import type { Container } from '../nutrition/water';
 
+import { t } from '../i18n';
 const CHANNEL = 'coach';
 
 /** Three levels, each its own Android channel so its sound and vibration can be set in the phone settings. */
@@ -26,25 +27,25 @@ Notifications.setNotificationHandler({
 export async function ensurePermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(CHANNELS.urgent, {
-      name: 'Nudge: חשוב',
-      description: 'אימון, שינה, חיבורים ומה שאסור לפספס',
+      name: t('Nudge: חשוב', 'Nudge: important'),
+      description: t('אימון, שינה, חיבורים ומה שאסור לפספס', 'Workout, sleep, connections and what must not be missed'),
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 300, 200, 300],
       lightColor: '#FF4D2E',
     });
     await Notifications.setNotificationChannelAsync(CHANNELS.normal, {
-      name: 'Nudge: רגיל',
-      description: 'ארוחות, מים, חלבון וצעדים',
+      name: t('Nudge: רגיל', 'Nudge: regular'),
+      description: t('ארוחות, מים, חלבון וצעדים', 'Meals, water, protein and steps'),
       importance: Notifications.AndroidImportance.DEFAULT,
     });
     await Notifications.setNotificationChannelAsync(CHANNELS.info, {
-      name: 'Nudge: מידע',
-      description: 'עידוד וסיכומים, בלי צליל',
+      name: t('Nudge: מידע', 'Nudge: info'),
+      description: t('עידוד וסיכומים, בלי צליל', 'Encouragement and summaries, no sound'),
       importance: Notifications.AndroidImportance.LOW,
     });
     // Old single channel, kept so existing scheduled reminders still show
     await Notifications.setNotificationChannelAsync(CHANNEL, {
-      name: 'תזכורות מאמן',
+      name: t('תזכורות מאמן', 'Coach reminders'),
       importance: Notifications.AndroidImportance.HIGH,
     });
   }
@@ -109,10 +110,10 @@ export function plannedReminders(
         }
         if (when <= now || onVacation(start, vacation)) continue;
         out.push({
-          title: morning ? 'מחר בבוקר: אימון' : `אימון ב${at}`,
+          title: morning ? t('מחר בבוקר: אימון', 'Tomorrow morning: workout') : t(`אימון ב${at}`, `Workout at ${at}`),
           body: morning
-            ? `${session.title} ב${at}, ${session.minutes} דקות. כדאי להכין תיק כבר הערב.`
-            : `${session.title}, ${session.minutes} דקות.`,
+            ? t(`${session.title} ב${at}, ${session.minutes} דקות. כדאי להכין תיק כבר הערב.`, `${session.title} at ${at}, ${session.minutes} minutes. Pack your bag tonight.`)
+            : t(`${session.title}, ${session.minutes} דקות.`, `${session.title}, ${session.minutes} minutes.`),
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: when, channelId: CHANNELS.urgent },
           category: 'workout',
           topic: 'workout_reminder',
@@ -133,8 +134,8 @@ export function plannedReminders(
       at.setHours(Math.floor(m / 60), m % 60, 0, 0);
       if (at <= now || onVacation(at, vacation)) continue;
       out.push({
-        title: 'שקילת בוקר',
-        body: 'לפני אוכל ושתייה. לחץ כאן כדי להזין.',
+        title: t('שקילת בוקר', 'Morning weigh-in'),
+        body: t('לפני אוכל ושתייה. לחץ כאן כדי להזין.', 'Before food and drink. Tap here to enter it.'),
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: CHANNELS.normal },
         topic: 'weigh_reminder',
         category: 'nag',
@@ -143,7 +144,7 @@ export function plannedReminders(
   }
   // The weekly report, at the day and hour he chose
   if (rp.weekly) {
-    out.push({ title: 'הדוח השבועי מוכן', body: 'איפה אתה עומד, מה השפיע, ומה עושים השבוע.', trigger: weekly(rp.weekDay, rp.hour, 0, CHANNELS.info), topic: 'weekly_report' });
+    out.push({ title: t('הדוח השבועי מוכן', 'The weekly report is ready'), body: t('איפה אתה עומד, מה השפיע, ומה עושים השבוע.', 'Where you stand, what had an effect, and what to do this week.'), trigger: weekly(rp.weekDay, rp.hour, 0, CHANNELS.info), topic: 'weekly_report' });
   }
   return out;
 }
@@ -166,7 +167,7 @@ export async function applyReminders(s: ReminderSettings): Promise<number> {
 
 export async function sendTestNotification(): Promise<void> {
   await Notifications.scheduleNotificationAsync({
-    content: { title: 'בדיקת התראה', body: 'ההתראות של Coach עובדות.' },
+    content: { title: t('בדיקת התראה', 'Test notification'), body: t('ההתראות של Coach עובדות.', 'Coach notifications work.') },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5, channelId: CHANNELS.urgent },
   });
 }
@@ -174,40 +175,40 @@ export async function sendTestNotification(): Promise<void> {
 /** Buttons on the coach's "go to sleep" message. The second one only for people with broken nights. */
 export async function setNightButtons(brokenLabel: string | null, container: Container = 250) {
   const actions: Notifications.NotificationAction[] = [
-    { identifier: 'sleeping', buttonTitle: 'הולך לישון', options: { opensAppToForeground: false } },
-    { identifier: 'ack', buttonTitle: 'ידוע לי, זה בסדר', options: { opensAppToForeground: false } },
+    { identifier: 'sleeping', buttonTitle: t('הולך לישון', 'Going to sleep'), options: { opensAppToForeground: false } },
+    { identifier: 'ack', buttonTitle: t('ידוע לי, זה בסדר', 'I know, it\'s fine'), options: { opensAppToForeground: false } },
   ];
   if (brokenLabel) actions.push({ identifier: 'baby', buttonTitle: brokenLabel, options: { opensAppToForeground: false } });
   await Notifications.setNotificationCategoryAsync('night', actions).catch(() => undefined);
-  const gotIt: Notifications.NotificationAction = { identifier: 'snooze', buttonTitle: 'הבנתי', options: { opensAppToForeground: false } };
+  const gotIt: Notifications.NotificationAction = { identifier: 'snooze', buttonTitle: t('הבנתי', 'Got it'), options: { opensAppToForeground: false } };
   await Notifications.setNotificationCategoryAsync('nag', [gotIt]).catch(() => undefined);
   await Notifications.setNotificationCategoryAsync('workout', [
-    { identifier: 'trained', buttonTitle: 'התאמנתי', options: { opensAppToForeground: false } },
-    { identifier: 'reschedule', buttonTitle: 'לא מסתדר', options: { opensAppToForeground: true } },
+    { identifier: 'trained', buttonTitle: t('התאמנתי', 'I trained'), options: { opensAppToForeground: false } },
+    { identifier: 'reschedule', buttonTitle: t('לא מסתדר', 'Can\'t make it'), options: { opensAppToForeground: true } },
     gotIt,
   ]).catch(() => undefined);
   // A network that looks like a gym: yes or no, nothing in between
   await Notifications.setNotificationCategoryAsync('gym_guess', [
-    { identifier: 'gym_yes', buttonTitle: 'כן, זה חדר הכושר', options: { opensAppToForeground: false } },
-    { identifier: 'gym_no', buttonTitle: 'לא', options: { opensAppToForeground: false } },
+    { identifier: 'gym_yes', buttonTitle: t('כן, זה חדר הכושר', 'Yes, that\'s the gym'), options: { opensAppToForeground: false } },
+    { identifier: 'gym_no', buttonTitle: t('לא', 'No'), options: { opensAppToForeground: false } },
   ]).catch(() => undefined);
   // Meal reminder: he ate but did not log it
   await Notifications.setNotificationCategoryAsync('meal', [
-    { identifier: 'ate', buttonTitle: 'אכלתי, לא רשמתי', options: { opensAppToForeground: false } },
+    { identifier: 'ate', buttonTitle: t('אכלתי, לא רשמתי', 'I ate, didn\'t log'), options: { opensAppToForeground: false } },
     gotIt,
   ]).catch(() => undefined);
   // Water: one tap logs what he drank, in his own unit
   const drink: Notifications.NotificationAction[] =
     container === 250
-      ? [{ identifier: 'drank_250', buttonTitle: 'שתיתי כוס', options: { opensAppToForeground: false } }]
+      ? [{ identifier: 'drank_250', buttonTitle: t('שתיתי כוס', 'I drank a glass'), options: { opensAppToForeground: false } }]
       : container === 30
       ? [
-          { identifier: 'drank_150', buttonTitle: '5 לגימות', options: { opensAppToForeground: false } },
-          { identifier: 'drank_300', buttonTitle: '10 לגימות', options: { opensAppToForeground: false } },
+          { identifier: 'drank_150', buttonTitle: t('5 לגימות', '5 sips'), options: { opensAppToForeground: false } },
+          { identifier: 'drank_300', buttonTitle: t('10 לגימות', '10 sips'), options: { opensAppToForeground: false } },
         ]
       : [
-          { identifier: `drank_${container / 2}`, buttonTitle: 'חצי בקבוק', options: { opensAppToForeground: false } },
-          { identifier: `drank_${container}`, buttonTitle: 'בקבוק', options: { opensAppToForeground: false } },
+          { identifier: `drank_${container / 2}`, buttonTitle: t('חצי בקבוק', 'Half a bottle'), options: { opensAppToForeground: false } },
+          { identifier: `drank_${container}`, buttonTitle: t('בקבוק', 'Bottle'), options: { opensAppToForeground: false } },
         ];
   await Notifications.setNotificationCategoryAsync('water', [...drink, gotIt]).catch(() => undefined);
 }

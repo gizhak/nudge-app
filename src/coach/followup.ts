@@ -3,6 +3,7 @@
 // still shows it open, the coach comes back, louder each time.
 import { SLOT_BY_ID, SlotId } from '../nutrition/meals';
 
+import { t as tr } from '../i18n';
 export type Family = 'weigh' | 'water' | 'meal' | 'workout' | 'sync' | 'hc' | 'food';
 
 /** Which topics can be checked in the data, and so come back after "got it". */
@@ -108,23 +109,23 @@ export function isResolved(f: FollowUp, x: Facts): boolean {
 }
 
 const WHAT: Record<Family, string> = {
-  weigh: 'שקילה',
-  water: 'שתייה',
-  meal: 'רישום ארוחה',
-  workout: 'אימון',
-  sync: 'סנכרון מהשעון',
-  hc: 'חיבור תקין לנתונים',
-  food: 'ארוחה רשומה',
+  weigh: tr('שקילה', 'a weigh-in'),
+  water: tr('שתייה', 'drinking'),
+  meal: tr('רישום ארוחה', 'a logged meal'),
+  workout: tr('אימון', 'a workout'),
+  sync: tr('סנכרון מהשעון', 'a sync from the watch'),
+  hc: tr('חיבור תקין לנתונים', 'a working data connection'),
+  food: tr('ארוחה רשומה', 'a logged meal'),
 };
 
 const DO_NOW: Record<Family, string> = {
-  weigh: 'עלה על המשקל עכשיו, זה 10 שניות.',
-  water: 'כוס מים עכשיו, לא אחר כך.',
-  meal: 'רשום את הארוחה עכשיו, או סמן "אכלתי".',
-  workout: 'תחליט עכשיו: מתאמן, 20 דקות בבית, או "לא מסתדר".',
-  sync: 'פתח את אפליקציית השעון ותן לה לסנכרן.',
-  hc: 'פתח את בדיקת המוכנות ותקן.',
-  food: 'רשום מה אכלת היום.',
+  weigh: tr('עלה על המשקל עכשיו, זה 10 שניות.', 'Step on the scale now, it is 10 seconds.'),
+  water: tr('כוס מים עכשיו, לא אחר כך.', 'A glass of water now, not later.'),
+  meal: tr('רשום את הארוחה עכשיו, או סמן "אכלתי".', 'Log the meal now, or tap "I ate".'),
+  workout: tr('תחליט עכשיו: מתאמן, 20 דקות בבית, או "לא מסתדר".', 'Decide now: training, 20 minutes at home, or "can\'t make it".'),
+  sync: tr('פתח את אפליקציית השעון ותן לה לסנכרן.', 'Open the watch app and let it sync.'),
+  hc: tr('פתח את בדיקת המוכנות ותקן.', 'Open the readiness check and fix it.'),
+  food: tr('רשום מה אכלת היום.', 'Log what you ate today.'),
 };
 
 const hhmm = (t: number) => {
@@ -138,17 +139,17 @@ export function followUpMessage(f: FollowUp): { title: string; body: string; lev
   let what = WHAT[fam];
   if (fam === 'meal') {
     const slot = SLOT_BY_ID[f.key.replace('meal_reminder_', '') as SlotId];
-    if (slot) what = `רישום של ${slot.label}`;
+    if (slot) what = tr(`רישום של ${slot.label}`, `logging of ${slot.label.toLowerCase()}`);
   }
   if (f.count <= 1) {
-    return { title: 'הבנתי, אבל לא בוצע', body: `לחצת הבנתי ב${hhmm(f.ackAt)}, ואני עדיין לא רואה ${what}. ${DO_NOW[fam]}`, level: 'normal' };
+    return { title: tr('הבנתי, אבל לא בוצע', 'Got it, but not done'), body: tr(`לחצת הבנתי ב${hhmm(f.ackAt)}, ואני עדיין לא רואה ${what}. ${DO_NOW[fam]}`, `You tapped got it at ${hhmm(f.ackAt)}, and I still don't see ${what}. ${DO_NOW[fam]}`), level: 'normal' };
   }
   if (f.count === 2) {
-    return { title: `פעם שנייה: עדיין אין ${what}`, body: `שתי פעמים "הבנתי" מאז הבוקר, ועדיין כלום. ${DO_NOW[fam]}`, level: 'urgent' };
+    return { title: tr(`פעם שנייה: עדיין אין ${what}`, `Second time: still no ${what}`), body: tr(`שתי פעמים "הבנתי" מאז הבוקר, ועדיין כלום. ${DO_NOW[fam]}`, `Twice "got it" since the morning, and still nothing. ${DO_NOW[fam]}`), level: 'urgent' };
   }
   return {
-    title: `${f.count} פעמים "הבנתי", אפס ביצוע`,
-    body: `"הבנתי" לא עושה את זה במקומך. ${DO_NOW[fam]} אני לא מוותר.`,
+    title: tr(`${f.count} פעמים "הבנתי", אפס ביצוע`, `${f.count} times "got it", zero done`),
+    body: tr(`"הבנתי" לא עושה את זה במקומך. ${DO_NOW[fam]} אני לא מוותר.`, `"Got it" does not do it for you. ${DO_NOW[fam]} I am not giving up.`),
     level: 'urgent',
   };
 }
