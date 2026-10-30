@@ -10,6 +10,7 @@ import { derive } from '../profile/derive';
 import { loadProfile } from '../profile/profile';
 import { explainWeight, merge, WeightWhy } from './weightWhy';
 
+import { t as tr } from '../i18n';
 const DAY = 24 * 3600 * 1000;
 
 export interface DayRow {
@@ -96,29 +97,29 @@ export function reconcile(points: { date: Date; kg: number }[], now = Date.now()
   const a1 = mean(wk);
   const delta = a1 - mean(prev);
   const last = wk[wk.length - 1];
-  const names = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  const names = [tr('ראשון', 'Sunday'), tr('שני', 'Monday'), tr('שלישי', 'Tuesday'), tr('רביעי', 'Wednesday'), tr('חמישי', 'Thursday'), tr('שישי', 'Friday'), tr('שבת', 'Saturday')];
   const f = (n: number) => (Math.round(Math.abs(n) * 10) / 10).toFixed(1);
   if (delta >= 0.2 && last.kg <= a1 - 0.3) {
     const peak = wk.reduce((a, p) => (p.kg > a.kg ? p : a));
-    return `הממוצע עלה ${f(delta)} ק"ג בגלל ימים גבוהים השבוע, עם שיא של ${peak.kg.toFixed(1)} ביום ${names[peak.date.getDay()]}. השקילה האחרונה, ${last.kg.toFixed(1)}, כבר מתחת לממוצע, אז אם זה יימשך הממוצע של השבוע הבא יירד.`;
+    return tr(`הממוצע עלה ${f(delta)} ק"ג בגלל ימים גבוהים השבוע, עם שיא של ${peak.kg.toFixed(1)} ביום ${names[peak.date.getDay()]}. השקילה האחרונה, ${last.kg.toFixed(1)}, כבר מתחת לממוצע, אז אם זה יימשך הממוצע של השבוע הבא יירד.`, `The average went up ${f(delta)} kg because of high days this week, with a peak of ${peak.kg.toFixed(1)} on ${names[peak.date.getDay()]}. The last weigh-in, ${last.kg.toFixed(1)}, is already below the average, so if it holds, next week's average will go down.`);
   }
   if (delta <= -0.2 && last.kg >= a1 + 0.3) {
-    return `הממוצע ירד ${f(delta)} ק"ג, אבל השקילה האחרונה, ${last.kg.toFixed(1)}, מעל הממוצע. קפיצה של יום או יומיים היא בדרך כלל מים, והממוצע הוא מה שקובע.`;
+    return tr(`הממוצע ירד ${f(delta)} ק"ג, אבל השקילה האחרונה, ${last.kg.toFixed(1)}, מעל הממוצע. קפיצה של יום או יומיים היא בדרך כלל מים, והממוצע הוא מה שקובע.`, `The average went down ${f(delta)} kg, but the last weigh-in, ${last.kg.toFixed(1)}, is above the average. A jump of a day or two is usually water, and the average is what counts.`);
   }
   return null;
 }
 
 /** One thing to do next week, from the strongest reason */
 export function nextStep(reasons: string[]): string | null {
-  const r = reasons.find((x) => !x.startsWith('המגמה התהפכה')) ?? reasons[0];
+  const r = reasons.find((x) => !/^(המגמה התהפכה|The trend turned)/.test(x)) ?? reasons[0];
   if (!r) return null;
-  if (r.includes('שתי שקילות')) return 'שקילה אחת בבוקר, לבד על המשקל, כדי שהמספרים לא יתערבבו.';
-  if (r.includes('ישנת')) return 'השבוע: לישון חצי שעה מוקדם יותר. זה הצעד הכי קל שיוריד את המשקל של הבוקר.';
-  if (r.includes('ארוחה גדולה') || r.includes('קלוריות. ארוחה')) return 'אחרי יום גדול לא מפצים ברעב: חוזרים ליעד הקלוריות ושותים יותר מים. תוך יומיים זה יורד.';
-  if (r.includes('מאוחר') || r.includes('מוקדם')) return 'להישקל כל יום באותה שעה, אחרי שירותים ולפני אוכל ושתייה.';
-  if (r.includes('לא נרשם')) return 'לרשום את כל הארוחות השבוע, גם את הקטנות. בלי זה אי אפשר לדעת מה הזיז את המשקל.';
-  if (r.includes('אימון')) return 'להמשיך באימונים. המים שהשריר מחזיק יורדים כשהגוף מתרגל.';
-  if (r.includes('אכלת מעט')) return 'לא להוריד עוד: יום עם מעט אוכל מחזיר את המשקל אחרי יומיים. להישאר קרוב ליעד הקלוריות.';
-  if (r.includes('קצב')) return 'להמשיך בדיוק כך. זה הקצב שמחזיק לאורך זמן.';
+  if (/שתי שקילות|two weigh-ins/i.test(r)) return tr('שקילה אחת בבוקר, לבד על המשקל, כדי שהמספרים לא יתערבבו.', 'One weigh-in in the morning, alone on the scale, so the numbers do not mix.');
+  if (/ישנת|you slept/i.test(r)) return tr('השבוע: לישון חצי שעה מוקדם יותר. זה הצעד הכי קל שיוריד את המשקל של הבוקר.', 'This week: go to sleep half an hour earlier. It is the easiest step to lower the morning weight.');
+  if (/ארוחה גדולה|קלוריות. ארוחה|calories\. A big meal/i.test(r)) return tr('אחרי יום גדול לא מפצים ברעב: חוזרים ליעד הקלוריות ושותים יותר מים. תוך יומיים זה יורד.', 'After a big day, do not make up for it by going hungry: back to the calorie target and drink more water. Within two days it goes down.');
+  if (/מאוחר|מוקדם|later than usual|earlier than usual/i.test(r)) return tr('להישקל כל יום באותה שעה, אחרי שירותים ולפני אוכל ושתייה.', 'Weigh in every day at the same time, after the bathroom and before food and drink.');
+  if (/לא נרשם|not fully logged/i.test(r)) return tr('לרשום את כל הארוחות השבוע, גם את הקטנות. בלי זה אי אפשר לדעת מה הזיז את המשקל.', 'Log every meal this week, the small ones too. Without that there is no way to know what moved the weight.');
+  if (/אימון|workout/i.test(r)) return tr('להמשיך באימונים. המים שהשריר מחזיק יורדים כשהגוף מתרגל.', 'Keep training. The water the muscles hold goes down as the body gets used to it.');
+  if (/אכלת מעט|you ate little/i.test(r)) return tr('לא להוריד עוד: יום עם מעט אוכל מחזיר את המשקל אחרי יומיים. להישאר קרוב ליעד הקלוריות.', 'Do not cut more: a day of little food brings the weight back after two days. Stay close to the calorie target.');
+  if (/קצב|a pace/i.test(r)) return tr('להמשיך בדיוק כך. זה הקצב שמחזיק לאורך זמן.', 'Keep going exactly like this. This is the pace that lasts.');
   return null;
 }

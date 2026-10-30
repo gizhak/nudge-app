@@ -32,16 +32,16 @@ import TodayScreen from './src/screens/TodayScreen';
 import TrainScreen from './src/screens/TrainScreen';
 import { C, FONT } from './src/ui/theme';
 
-import { ROW } from './src/i18n';
+import { ROW, t as tr } from './src/i18n';
 type Tab = 'today' | 'train' | 'food' | 'progress' | 'settings';
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
 const TABS: { key: Tab; label: string; icon: IconName; iconOn: IconName }[] = [
-  { key: 'today', label: 'היום', icon: 'home-outline', iconOn: 'home' },
-  { key: 'train', label: 'אימון', icon: 'barbell-outline', iconOn: 'barbell' },
-  { key: 'food', label: 'תזונה', icon: 'restaurant-outline', iconOn: 'restaurant' },
-  { key: 'progress', label: 'התקדמות', icon: 'trending-up-outline', iconOn: 'trending-up' },
-  { key: 'settings', label: 'המאמן', icon: 'chatbubble-ellipses-outline', iconOn: 'chatbubble-ellipses' },
+  { key: 'today', label: tr('היום', 'Today'), icon: 'home-outline', iconOn: 'home' },
+  { key: 'train', label: tr('אימון', 'Train'), icon: 'barbell-outline', iconOn: 'barbell' },
+  { key: 'food', label: tr('תזונה', 'Food'), icon: 'restaurant-outline', iconOn: 'restaurant' },
+  { key: 'progress', label: tr('התקדמות', 'Progress'), icon: 'trending-up-outline', iconOn: 'trending-up' },
+  { key: 'settings', label: tr('המאמן', 'Coach'), icon: 'chatbubble-ellipses-outline', iconOn: 'chatbubble-ellipses' },
 ];
 
 /** The app under the opening animation, which stays until the profile is loaded. */
@@ -326,7 +326,7 @@ function AppInner({ onReady }: { onReady: () => void }) {
         <StatusBar style="dark" />
         <SafeAreaView style={s.root} edges={['top', 'bottom']}>
           <ReadinessScreen
-            continueLabel="סיום"
+            continueLabel={tr('סיום', 'Finish')}
             onContinue={() => {
               setReadinessOpen(false);
               setReadinessTick((t) => t + 1);
@@ -389,7 +389,7 @@ function AppInner({ onReady }: { onReady: () => void }) {
                 }}
                 style={[s.tab, on && s.tabOn]}
                 accessibilityRole="tab"
-                accessibilityLabel={t.key === 'settings' && unread && !on ? `${t.label}, ${unread} הודעות שלא נקראו` : t.label}
+                accessibilityLabel={t.key === 'settings' && unread && !on ? tr(`${t.label}, ${unread} הודעות שלא נקראו`, `${t.label}, ${unread} unread messages`) : t.label}
                 accessibilityState={{ selected: on }}
               >
                 {t.key === 'settings' ? (

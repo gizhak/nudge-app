@@ -3,6 +3,7 @@
 // against the goal and what is left for today. It ranks by ingredients and cooking
 // method; it does not know portion sizes, so it gives no calorie numbers.
 
+import { t as tr } from '../i18n';
 type Tag = 'protein' | 'lean' | 'veg' | 'fried' | 'creamy' | 'carbs' | 'sweet' | 'drink' | 'meat';
 
 interface Rule {
@@ -103,15 +104,15 @@ export function parseMenu(text: string): { name: string; section: 'sweet' | 'dri
 }
 
 const REASON: Record<Tag, string> = {
-  protein: 'עשיר בחלבון',
-  lean: 'הכנה רזה',
-  veg: 'ירקות',
-  fried: 'מטוגן',
-  creamy: 'שמנת או רוטב שמן',
-  carbs: 'פחמימה כבדה',
-  sweet: 'מתוק',
-  drink: 'קלוריות מנוזלים',
-  meat: 'בשר',
+  protein: tr('עשיר בחלבון', 'High in protein'),
+  lean: tr('הכנה רזה', 'Lean cooking'),
+  veg: tr('ירקות', 'Vegetables'),
+  fried: tr('מטוגן', 'Fried'),
+  creamy: tr('שמנת או רוטב שמן', 'Cream or oily sauce'),
+  carbs: tr('פחמימה כבדה', 'Heavy carbs'),
+  sweet: tr('מתוק', 'Sweet'),
+  drink: tr('קלוריות מנוזלים', 'Liquid calories'),
+  meat: tr('בשר', 'Meat'),
 };
 
 export function scoreDish(name: string, section: 'sweet' | 'drink' | null, c: MenuContext): Dish {
@@ -167,12 +168,12 @@ export function adviseMenu(text: string, c: MenuContext): MenuAdvice {
 
   const tips: string[] = [];
   const top = best[0];
-  if (top?.tags.includes('carbs') || top?.tags.includes('fried')) tips.push('בקש להחליף את התוספת בסלט או ירקות.');
-  if (best.some((d) => d.tags.includes('creamy')) || known.some((d) => d.tags.includes('creamy'))) tips.push('רוטב בצד, לא על המנה.');
-  if (c.proteinLeft > 40) tips.push(`חסרים לך עוד ${Math.round(c.proteinLeft)} גרם חלבון היום. מנה עיקרית עם חלבון קודמת לכל השאר.`);
-  if (c.kcalLeft < 600) tips.push(`נשארו לך ${Math.max(0, Math.round(c.kcalLeft))} קלוריות. מנה אחת, בלי ראשונה ובלי קינוח.`);
-  if (c.hour >= 20) tips.push('שעה מאוחרת: פחות פחמימה, יותר חלבון וירקות.');
-  if (!best.length && known.length) tips.push('אין כאן מנה טובה באמת. בחר את הכי פחות גרועה, ושלוט בכמות.');
+  if (top?.tags.includes('carbs') || top?.tags.includes('fried')) tips.push(tr('בקש להחליף את התוספת בסלט או ירקות.', 'Ask to swap the side for salad or vegetables.'));
+  if (best.some((d) => d.tags.includes('creamy')) || known.some((d) => d.tags.includes('creamy'))) tips.push(tr('רוטב בצד, לא על המנה.', 'Sauce on the side, not on the dish.'));
+  if (c.proteinLeft > 40) tips.push(tr(`חסרים לך עוד ${Math.round(c.proteinLeft)} גרם חלבון היום. מנה עיקרית עם חלבון קודמת לכל השאר.`, `You still need ${Math.round(c.proteinLeft)} g of protein today. A main dish with protein comes before everything else.`));
+  if (c.kcalLeft < 600) tips.push(tr(`נשארו לך ${Math.max(0, Math.round(c.kcalLeft))} קלוריות. מנה אחת, בלי ראשונה ובלי קינוח.`, `You have ${Math.max(0, Math.round(c.kcalLeft))} calories left. One dish, no starter and no dessert.`));
+  if (c.hour >= 20) tips.push(tr('שעה מאוחרת: פחות פחמימה, יותר חלבון וירקות.', 'A late hour: less carbs, more protein and vegetables.'));
+  if (!best.length && known.length) tips.push(tr('אין כאן מנה טובה באמת. בחר את הכי פחות גרועה, ושלוט בכמות.', 'There is no really good dish here. Choose the least bad one, and control the amount.'));
 
   return { best, avoid, unknown: dishes.length - known.length, total: dishes.length, tips };
 }

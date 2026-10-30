@@ -10,7 +10,7 @@ import { loadSettings } from '../notifications/settings';
 import { Card, PrimaryButton } from '../ui/components';
 import { C, T } from '../ui/theme';
 
-import { SIDE_END, LOCALE } from '../i18n';
+import { SIDE_END, LOCALE, t as tr } from '../i18n';
 const HOUR = 3600000;
 
 /**
@@ -42,9 +42,9 @@ function FactRow({ f, off, onToggle }: { f: Fact; off: boolean; onToggle: () => 
     <View style={[s.fact, off && { opacity: 0.45 }]}>
       <Text style={[T.bold, { fontSize: 15 }]}>{f.title}</Text>
       <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>{f.detail}</Text>
-      <Text style={[T.base, { fontSize: 13, lineHeight: 19 }]}>{off ? 'סימנת שזה לא נכון: המאמן לא משתמש בזה.' : f.effect}</Text>
+      <Text style={[T.base, { fontSize: 13, lineHeight: 19 }]}>{off ? tr('סימנת שזה לא נכון: המאמן לא משתמש בזה.', 'You marked this as wrong: the coach does not use it.') : f.effect}</Text>
       <Pressable onPress={onToggle} hitSlop={8} style={{ alignSelf: SIDE_END }}>
-        <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>{off ? 'זה כן נכון' : 'לא נכון'}</Text>
+        <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>{off ? tr('זה כן נכון', 'This is right') : tr('לא נכון', 'Not right')}</Text>
       </Pressable>
     </View>
   );
@@ -91,66 +91,66 @@ export default function Learned() {
   return (
     <View style={{ gap: 12 }}>
       {gym.length > 0 && (
-        <Card title="ביקורים בחדר הכושר">
-          <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>יום נספר כאימון רק אחרי {GYM_MIN} דקות בחדר הכושר, או אימון מהשעון, או "התאמנתי".</Text>
+        <Card title={tr("ביקורים בחדר הכושר", 'Gym visits')}>
+          <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{tr('יום נספר כאימון רק אחרי', 'A day counts as a workout only after')} {GYM_MIN} {tr('דקות בחדר הכושר, או אימון מהשעון, או "התאמנתי".', 'minutes at the gym, or a workout from the watch, or "I trained".')}</Text>
           {[...gym].reverse().slice(0, 12).map((g, i) => (
             <Text key={i} style={[T.base, { fontSize: 13 }]}>
               {new Date(g.at).toLocaleString(LOCALE, { weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })} ·{' '}
-              {g.kind === 'enter' ? 'הגעה' : g.kind === 'exit' ? `יציאה אחרי ${g.minutes ?? 0} דק'` : `נספר כאימון, ${g.minutes} דק'`}
-              {g.via ? ` · לפי ${g.via}` : ''}
+              {g.kind === 'enter' ? tr('הגעה', 'Arrival') : g.kind === 'exit' ? tr(`יציאה אחרי ${g.minutes ?? 0} דק'`, `Left after ${g.minutes ?? 0} min`) : tr(`נספר כאימון, ${g.minutes} דק'`, `Counted as a workout, ${g.minutes} min`)}
+              {g.via ? tr(` · לפי ${g.via}`, ` · by ${({ 'מיקום': 'location', 'רכב': 'car', 'ידני': 'hand' } as Record<string, string>)[g.via ?? ''] ?? g.via}`) : ''}
             </Text>
           ))}
         </Card>
       )}
-      <Card title="המאמן ברקע">
+      <Card title={tr("המאמן ברקע", 'The coach in the background')}>
         {young ? (
-          <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>מתחיל למדוד עכשיו. אחרי יום אפשר יהיה לראות אם הטלפון נותן למאמן לרוץ כשהאפליקציה סגורה.</Text>
+          <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>{tr('מתחיל למדוד עכשיו. אחרי יום אפשר יהיה לראות אם הטלפון נותן למאמן לרוץ כשהאפליקציה סגורה.', 'Starting to measure now. After a day you will see whether the phone lets the coach run while the app is closed.')}</Text>
         ) : (
           <>
             <Text style={[T.bold, { fontSize: 15, color: bg.ok ? C.ink : C.signal }]}>
-              {bg.ok ? 'רץ כמו שצריך' : 'נראה שהטלפון עוצר אותו'}
+              {bg.ok ? tr('רץ כמו שצריך', 'Running as it should') : tr('נראה שהטלפון עוצר אותו', 'The phone seems to be stopping it')}
             </Text>
             <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>
-              ב 24 השעות האחרונות: {bg.count} הפעלות כשהאפליקציה סגורה. הפער הארוך ביותר בשעות היום: {bg.gapH} שעות.
-              {bg.last ? ` האחרונה ב ${hhmm(new Date(bg.last).getHours() * 60 + new Date(bg.last).getMinutes())}.` : ''}
+              {tr('ב 24 השעות האחרונות:', 'In the last 24 hours:')} {bg.count} {tr('הפעלות כשהאפליקציה סגורה. הפער הארוך ביותר בשעות היום:', 'runs while the app was closed. The longest gap during the day:')} {bg.gapH} {tr('שעות.', 'hours.')}
+              {bg.last ? tr(` האחרונה ב ${hhmm(new Date(bg.last).getHours() * 60 + new Date(bg.last).getMinutes())}.`, ` The last at ${hhmm(new Date(bg.last).getHours() * 60 + new Date(bg.last).getMinutes())}.`) : ''}
             </Text>
             {!bg.ok && (
               <>
                 <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>
-                  בטלפונים של Xiaomi: הגדרות, אפליקציות, Nudge. שם: "הפעלה אוטומטית" פועל, ו"חיסכון בסוללה" על "ללא הגבלות". אחר כך ננעל את האפליקציה בתפריט האפליקציות האחרונות (מנעול על החלון שלה).
+                  {tr('בטלפונים של Xiaomi: הגדרות, אפליקציות, Nudge. שם: "הפעלה אוטומטית" פועל, ו"חיסכון בסוללה" על "ללא הגבלות". אחר כך ננעל את האפליקציה בתפריט האפליקציות האחרונות (מנעול על החלון שלה).', 'On Xiaomi phones: Settings, Apps, Nudge. There: "Autostart" on, and "Battery saver" on "No restrictions". Then lock the app in the recent apps menu (the lock on its window).')}
                 </Text>
-                <PrimaryButton label="פתח את הגדרות האפליקציה" onPress={() => Linking.openSettings()} />
+                <PrimaryButton label={tr("פתח את הגדרות האפליקציה", 'Open the app settings')} onPress={() => Linking.openSettings()} />
               </>
             )}
           </>
         )}
         {lastMsg && (
           <Text style={[T.muted, { fontSize: 13 }]}>
-            ההודעה האחרונה שנשלחה: {new Date(lastMsg).toLocaleString(LOCALE, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            {tr('ההודעה האחרונה שנשלחה:', 'The last message sent:')} {new Date(lastMsg).toLocaleString(LOCALE, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </Text>
         )}
         {run && (
           <Text style={[T.muted, { fontSize: 13 }]} selectable>
-            בדיקה אחרונה ב {new Date(run.at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}:{' '}
+            {tr('בדיקה אחרונה ב', 'Last check at')} {new Date(run.at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}:{' '}
             {run.why === 'driving'
-              ? 'שקט, כי נראה שאתה נוהג (הרכב מחובר)'
+              ? tr('שקט, כי נראה שאתה נוהג (הרכב מחובר)', 'Quiet, since you seem to be driving (the car is connected)')
               : run.why === 'sent'
-                ? 'נשלחה הודעה'
+                ? tr('נשלחה הודעה', 'A message was sent')
                 : run.why === 'said'
-                  ? 'אין משהו חדש, כל מה שרלוונטי כבר נאמר היום'
+                  ? tr('אין משהו חדש, כל מה שרלוונטי כבר נאמר היום', 'Nothing new, everything relevant was already said today')
                 : run.why === 'caps'
-                  ? `היה מה להגיד אבל הוחזק (${(run.held ?? []).join(', ')})`
+                  ? tr(`היה מה להגיד אבל הוחזק (${(run.held ?? []).join(', ')})`, `There was something to say but it was held (${(run.held ?? []).join(', ')})`)
                   : run.why === 'snoozed'
-                    ? `הכל מושתק אחרי "הבנתי" (${(run.candidates ?? []).join(', ')})`
-                    : 'לא היה מה להגיד'}
-            {run.data === false ? '. אין נתוני בריאות' : ''}
-            {typeof run.sentToday === 'number' ? `. היום נשלחו ${run.sentToday}` : ''}
+                    ? tr(`הכל מושתק אחרי "הבנתי" (${(run.candidates ?? []).join(', ')})`, `All muted after "Got it" (${(run.candidates ?? []).join(', ')})`)
+                    : tr('לא היה מה להגיד', 'There was nothing to say')}
+            {run.data === false ? tr('. אין נתוני בריאות', '. No health data') : ''}
+            {typeof run.sentToday === 'number' ? tr(`. היום נשלחו ${run.sentToday}`, `. Sent today: ${run.sentToday}`) : ''}
           </Text>
         )}
         {runLog.length > 0 && (
           <Pressable onPress={() => setLogOpen(!logOpen)} hitSlop={6}>
             <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>
-              {logOpen ? 'הסתר' : `כל הבדיקות מאז אתמול (${runLog.length})`}
+              {logOpen ? tr('הסתר', 'Hide') : tr(`כל הבדיקות מאז אתמול (${runLog.length})`, `All checks since yesterday (${runLog.length})`)}
             </Text>
           </Pressable>
         )}
@@ -158,18 +158,18 @@ export default function Learned() {
           [...runLog].reverse().map((x, i) => (
             <Text key={i} style={[T.muted, { fontSize: 12, lineHeight: 18 }]} selectable>
               {new Date(x.at).toLocaleString(LOCALE, { weekday: 'short', hour: '2-digit', minute: '2-digit' })} ·{' '}
-              {x.how === 'manual' ? 'ידני' : x.how === 'unlock' ? 'פתיחת מסך' : x.how === 'place' ? 'מקום' : 'רקע'} ·{' '}
-              {x.why === 'driving' ? 'נהיגה, שקט' : x.why === 'sent' ? `נשלח: ${(x.sent ?? []).join(', ')}` : x.why === 'caps' ? `הוחזק: ${(x.held ?? []).join(', ')}` : x.why === 'said' ? 'כבר נאמר' : x.why === 'snoozed' ? 'מושתק' : 'אין מה להגיד'}
+              {x.how === 'manual' ? tr('ידני', 'Manual') : x.how === 'unlock' ? tr('פתיחת מסך', 'Screen open') : x.how === 'place' ? tr('מקום', 'Place') : tr('רקע', 'Background')} ·{' '}
+              {x.why === 'driving' ? tr('נהיגה, שקט', 'Driving, quiet') : x.why === 'sent' ? tr(`נשלח: ${(x.sent ?? []).join(', ')}`, `Sent: ${(x.sent ?? []).join(', ')}`) : x.why === 'caps' ? tr(`הוחזק: ${(x.held ?? []).join(', ')}`, `Held: ${(x.held ?? []).join(', ')}`) : x.why === 'said' ? tr('כבר נאמר', 'Already said') : x.why === 'snoozed' ? tr('מושתק', 'Muted') : tr('אין מה להגיד', 'Nothing to say')}
             </Text>
           ))}
         {err && now - err.at < 24 * HOUR && (
           <Text style={[T.base, { fontSize: 13, color: C.signal }]} selectable>
-            תקלה ב {new Date(err.at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}: {err.msg} {err.where ? `(${err.where})` : ''}
+            {tr('תקלה ב', 'Error at')} {new Date(err.at).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}: {err.msg} {err.where ? `(${err.where})` : ''}
           </Text>
         )}
       </Card>
 
-      <Card title="מה המאמן למד עליך">
+      <Card title={tr("מה המאמן למד עליך", 'What the coach learned about you')}>
         {l.facts.length ? (
           l.facts.map((f) => (
             <FactRow
@@ -186,15 +186,15 @@ export default function Learned() {
           ))
         ) : (
           <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>
-            עוד מוקדם. כדי ללמוד מתי אתה קם ושוקל צריך לפחות שבוע של נתונים, וכדי ללמוד אילו הודעות עובדות עליך צריך לפחות 4 פעמים מכל סוג.
+            {tr('עוד מוקדם. כדי ללמוד מתי אתה קם ושוקל צריך לפחות שבוע של נתונים, וכדי ללמוד אילו הודעות עובדות עליך צריך לפחות 4 פעמים מכל סוג.', 'Too early. To learn when you get up and weigh in it needs at least a week of data, and to learn which messages work on you it needs at least 4 of each kind.')}
           </Text>
         )}
         <Text style={[T.muted, { fontSize: 12 }]}>
-          {l.at ? `עודכן ב ${new Date(l.at).toLocaleString(LOCALE, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}. ` : ''}
-          הלמידה רצה פעם ב 12 שעות, על 3 השבועות האחרונים, ונשארת בטלפון.
+          {l.at ? tr(`עודכן ב ${new Date(l.at).toLocaleString(LOCALE, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}. `, `Updated ${new Date(l.at).toLocaleString(LOCALE, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}. `) : ''}
+          {tr('הלמידה רצה פעם ב 12 שעות, על 3 השבועות האחרונים, ונשארת בטלפון.', 'Learning runs every 12 hours, on the last 3 weeks, and stays on the phone.')}
         </Text>
         <PrimaryButton
-          label={busy ? 'לומד...' : 'למד עכשיו'}
+          label={busy ? tr('לומד...', 'Learning...') : tr('למד עכשיו', 'Learn now')}
           onPress={async () => {
             if (busy) return;
             setBusy(true);

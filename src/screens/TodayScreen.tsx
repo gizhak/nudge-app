@@ -244,14 +244,14 @@ const WHY_SEEN = 'today.weightWhySeen.v1';
 const whySignature = (w: WeightWhy) => `${w.headline}|${w.reasons.join('|')}`;
 /** A hint of the first reason for the collapsed row */
 function shortReason(r: string): string {
-  if (r.includes('שתי שקילות')) return tr('שקילה כפולה', 'Double weigh-in');
-  if (r.includes('ישנת')) return tr('שינה קצרה', 'Short sleep');
-  if (r.includes('אימון')) return tr('אימון', 'Workout');
-  if (r.includes('אכלת מעט')) return tr('יום עם מעט אוכל', 'A day of little food');
-  if (r.includes('אכלת')) return tr('ארוחה גדולה', 'A big meal');
-  if (r.includes('מאוחר')) return tr('שקילה מאוחרת', 'Late weigh-in');
-  if (r.includes('מוקדם')) return tr('שקילה מוקדמת', 'Early weigh-in');
-  if (r.includes('קצב')) return tr('קצב בריא', 'A healthy pace');
+  if (/שתי שקילות|two weigh-ins/i.test(r)) return tr('שקילה כפולה', 'Double weigh-in');
+  if (/ישנת|you slept/i.test(r)) return tr('שינה קצרה', 'Short sleep');
+  if (/אימון|workout/i.test(r)) return tr('אימון', 'Workout');
+  if (/אכלת מעט|you ate little/i.test(r)) return tr('יום עם מעט אוכל', 'A day of little food');
+  if (/אכלת|you ate/i.test(r)) return tr('ארוחה גדולה', 'A big meal');
+  if (/מאוחר|later than usual/i.test(r)) return tr('שקילה מאוחרת', 'Late weigh-in');
+  if (/מוקדם|earlier than usual/i.test(r)) return tr('שקילה מוקדמת', 'Early weigh-in');
+  if (/קצב|a pace/i.test(r)) return tr('קצב בריא', 'A healthy pace');
   return tr('הסבר חדש', 'New explanation');
 }
 

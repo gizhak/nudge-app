@@ -2,18 +2,19 @@
 // Used to check the connection: compare the rows with the same weigh-ins in Zepp.
 import { getGrantedPermissions, readRecords } from 'react-native-health-connect';
 
+import { t as tr } from '../i18n';
 const DAY = 24 * 3600 * 1000;
 
 export const BODY_TYPES = ['BodyFat', 'LeanBodyMass', 'BoneMass', 'BodyWaterMass', 'BasalMetabolicRate'] as const;
 export type BodyType = (typeof BODY_TYPES)[number] | 'Weight';
 
 export const BODY_TITLES: Record<BodyType, string> = {
-  Weight: 'משקל',
-  BodyFat: 'אחוז שומן',
-  LeanBodyMass: 'מסה רזה',
-  BoneMass: 'מסת עצם',
-  BodyWaterMass: 'מים בגוף',
-  BasalMetabolicRate: 'חילוף חומרים במנוחה',
+  Weight: tr('משקל', 'Weight'),
+  BodyFat: tr('אחוז שומן', 'Body fat'),
+  LeanBodyMass: tr('מסה רזה', 'Lean mass'),
+  BoneMass: tr('מסת עצם', 'Bone mass'),
+  BodyWaterMass: tr('מים בגוף', 'Body water'),
+  BasalMetabolicRate: tr('חילוף חומרים במנוחה', 'Resting metabolism'),
 };
 
 export interface WeighIn {
@@ -60,20 +61,20 @@ const FIELD: Record<BodyType, keyof WeighIn> = {
 /** Pure: plausibility checks for one weigh-in. */
 export function checkWeighIn(w: WeighIn): string[] {
   const out: string[] = [];
-  if (w.fatPct != null && (w.fatPct < 3 || w.fatPct > 60)) out.push(`אחוז שומן ${w.fatPct.toFixed(1)} לא סביר`);
+  if (w.fatPct != null && (w.fatPct < 3 || w.fatPct > 60)) out.push(tr(`אחוז שומן ${w.fatPct.toFixed(1)} לא סביר`, `Body fat ${w.fatPct.toFixed(1)} is not plausible`));
   if (w.weight != null) {
-    if (w.leanKg != null && w.leanKg >= w.weight) out.push('מסה רזה גדולה מהמשקל');
+    if (w.leanKg != null && w.leanKg >= w.weight) out.push(tr('מסה רזה גדולה מהמשקל', 'Lean mass is larger than the weight'));
     if (w.fatPct != null && w.leanKg != null) {
       const sum = (w.weight * w.fatPct) / 100 + w.leanKg;
-      if (Math.abs(sum - w.weight) > 1.5) out.push(`שומן ומסה רזה לא מסתכמים למשקל (${sum.toFixed(1)} מול ${w.weight.toFixed(1)})`);
+      if (Math.abs(sum - w.weight) > 1.5) out.push(tr(`שומן ומסה רזה לא מסתכמים למשקל (${sum.toFixed(1)} מול ${w.weight.toFixed(1)})`, `Fat and lean mass do not add up to the weight (${sum.toFixed(1)} vs ${w.weight.toFixed(1)})`));
     }
     if (w.waterKg != null) {
       const pct = (w.waterKg / w.weight) * 100;
-      if (pct < 35 || pct > 75) out.push(`מים ${pct.toFixed(0)}% מהמשקל, לא סביר`);
+      if (pct < 35 || pct > 75) out.push(tr(`מים ${pct.toFixed(0)}% מהמשקל, לא סביר`, `Water ${pct.toFixed(0)}% of the weight, not plausible`));
     }
-    if (w.boneKg != null && (w.boneKg < 1.2 || w.boneKg > 6)) out.push(`מסת עצם ${w.boneKg.toFixed(1)} ק"ג לא סבירה`);
+    if (w.boneKg != null && (w.boneKg < 1.2 || w.boneKg > 6)) out.push(tr(`מסת עצם ${w.boneKg.toFixed(1)} ק"ג לא סבירה`, `Bone mass ${w.boneKg.toFixed(1)} kg is not plausible`));
   }
-  if (w.bmr != null && (w.bmr < 900 || w.bmr > 3500)) out.push(`חילוף חומרים ${Math.round(w.bmr)} לא סביר`);
+  if (w.bmr != null && (w.bmr < 900 || w.bmr > 3500)) out.push(tr(`חילוף חומרים ${Math.round(w.bmr)} לא סביר`, `Metabolism ${Math.round(w.bmr)} is not plausible`));
   return out;
 }
 

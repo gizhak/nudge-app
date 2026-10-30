@@ -3,7 +3,7 @@
 import { readRecords } from 'react-native-health-connect';
 import { sleepMinutesInWindow } from './today';
 
-import { LOCALE } from '../i18n';
+import { LOCALE, t as tr } from '../i18n';
 const DAY = 24 * 3600 * 1000;
 const H = 3600 * 1000;
 
@@ -106,8 +106,8 @@ export function summarize(nights: Night[], targetHours: number, kcalByDay: Map<n
     const d = avg(short)! - avg(good)!;
     link =
       d >= 150
-        ? `ביום שאחרי לילה של פחות מ 6 שעות אכלת בממוצע ${Math.round(d)} קלוריות יותר מאשר אחרי לילה של 7 שעות (${short.length} מול ${good.length} ימים).`
-        : `לפי הנתונים שלך, לילה קצר לא גורם לך לאכול יותר למחרת (${short.length} מול ${good.length} ימים).`;
+        ? tr(`ביום שאחרי לילה של פחות מ 6 שעות אכלת בממוצע ${Math.round(d)} קלוריות יותר מאשר אחרי לילה של 7 שעות (${short.length} מול ${good.length} ימים).`, `On a day after a night of under 6 hours you ate on average ${Math.round(d)} calories more than after a night of 7 hours (${short.length} vs ${good.length} days).`)
+        : tr(`לפי הנתונים שלך, לילה קצר לא גורם לך לאכול יותר למחרת (${short.length} מול ${good.length} ימים).`, `By your data, a short night does not make you eat more the next day (${short.length} vs ${good.length} days).`);
   }
   return {
     nights,
@@ -137,35 +137,35 @@ export interface SleepCheck {
 /** Pure: why sleep is missing, or where it comes from. */
 export function diagnose(p: { records: any[]; error?: string; granted: boolean; nights: Night[]; days: number; label: (pkg?: string) => string; now?: number }): SleepCheck {
   const now = p.now ?? Date.now();
-  if (p.error) return { ok: false, lines: [`הקריאה של השינה מ Health Connect נכשלה: ${p.error}`] };
+  if (p.error) return { ok: false, lines: [tr(`הקריאה של השינה מ Health Connect נכשלה: ${p.error}`, `Reading sleep from Health Connect failed: ${p.error}`)] };
   if (!p.granted)
-    return { ok: false, lines: ['ל Nudge אין הרשאה לקרוא שינה.', 'פתח Health Connect, הרשאות אפליקציות, Nudge, והפעל את "שינה".'] };
+    return { ok: false, lines: [tr('ל Nudge אין הרשאה לקרוא שינה.', 'Nudge has no permission to read sleep.'), tr('פתח Health Connect, הרשאות אפליקציות, Nudge, והפעל את "שינה".', 'Open Health Connect, App permissions, Nudge, and turn on "Sleep".')] };
   if (!p.records.length)
     return {
       ok: false,
       lines: [
-        `אף אפליקציה לא כתבה שינה ל Health Connect ב ${p.days} הימים האחרונים.`,
-        'באפליקציה של השעון (Mi Fitness או Zepp) בדוק בהגדרות Health Connect שהשינה מסומנת לכתיבה.',
-        'אחרי לילה עם השעון, פתח את האפליקציה של השעון. רוב השעונים מעבירים שינה רק אחרי סנכרון.',
+        tr(`אף אפליקציה לא כתבה שינה ל Health Connect ב ${p.days} הימים האחרונים.`, `No app wrote sleep to Health Connect in the last ${p.days} days.`),
+        tr('באפליקציה של השעון (Mi Fitness או Zepp) בדוק בהגדרות Health Connect שהשינה מסומנת לכתיבה.', 'In the watch app (Mi Fitness or Zepp), check in the Health Connect settings that sleep is set to write.'),
+        tr('אחרי לילה עם השעון, פתח את האפליקציה של השעון. רוב השעונים מעבירים שינה רק אחרי סנכרון.', 'After a night with the watch, open the watch app. Most watches pass sleep on only after a sync.'),
       ],
     };
   const lines: string[] = [];
   const bySource = new Map<string, number>();
   for (const n of p.nights) for (const s of n.sources) bySource.set(s, (bySource.get(s) ?? 0) + 1);
-  for (const [s, c] of bySource) lines.push(`מקור: ${p.label(s)} · ${c} לילות מתוך ${p.days}`);
+  for (const [s, c] of bySource) lines.push(tr(`מקור: ${p.label(s)} · ${c} לילות מתוך ${p.days}`, `Source: ${p.label(s)} · ${c} nights out of ${p.days}`));
   const last = Math.max(...p.records.map((r) => new Date(r.endTime).getTime()));
   const ago = (now - last) / H;
   const lastText = new Date(last).toLocaleString(LOCALE, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
   let ok = true;
   if (ago > 36) {
     ok = false;
-    lines.push(`הלילה האחרון שהגיע הסתיים ב ${lastText}. פתח את האפליקציה של השעון כדי שתסנכרן.`);
-  } else lines.push(`הרישום האחרון: ${lastText}`);
-  if (p.nights.length && p.nights.every((n) => n.deep == null)) lines.push('השעון מעביר רק את משך השינה, בלי שלבים (עמוקה, REM).');
+    lines.push(tr(`הלילה האחרון שהגיע הסתיים ב ${lastText}. פתח את האפליקציה של השעון כדי שתסנכרן.`, `The last night that arrived ended at ${lastText}. Open the watch app so it syncs.`));
+  } else lines.push(tr(`הרישום האחרון: ${lastText}`, `The last record: ${lastText}`));
+  if (p.nights.length && p.nights.every((n) => n.deep == null)) lines.push(tr('השעון מעביר רק את משך השינה, בלי שלבים (עמוקה, REM).', 'The watch passes only the sleep length, without stages (deep, REM).'));
   const short = p.records.length - p.nights.length;
   if (!p.nights.length) {
     ok = false;
-    lines.push(`יש ${p.records.length} רישומי שינה, אבל אף אחד לא מגיע לשעה. אולי רק תנומות.`);
-  } else if (short > 3) lines.push('חלק מהרישומים קצרים משעה, ולא נספרים כלילה.');
+    lines.push(tr(`יש ${p.records.length} רישומי שינה, אבל אף אחד לא מגיע לשעה. אולי רק תנומות.`, `There are ${p.records.length} sleep records, but none reaches an hour. Maybe only naps.`));
+  } else if (short > 3) lines.push(tr('חלק מהרישומים קצרים משעה, ולא נספרים כלילה.', 'Some records are shorter than an hour, and do not count as a night.'));
   return { ok, lines };
 }

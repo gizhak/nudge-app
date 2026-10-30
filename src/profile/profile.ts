@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { t } from '../i18n';
 export type Sex = 'male' | 'female';
 export type Goal = 'lose' | 'recomp' | 'gain' | 'maintain';
 export type Pace = 'moderate' | 'fast';
@@ -32,9 +33,9 @@ export type FoodAppKind = 'zepp' | 'samsung' | 'other' | 'none';
 
 /** The words for a broken night, by who is at home. */
 export function interruptLabels(kids: Kids): { button: string; night: string; question: string } {
-  if (kids === 'baby') return { button: 'התינוק העיר אותי', night: 'לילה עם התינוק', question: 'הלילה נקטע בגלל התינוק?' };
-  if (kids === 'young') return { button: 'הילדים העירו אותי', night: 'לילה עם הילדים', question: 'הלילה נקטע בגלל הילדים?' };
-  return { button: 'התעוררתי באמצע הלילה', night: 'לילה עם התעוררויות', question: 'התעוררת באמצע הלילה?' };
+  if (kids === 'baby') return { button: t('התינוק העיר אותי', 'The baby woke me'), night: t('לילה עם התינוק', 'A night with the baby'), question: t('הלילה נקטע בגלל התינוק?', 'Was the night broken because of the baby?') };
+  if (kids === 'young') return { button: t('הילדים העירו אותי', 'The kids woke me'), night: t('לילה עם הילדים', 'A night with the kids'), question: t('הלילה נקטע בגלל הילדים?', 'Was the night broken because of the kids?') };
+  return { button: t('התעוררתי באמצע הלילה', 'I woke up in the night'), night: t('לילה עם התעוררויות', 'A night with wake-ups'), question: t('התעוררת באמצע הלילה?', 'Did you wake up in the night?') };
 }
 
 /** Whether to offer the broken night button at all. */

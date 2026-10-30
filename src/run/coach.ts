@@ -6,6 +6,7 @@ import { talk } from './analyze';
 import { bounds, syncRuns } from './read';
 import { loadRunPrefs, saveRuns } from './store';
 
+import { t as tr } from '../i18n';
 export async function runMessage(age: number, now: Date, prefs: CoachPrefs): Promise<CoachMessage | null> {
   if (isQuietTime(now, prefs)) return null;
   if (prefs.vacation && prefs.vacation.mode === 'silent' && onVacation(now, prefs.vacation)) return null;
@@ -17,5 +18,5 @@ export async function runMessage(age: number, now: Date, prefs: CoachPrefs): Pro
   await saveRuns(runs.map((r) => (r.messaged ? r : { ...r, messaged: true })));
   if (now.getTime() - latest.end > 12 * 3600000) return null;
   const t = talk(latest, runs, await loadRunPrefs(), await bounds(age, runs), now.getTime());
-  return { id: `run@${latest.start}`, priority: 1, level: 'normal', title: t.title, body: `${t.body} פתח כדי לענות.` };
+  return { id: `run@${latest.start}`, priority: 1, level: 'normal', title: t.title, body: tr(`${t.body} פתח כדי לענות.`, `${t.body} Open to answer.`) };
 }

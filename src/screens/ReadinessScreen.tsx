@@ -21,9 +21,9 @@ import {
 import { Card, PrimaryButton, Screen } from '../ui/components';
 import { C, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, t } from '../i18n';
 const COLOR: Record<CheckStatus, string> = { ok: C.accent, warn: C.warn, error: C.bad, manual: C.warn };
-const LABEL: Record<CheckStatus, string> = { ok: 'תקין', warn: 'לבדוק', error: 'חסר', manual: 'ידני' };
+const LABEL: Record<CheckStatus, string> = { ok: t('תקין', 'OK'), warn: t('לבדוק', 'Check'), error: t('חסר', 'Missing'), manual: t('ידני', 'Manual') };
 
 const store = (pkg: string) =>
   Linking.openURL(`market://details?id=${pkg}`).catch(() => Linking.openURL(`https://play.google.com/store/apps/details?id=${pkg}`));
@@ -125,21 +125,21 @@ export default function ReadinessScreen({
   const ready = result && result.errors === 0;
 
   return (
-    <Screen title="בדיקת מוכנות" refreshing={running} onRefresh={check}>
+    <Screen title={t("בדיקת מוכנות", 'Readiness check')} refreshing={running} onRefresh={check}>
       {!result ? (
         <ActivityIndicator style={{ marginTop: 40 }} color={C.accent} />
       ) : (
         <>
           <Card>
             <Text style={[T.bold, { fontSize: 20, color: ready ? C.accent : C.bad }]}>
-              {ready ? 'מוכן לעבודה' : `${result.errors} דברים לתקן`}
+              {ready ? t('מוכן לעבודה', 'Ready to go') : t(`${result.errors} דברים לתקן`, `${result.errors} things to fix`)}
             </Text>
             <Text style={[T.muted, { fontSize: 14 }]}>
               {ready
                 ? result.warnings
-                  ? `יש ${result.warnings} דברים שכדאי לבדוק, אבל הם לא חוסמים.`
-                  : 'כל החיבורים, ההרשאות והנתונים תקינים.'
-                : 'בלי התיקונים האלה חלק מהמאמן לא יעבוד. כל שורה כוללת כפתור לתיקון.'}
+                  ? t(`יש ${result.warnings} דברים שכדאי לבדוק, אבל הם לא חוסמים.`, `There are ${result.warnings} things worth checking, but they do not block anything.`)
+                  : t('כל החיבורים, ההרשאות והנתונים תקינים.', 'All connections, permissions and data are fine.')
+                : t('בלי התיקונים האלה חלק מהמאמן לא יעבוד. כל שורה כוללת כפתור לתיקון.', 'Without these fixes part of the coach will not work. Every row has a button to fix it.')}
             </Text>
           </Card>
           {groups.map((g) => (
@@ -153,10 +153,10 @@ export default function ReadinessScreen({
           ))}
           {onOpenWizard && (
             <Pressable onPress={onOpenWizard} style={s.wizard}>
-              <Text style={[T.bold, { textAlign: 'center', fontSize: 15 }]}>אשף החיבורים: מה להתקין ואיך לחבר</Text>
+              <Text style={[T.bold, { textAlign: 'center', fontSize: 15 }]}>{t('אשף החיבורים: מה להתקין ואיך לחבר', 'Connection wizard: what to install and how to connect')}</Text>
             </Pressable>
           )}
-          {onContinue && <PrimaryButton label={continueLabel ?? 'המשך'} onPress={onContinue} />}
+          {onContinue && <PrimaryButton label={continueLabel ?? t('המשך', 'Continue')} onPress={onContinue} />}
         </>
       )}
       {consentSheet}

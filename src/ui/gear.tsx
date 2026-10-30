@@ -4,13 +4,14 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from './theme';
 
+import { t } from '../i18n';
 export const GearContext = createContext<(() => void) | null>(null);
 
 export function Gear() {
   const open = useContext(GearContext);
   if (!open) return null;
   return (
-    <Pressable onPress={open} style={({ pressed }) => [s.gear, pressed && { opacity: 0.7 }]} accessibilityLabel="הגדרות" hitSlop={6}>
+    <Pressable onPress={open} style={({ pressed }) => [s.gear, pressed && { opacity: 0.7 }]} accessibilityLabel={t("הגדרות", 'Settings')} hitSlop={6}>
       <Ionicons name="settings-outline" size={20} color={C.ink} />
     </Pressable>
   );

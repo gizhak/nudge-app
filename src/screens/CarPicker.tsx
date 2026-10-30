@@ -3,7 +3,7 @@ import { AppState, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, Vi
 import { carState, CarState, listPairedDevices, PairedDevice, setCar } from '../../modules/night-guard';
 import { C, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, t as tr } from '../i18n';
 /**
  * "My car": pick it from the paired Bluetooth devices. While the phone is connected to it
  * the coach stays silent; connecting and disconnecting mark leaving and arriving.
@@ -26,13 +26,13 @@ export default function CarPicker({ compact = false }: { compact?: boolean }) {
     if (Platform.OS === 'android' && Number(Platform.Version) >= 31) {
       const r = await PermissionsAndroid.request('android.permission.BLUETOOTH_CONNECT' as any).catch(() => 'denied');
       if (r !== PermissionsAndroid.RESULTS.GRANTED) {
-        setNote('בלי הרשאת "מכשירים בקרבת מקום" אני לא יכול לראות את הרכב. אפשר לאשר בהגדרות האפליקציה.');
+        setNote(tr('בלי הרשאת "מכשירים בקרבת מקום" אני לא יכול לראות את הרכב. אפשר לאשר בהגדרות האפליקציה.', 'Without the "Nearby devices" permission I cannot see the car. You can allow it in the app settings.'));
         return;
       }
     }
     const list = listPairedDevices();
-    if (list === null) return setNote('אין הרשאה לקרוא את מכשירי ה Bluetooth.');
-    if (!list.length) return setNote('אין מכשירים מצומדים. חבר קודם את הטלפון לרכב פעם אחת.');
+    if (list === null) return setNote(tr('אין הרשאה לקרוא את מכשירי ה Bluetooth.', 'No permission to read Bluetooth devices.'));
+    if (!list.length) return setNote(tr('אין מכשירים מצומדים. חבר קודם את הטלפון לרכב פעם אחת.', 'No paired devices. Connect the phone to the car once first.'));
     setDevices(list.sort((a, b) => a.name.localeCompare(b.name)));
   };
 
@@ -46,21 +46,21 @@ export default function CarPicker({ compact = false }: { compact?: boolean }) {
     <View style={{ gap: 8 }}>
       <View style={s.row}>
         <View style={{ flex: 1 }}>
-          <Text style={[T.bold, { fontSize: 15 }]}>הרכב שלי</Text>
+          <Text style={[T.bold, { fontSize: 15 }]}>{tr('הרכב שלי', 'My car')}</Text>
           <Text style={[T.muted, { fontSize: 13 }]}>
             {state.address
-              ? `${state.name}: ${state.connected ? 'מחובר עכשיו, המאמן שקט' : 'לא מחובר'}`
+              ? tr(`${state.name}: ${state.connected ? 'מחובר עכשיו, המאמן שקט' : 'לא מחובר'}`, `${state.name}: ${state.connected ? 'connected now, the coach is quiet' : 'not connected'}`)
               : compact
-                ? 'בזמן נהיגה המאמן שותק, ויודע מתי יצאת ומתי הגעת'
-                : 'לא נבחר. בזמן נהיגה המאמן שותק, וחיבור לרכב מסמן יציאה והגעה.'}
+                ? tr('בזמן נהיגה המאמן שותק, ויודע מתי יצאת ומתי הגעת', 'While driving the coach is quiet, and knows when you left and when you arrived')
+                : tr('לא נבחר. בזמן נהיגה המאמן שותק, וחיבור לרכב מסמן יציאה והגעה.', 'Not chosen. While driving the coach is quiet, and connecting to the car marks leaving and arriving.')}
           </Text>
         </View>
         <Pressable onPress={pick} style={s.btn}>
-          <Text style={[T.bold, { color: '#fff', fontSize: 13 }]}>{state.address ? 'החלף' : 'בחר רכב'}</Text>
+          <Text style={[T.bold, { color: '#fff', fontSize: 13 }]}>{state.address ? tr('החלף', 'Change') : tr('בחר רכב', 'Choose a car')}</Text>
         </Pressable>
         {state.address && (
           <Pressable onPress={() => choose(null)} style={s.ghost}>
-            <Text style={[T.bold, { fontSize: 13 }]}>בטל</Text>
+            <Text style={[T.bold, { fontSize: 13 }]}>{tr('בטל', 'Cancel')}</Text>
           </Pressable>
         )}
       </View>
@@ -72,7 +72,7 @@ export default function CarPicker({ compact = false }: { compact?: boolean }) {
             </Pressable>
           ))}
           <Pressable onPress={() => setDevices(null)}>
-            <Text style={[T.muted, { fontSize: 13 }]}>סגור</Text>
+            <Text style={[T.muted, { fontSize: 13 }]}>{tr('סגור', 'Close')}</Text>
           </Pressable>
         </View>
       )}

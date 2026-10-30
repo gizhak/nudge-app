@@ -8,6 +8,7 @@ import { currentEatingDayStart, eatingDayStart, SleepSpan } from './eatingDay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadManual, morningKey } from '../sleep/manual';
 
+import { t as tr } from '../i18n';
 const readNutrition = async (start: Date, end: Date): Promise<any[]> => {
   const { records }: any = await readRecords('Nutrition', range(start, end));
   // Hidden first: every copy of a hidden meal goes, whichever copy the dedupe would keep
@@ -58,7 +59,7 @@ export async function readMeals(day = new Date()): Promise<Meal[]> {
     .map((r: any) => ({
       id: mealId(r),
       key: mealKey(r),
-      name: r.name || 'ארוחה',
+      name: r.name || tr('ארוחה', 'Meal'),
       time: new Date(r.startTime),
       kcal: r.energy?.inKilocalories ?? 0,
       protein: r.protein?.inGrams ?? 0,
@@ -76,7 +77,7 @@ export async function readMealsSince(days: number, now = new Date()): Promise<Me
     .map((r: any) => ({
       id: mealId(r),
       key: mealKey(r),
-      name: r.name || 'ארוחה',
+      name: r.name || tr('ארוחה', 'Meal'),
       time: new Date(r.startTime),
       kcal: r.energy?.inKilocalories ?? 0,
       protein: r.protein?.inGrams ?? 0,
@@ -179,7 +180,7 @@ export async function readNutritionByEatingDay(days = 14, now = new Date()) {
         const t = new Date(r.startTime).getTime();
         return t >= from && t < to;
       })
-      .map((r: any) => ({ name: r.name || 'ארוחה', time: new Date(r.startTime), kcal: r.energy?.inKilocalories ?? 0, protein: r.protein?.inGrams ?? 0 }))
+      .map((r: any) => ({ name: r.name || tr('ארוחה', 'Meal'), time: new Date(r.startTime), kcal: r.energy?.inKilocalories ?? 0, protein: r.protein?.inGrams ?? 0 }))
       .sort((a: any, b: any) => a.time.getTime() - b.time.getTime());
     return {
       date: addDays(first, i),

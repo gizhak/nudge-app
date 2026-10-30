@@ -7,7 +7,7 @@ import { DEFAULT_REPORT_PREFS, loadReportPrefs, ReportPrefs, saveReportPrefs } f
 import { Card } from '../ui/components';
 import { C, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, t } from '../i18n';
 /** When the weekly report comes, and whether the monthly one does. */
 export default function ReportSettings() {
   const [p, setP] = useState<ReportPrefs>(DEFAULT_REPORT_PREFS);
@@ -23,12 +23,12 @@ export default function ReportSettings() {
   };
 
   return (
-    <Card title="דוחות">
+    <Card title={t("דוחות", 'Reports')}>
       <View style={s.row}>
         <View style={{ flex: 1 }}>
-          <Text style={[T.bold, { fontSize: 15 }]}>דוח שבועי</Text>
+          <Text style={[T.bold, { fontSize: 15 }]}>{t('דוח שבועי', 'Weekly report')}</Text>
           <Text style={[T.muted, { fontSize: 13 }]}>
-            {p.weekly ? `כל יום ${DAY_NAMES[p.weekDay]} ב${pad2(p.hour)}:00, על שבעת הימים שלפניו` : 'כבוי'}
+            {p.weekly ? t(`כל יום ${DAY_NAMES[p.weekDay]} ב${pad2(p.hour)}:00, על שבעת הימים שלפניו`, `Every ${DAY_NAMES[p.weekDay]} at ${pad2(p.hour)}:00, on the seven days before it`) : t('כבוי', 'Off')}
           </Text>
         </View>
         <Switch value={p.weekly} onValueChange={(v) => update({ ...p, weekly: v })} trackColor={{ true: C.accent, false: C.track }} thumbColor="#fff" />
@@ -43,7 +43,7 @@ export default function ReportSettings() {
             ))}
           </View>
           <View style={s.row}>
-            <Text style={[T.base, { fontSize: 14, flex: 1 }]}>שעה</Text>
+            <Text style={[T.base, { fontSize: 14, flex: 1 }]}>{t('שעה', 'Hour')}</Text>
             <Pressable onPress={() => update({ ...p, hour: (p.hour + 23) % 24 })} style={s.step} hitSlop={6}>
               <Text style={[T.bold, { fontSize: 18, textAlign: 'center' }]}>−</Text>
             </Pressable>
@@ -52,13 +52,13 @@ export default function ReportSettings() {
               <Text style={[T.bold, { fontSize: 18, textAlign: 'center' }]}>+</Text>
             </Pressable>
           </View>
-          <Text style={[T.muted, { fontSize: 12 }]}>כדאי אחרי שקילת הבוקר, כדי שהשקילה תיכנס לתמונה.</Text>
+          <Text style={[T.muted, { fontSize: 12 }]}>{t('כדאי אחרי שקילת הבוקר, כדי שהשקילה תיכנס לתמונה.', 'Best after the morning weigh-in, so the weigh-in is in the picture.')}</Text>
         </>
       )}
       <View style={s.row}>
         <View style={{ flex: 1 }}>
-          <Text style={[T.bold, { fontSize: 15 }]}>דוח חודשי</Text>
-          <Text style={[T.muted, { fontSize: 13 }]}>כל 4 שבועות, ביום הביקורת: עם מותן, תמונות, דפוסים ותחזית</Text>
+          <Text style={[T.bold, { fontSize: 15 }]}>{t('דוח חודשי', 'Monthly report')}</Text>
+          <Text style={[T.muted, { fontSize: 13 }]}>{t('כל 4 שבועות, ביום הביקורת: עם מותן, תמונות, דפוסים ותחזית', 'Every 4 weeks, on checkpoint day: with waist, photos, patterns and a forecast')}</Text>
         </View>
         <Switch value={p.monthly} onValueChange={(v) => update({ ...p, monthly: v })} trackColor={{ true: C.accent, false: C.track }} thumbColor="#fff" />
       </View>

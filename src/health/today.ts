@@ -6,6 +6,7 @@ import { withoutHidden } from './hiddenMeals';
 import { currentEatingDayStart } from './eatingDay';
 import { loadManual, morningKey } from '../sleep/manual';
 
+import { t } from '../i18n';
 export type Quality = 'ok' | 'partial' | 'missing';
 
 export interface QualityItem {
@@ -93,7 +94,7 @@ async function readSleep(dayStart: Date) {
   if (!records.length) {
     // The watch missed the night: what he entered by hand
     const m = (await loadManual().catch(() => ({}) as Record<string, any>))[morningKey(dayStart.getTime())];
-    if (m) return { minutes: m.minutes as number | null, sources: ['הזנה ידנית'] };
+    if (m) return { minutes: m.minutes as number | null, sources: [t('הזנה ידנית', 'Entered by hand')] };
   }
   return { minutes: records.length ? minutes : null, sources: records.map(origin) };
 }
@@ -157,33 +158,33 @@ export async function readToday(now = new Date()): Promise<TodayData> {
 
   const quality: QualityItem[] = [
     {
-      label: 'צעדים',
+      label: t('צעדים', 'Steps'),
       quality: steps.failed ? 'missing' : stepsCount > 0 ? 'ok' : 'missing',
       source: sourceLabels(steps.value?.dataOrigins ?? []),
     },
     {
-      label: 'תזונה',
+      label: t('תזונה', 'Nutrition'),
       quality: nut.meals ? 'ok' : 'missing',
       source: sourceLabels(meals.map(origin)),
-      hint: nut.meals ? undefined : 'לא נרשמו ארוחות היום ב Zepp',
+      hint: nut.meals ? undefined : t('לא נרשמו ארוחות היום ב Zepp', 'No meals logged today in Zepp'),
     },
     {
-      label: 'שינה',
+      label: t('שינה', 'Sleep'),
       quality: sleepMin === null ? 'missing' : sleepMin < 240 ? 'partial' : 'ok',
       source: sourceLabels(sleep.value.sources),
-      hint: sleepMin !== null && sleepMin < 240 ? 'פחות מ4 שעות, כנראה סנכרון חלקי' : undefined,
+      hint: sleepMin !== null && sleepMin < 240 ? t('פחות מ4 שעות, כנראה סנכרון חלקי', 'Under 4 hours, probably a partial sync') : undefined,
     },
     {
-      label: 'משקל',
+      label: t('משקל', 'Weight'),
       quality: !weightVal ? 'missing' : weightVal.daysAgo > 7 ? 'partial' : 'ok',
-      source: latestW ? sourceLabel(origin(latestW)) : 'אין מקור',
-      hint: !weightVal ? 'אין שקילה ב Health Connect' : weightVal.daysAgo > 7 ? `שקילה אחרונה לפני ${weightVal.daysAgo} ימים` : undefined,
+      source: latestW ? sourceLabel(origin(latestW)) : t('אין מקור', 'No source'),
+      hint: !weightVal ? t('אין שקילה ב Health Connect', 'No weigh-in in Health Connect') : weightVal.daysAgo > 7 ? t(`שקילה אחרונה לפני ${weightVal.daysAgo} ימים`, `Last weigh-in ${weightVal.daysAgo} days ago`) : undefined,
     },
     {
-      label: 'דופק',
+      label: t('דופק', 'Heart rate'),
       quality: hrVal ? (bpm.length >= 50 ? 'ok' : 'partial') : 'missing',
       source: sourceLabels(hrRecords.map(origin)),
-      hint: hrVal ? undefined : 'Mi Fitness לא כותב דופק ל Health Connect',
+      hint: hrVal ? undefined : t('Mi Fitness לא כותב דופק ל Health Connect', 'Mi Fitness does not write heart rate to Health Connect'),
     },
   ];
 

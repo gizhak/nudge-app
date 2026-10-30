@@ -9,14 +9,14 @@ import { PLACE_NAMES, PlaceId } from '../coach/store';
 import { Card } from '../ui/components';
 import { C, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, t as tr } from '../i18n';
 const ORDER: PlaceId[] = ['home', 'office', 'gym'];
 
 const WHY: Record<string, string> = {
-  wifi_off: 'ה Wi-Fi בטלפון כבוי. הדלק אותו כדי שאוכל לראות רשתות.',
-  permission: 'אין לי גישה לרשתות. צריך שהמיקום בטלפון יהיה דלוק והרשאת מיקום "תמיד".',
-  no_native: 'הגרסה הזו לא תומכת ב Wi-Fi. התקן את הגרסה האחרונה.',
-  no_wifi: 'לא נמצא Wi-Fi בטלפון.',
+  wifi_off: tr('ה Wi-Fi בטלפון כבוי. הדלק אותו כדי שאוכל לראות רשתות.', 'Wi-Fi on the phone is off. Turn it on so I can see networks.'),
+  permission: tr('אין לי גישה לרשתות. צריך שהמיקום בטלפון יהיה דלוק והרשאת מיקום "תמיד".', 'I have no access to networks. Location on the phone must be on, with location permission "Always".'),
+  no_native: tr('הגרסה הזו לא תומכת ב Wi-Fi. התקן את הגרסה האחרונה.', 'This version does not support Wi-Fi. Install the latest version.'),
+  no_wifi: tr('לא נמצא Wi-Fi בטלפון.', 'No Wi-Fi found on the phone.'),
 };
 
 function Bars({ rssi }: { rssi: number }) {
@@ -62,13 +62,13 @@ export default function WifiPlaces() {
   return (
     <Card title="Wi-Fi">
       <Text style={[T.muted, { fontSize: 13 }]}>
-        הרשת שאתה מחובר אליה, או רשת חזקה שאתה רק רואה (3 פסים ומעלה), מגלה איפה אתה. זה מהיר ומדויק יותר מהמיקום, ובמיוחד בתוך בניין.
+        {tr('הרשת שאתה מחובר אליה, או רשת חזקה שאתה רק רואה (3 פסים ומעלה), מגלה איפה אתה. זה מהיר ומדויק יותר מהמיקום, ובמיוחד בתוך בניין.', 'The network you are connected to, or a strong network you only see (3 bars and up), tells where you are. It is faster and more accurate than location, especially inside a building.')}
       </Text>
       {!now?.ok ? (
-        <Text style={[T.base, { fontSize: 14, color: C.bad }]}>{WHY[now?.reason ?? ''] ?? 'לא מצליח לקרוא Wi-Fi כרגע.'}</Text>
+        <Text style={[T.base, { fontSize: 14, color: C.bad }]}>{WHY[now?.reason ?? ''] ?? tr('לא מצליח לקרוא Wi-Fi כרגע.', 'Cannot read Wi-Fi right now.')}</Text>
       ) : (
         <Text style={[T.bold, { fontSize: 14 }]}>
-          {here ? `עכשיו: ${PLACE_NAMES[here.place]}, לפי ${here.how === 'connected' ? 'הרשת שאתה מחובר אליה' : 'רשת חזקה בסביבה'}` : now.connected?.ssid ? `מחובר ל "${now.connected.ssid}", לא שייך לאף מקום` : 'עכשיו: לא מזוהה אף מקום'}
+          {here ? tr(`עכשיו: ${PLACE_NAMES[here.place]}, לפי ${here.how === 'connected' ? 'הרשת שאתה מחובר אליה' : 'רשת חזקה בסביבה'}`, `Now: ${PLACE_NAMES[here.place]}, by ${here.how === 'connected' ? 'the network you are connected to' : 'a strong network nearby'}`) : now.connected?.ssid ? tr(`מחובר ל "${now.connected.ssid}", לא שייך לאף מקום`, `Connected to "${now.connected.ssid}", not part of any place`) : tr('עכשיו: לא מזוהה אף מקום', 'Now: no place recognized')}
         </Text>
       )}
 
@@ -80,18 +80,18 @@ export default function WifiPlaces() {
             <View style={{ flex: 1 }}>
               <Text style={[T.bold, { fontSize: 15 }]}>{PLACE_NAMES[p]}</Text>
               <Text style={[T.muted, { fontSize: 13 }]} numberOfLines={2}>
-                {pr?.bssids.length ? (names.length ? names.join(', ') : `${pr.bssids.length} נתבים שמורים`) : 'לא הוגדרה רשת'}
+                {pr?.bssids.length ? (names.length ? names.join(', ') : tr(`${pr.bssids.length} נתבים שמורים`, `${pr.bssids.length} routers saved`)) : tr('לא הוגדרה רשת', 'No network set')}
               </Text>
             </View>
             <Pressable
               onPress={async () => {
                 const r = await teachHere(p);
-                setMsg(r.ok ? `${PLACE_NAMES[p]}: נשמר${r.names.length ? ` (${r.names.join(', ')})` : ''}` : WHY[r.reason ?? ''] ?? 'לא נשמר');
+                setMsg(r.ok ? tr(`${PLACE_NAMES[p]}: נשמר${r.names.length ? ` (${r.names.join(', ')})` : ''}`, `${PLACE_NAMES[p]}: saved${r.names.length ? ` (${r.names.join(', ')})` : ''}`) : WHY[r.reason ?? ''] ?? tr('לא נשמר', 'Not saved'));
                 refresh(false);
               }}
               style={({ pressed }) => [s.btn, pressed && { opacity: 0.7 }]}
             >
-              <Text style={[T.bold, { fontSize: 13, color: '#fff' }]}>אני כאן</Text>
+              <Text style={[T.bold, { fontSize: 13, color: '#fff' }]}>{tr('אני כאן', 'I am here')}</Text>
             </Pressable>
             {pr?.bssids.length ? (
               <Pressable
@@ -101,7 +101,7 @@ export default function WifiPlaces() {
                 }}
                 hitSlop={8}
               >
-                <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>נקה</Text>
+                <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>{tr('נקה', 'Clear')}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -112,7 +112,7 @@ export default function WifiPlaces() {
       {now?.ok && list.length > 0 && (
         <>
           <View style={s.headRow}>
-            <Text style={[T.bold, { fontSize: 14, flex: 1 }]}>מה הטלפון רואה עכשיו</Text>
+            <Text style={[T.bold, { fontSize: 14, flex: 1 }]}>{tr('מה הטלפון רואה עכשיו', 'What the phone sees now')}</Text>
             <Pressable onPress={() => refresh(true).then(() => setTimeout(() => refresh(false), 4000))} hitSlop={8}>
               <Ionicons name="refresh" size={18} color={C.muted} />
             </Pressable>
@@ -125,10 +125,10 @@ export default function WifiPlaces() {
                 <Pressable onPress={() => setPick(open ? null : n)} style={s.net}>
                   <Bars rssi={n.rssi} />
                   <Text style={[T.base, { fontSize: 14, flex: 1, color: n.rssi >= STRONG ? C.ink : C.muted }]} numberOfLines={1}>
-                    {n.ssid ?? 'רשת נסתרת'}
-                    {now.connected?.bssid === n.bssid ? '  (מחובר)' : ''}
+                    {n.ssid ?? tr('רשת נסתרת', 'Hidden network')}
+                    {now.connected?.bssid === n.bssid ? tr('  (מחובר)', '  (connected)') : ''}
                   </Text>
-                  <Text style={[T.bold, { fontSize: 13, color: at ? C.good : C.muted }]}>{at ? PLACE_NAMES[at] : 'שייך'}</Text>
+                  <Text style={[T.bold, { fontSize: 13, color: at ? C.good : C.muted }]}>{at ? PLACE_NAMES[at] : tr('שייך', 'Belongs')}</Text>
                 </Pressable>
                 {open && (
                   <View style={s.chips}>
@@ -156,7 +156,7 @@ export default function WifiPlaces() {
                         }}
                         style={s.chip}
                       >
-                        <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>לא שייך</Text>
+                        <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>{tr('לא שייך', 'Does not belong')}</Text>
                       </Pressable>
                     )}
                   </View>
@@ -164,7 +164,7 @@ export default function WifiPlaces() {
               </View>
             );
           })}
-          <Text style={[T.muted, { fontSize: 12 }]}>רשת חלשה מ 3 פסים לא נחשבת, כדי שמעבר ליד המקום לא ייראה כמו הגעה.</Text>
+          <Text style={[T.muted, { fontSize: 12 }]}>{tr('רשת חלשה מ 3 פסים לא נחשבת, כדי שמעבר ליד המקום לא ייראה כמו הגעה.', 'A network weaker than 3 bars does not count, so passing near the place does not look like arriving.')}</Text>
         </>
       )}
     </Card>

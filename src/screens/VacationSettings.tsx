@@ -8,7 +8,7 @@ import { Card, PrimaryButton } from '../ui/components';
 import { Choice } from '../ui/inputs';
 import { C, T } from '../ui/theme';
 
-import { ROW } from '../i18n';
+import { ROW, t } from '../i18n';
 function Stepper({ label, value, min, max, text, onChange }: { label: string; value: number; min: number; max: number; text: string; onChange: (n: number) => void }) {
   return (
     <View style={s.row}>
@@ -49,14 +49,14 @@ export default function VacationSettings({ onChanged }: { onChanged?: () => void
   if (active && v) {
     const now = onVacation(new Date(), v);
     return (
-      <Card title={now ? 'בחופשה' : 'חופשה מתוכננת'}>
+      <Card title={now ? t('בחופשה', 'On vacation') : t('חופשה מתוכננת', 'Vacation planned')}>
         <Text style={[T.bold, { fontSize: 18 }]}>
-          {dm(v.from)} עד {dm(v.to)}
+          {dm(v.from)} {t('עד', 'to')} {dm(v.to)}
         </Text>
-        <Text style={[T.muted, { fontSize: 14 }]}>{v.mode === 'silent' ? 'שקט מלא: בלי הודעות בכלל.' : 'תחזוקה קלה: הודעה אחת ביום לכל היותר, על מים, צעדים או חלבון.'}</Text>
-        <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>ימי החופשה לא נספרים בדוחות. ביום הראשון אחרי, המאמן יסביר מראש מה המשקל יראה.</Text>
+        <Text style={[T.muted, { fontSize: 14 }]}>{v.mode === 'silent' ? t('שקט מלא: בלי הודעות בכלל.', 'Full quiet: no messages at all.') : t('תחזוקה קלה: הודעה אחת ביום לכל היותר, על מים, צעדים או חלבון.', 'Light maintenance: one message a day at most, about water, steps or protein.')}</Text>
+        <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>{t('ימי החופשה לא נספרים בדוחות. ביום הראשון אחרי, המאמן יסביר מראש מה המשקל יראה.', 'Vacation days are not counted in the reports. On the first day after, the coach will explain ahead what the scale will show.')}</Text>
         <PrimaryButton
-          label={now ? 'חזרתי, סיים את החופשה' : 'בטל את החופשה'}
+          label={now ? t('חזרתי, סיים את החופשה', 'I am back, end the vacation') : t('בטל את החופשה', 'Cancel the vacation')}
           onPress={() => {
             if (!now) return save(null);
             // Ended today: yesterday was the last vacation day, so today is the first day back
@@ -71,26 +71,26 @@ export default function VacationSettings({ onChanged }: { onChanged?: () => void
   }
 
   return (
-    <Card title="יוצא לחופשה">
-      <Stepper label="מתחיל" value={start} min={0} max={60} text={start === 0 ? 'היום' : start === 1 ? 'מחר' : dm(preview.from)} onChange={setStart} />
-      <Stepper label="כמה ימים" value={length} min={1} max={30} text={`${length} ימים`} onChange={setLength} />
+    <Card title={t("יוצא לחופשה", 'Going on vacation')}>
+      <Stepper label={t("מתחיל", 'Starts')} value={start} min={0} max={60} text={start === 0 ? t('היום', 'Today') : start === 1 ? t('מחר', 'Tomorrow') : dm(preview.from)} onChange={setStart} />
+      <Stepper label={t("כמה ימים", 'How many days')} value={length} min={1} max={30} text={t(`${length} ימים`, `${length} days`)} onChange={setLength} />
       <Text style={[T.muted, { fontSize: 13 }]}>
-        {dm(preview.from)} עד {dm(preview.to)}
+        {dm(preview.from)} {t('עד', 'to')} {dm(preview.to)}
       </Text>
       <Choice
         options={[
-          { key: 'light', label: 'תחזוקה קלה' },
-          { key: 'silent', label: 'שקט מלא' },
+          { key: 'light', label: t('תחזוקה קלה', 'Light maintenance') },
+          { key: 'silent', label: t('שקט מלא', 'Full quiet') },
         ]}
         value={mode}
         onChange={setMode}
       />
       <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>
         {mode === 'light'
-          ? 'הודעה אחת ביום לכל היותר, רק על מים, צעדים או חלבון. בלי רישום אוכל ובלי אימונים.'
-          : 'בלי הודעות בכלל עד החזרה. גם תזכורות האימון והשקילה יושבתו.'}
+          ? t('הודעה אחת ביום לכל היותר, רק על מים, צעדים או חלבון. בלי רישום אוכל ובלי אימונים.', 'One message a day at most, only about water, steps or protein. No food logging and no workouts.')
+          : t('בלי הודעות בכלל עד החזרה. גם תזכורות האימון והשקילה יושבתו.', 'No messages at all until you are back. Workout and weigh-in reminders are off too.')}
       </Text>
-      <PrimaryButton label="שמור חופשה" onPress={() => save(preview)} />
+      <PrimaryButton label={t("שמור חופשה", 'Save vacation')} onPress={() => save(preview)} />
     </Card>
   );
 }

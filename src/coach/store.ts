@@ -5,6 +5,7 @@ import { graceEnd, OutingPlan } from './outing';
 import type { Vacation } from './vacation';
 import { EMPTY_OVERRIDES, setWeekOverrides, WeekOverrides, weekStartKey } from '../config/goals';
 
+import { t } from '../i18n';
 export type PlaceId = 'home' | 'office' | 'gym';
 export type NagLevel = 'quiet' | 'normal' | 'close' | 'drill';
 
@@ -61,7 +62,7 @@ export interface PlaceState {
   via?: string;
 }
 
-export const PLACE_NAMES: Record<PlaceId, string> = { home: 'בית', office: 'משרד', gym: 'חדר כושר' };
+export const PLACE_NAMES: Record<PlaceId, string> = { home: t('בית', 'Home'), office: t('משרד', 'Office'), gym: t('חדר כושר', 'Gym') };
 
 export const DEFAULT_PREFS: CoachPrefs = {
   enabled: true,

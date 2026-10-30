@@ -7,6 +7,7 @@ import {
 } from 'react-native-health-connect';
 import { BODY_TYPES } from './scale';
 
+import { t as tr } from '../i18n';
 export const RECORD_TYPES = [
   'Steps',
   'ActiveCaloriesBurned',
@@ -50,11 +51,11 @@ async function doSetup(): Promise<SetupResult> {
   const status = await getSdkStatus();
   if (status !== SdkAvailabilityStatus.SDK_AVAILABLE) {
     pending = null;
-    return { ok: false, reason: 'Health Connect לא זמין במכשיר, או שדרוש עדכון' };
+    return { ok: false, reason: tr('Health Connect לא זמין במכשיר, או שדרוש עדכון', 'Health Connect is not available on the device, or needs an update') };
   }
   if (!(await initialize())) {
     pending = null;
-    return { ok: false, reason: 'האתחול של Health Connect נכשל' };
+    return { ok: false, reason: tr('האתחול של Health Connect נכשל', 'Starting Health Connect failed') };
   }
   await requestPermission(PERMISSIONS);
   const granted = await getGrantedPermissions();

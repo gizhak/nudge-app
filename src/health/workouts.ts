@@ -2,6 +2,7 @@
 // (active calories, heart rate, steps, distance). Only what the watch app actually writes.
 import { aggregateRecord, readRecords } from 'react-native-health-connect';
 
+import { t } from '../i18n';
 const DAY = 24 * 3600 * 1000;
 
 export interface WorkoutDetail {
@@ -21,22 +22,22 @@ export interface WorkoutDetail {
 }
 
 const TYPE_LABEL: Record<number, string> = {
-  0: 'אימון',
-  13: 'קליסתניקס',
-  36: 'אינטרוולים',
-  41: 'קפיצות בחבל',
-  56: 'ריצה',
-  57: 'ריצה על הליכון',
-  70: 'אימון כוח',
-  79: 'הליכה',
-  81: 'הרמת משקולות',
-  8: 'אופניים',
-  9: 'אופני כושר',
-  10: 'בוט קאמפ',
-  25: 'אליפטיקל',
+  0: t('אימון', 'Workout'),
+  13: t('קליסתניקס', 'Calisthenics'),
+  36: t('אינטרוולים', 'Intervals'),
+  41: t('קפיצות בחבל', 'Jump rope'),
+  56: t('ריצה', 'Running'),
+  57: t('ריצה על הליכון', 'Treadmill run'),
+  70: t('אימון כוח', 'Strength training'),
+  79: t('הליכה', 'Walking'),
+  81: t('הרמת משקולות', 'Weightlifting'),
+  8: t('אופניים', 'Cycling'),
+  9: t('אופני כושר', 'Exercise bike'),
+  10: t('בוט קאמפ', 'Boot camp'),
+  25: t('אליפטיקל', 'Elliptical'),
 };
 
-export const workoutLabel = (w: WorkoutDetail) => w.title?.trim() || TYPE_LABEL[w.type] || 'אימון';
+export const workoutLabel = (w: WorkoutDetail) => w.title?.trim() || TYPE_LABEL[w.type] || t('אימון', 'Workout');
 
 const safe = async <X,>(fn: () => Promise<X>): Promise<X | null> => {
   try {

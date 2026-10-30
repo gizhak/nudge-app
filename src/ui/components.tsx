@@ -6,7 +6,7 @@ import { EnterCtx, useGrow, useGrowNumber, useTabFresh } from './tabEnter';
 import { Ionicons } from '@expo/vector-icons';
 import { C, FONT, T } from './theme';
 
-import { CHEVRON_BACK, CHEVRON_ON, ROW, SIDE_START } from '../i18n';
+import { CHEVRON_BACK, CHEVRON_ON, ROW, SIDE_START, t as tr } from '../i18n';
 export function Card({ title, children, style }: { title?: string; children: ReactNode; style?: ViewStyle }) {
   return (
     <View style={[s.card, style]}>
@@ -143,7 +143,7 @@ export function Screen({
   children,
   brand = false,
   onBack,
-  backLabel = 'חזרה',
+  backLabel = tr('חזרה', 'Back'),
   focus,
   enter,
   brandSide,

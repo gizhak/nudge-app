@@ -5,6 +5,7 @@ import { loadProfile, saveProfile } from '../profile/profile';
 import type { SlotId } from '../nutrition/meals';
 import { DietMenu, mealKcal, mealProtein, MenuMeal, menuTotals } from './parse';
 
+import { t as tr } from '../i18n';
 const KEY = 'diet.menu.v1';
 
 export async function loadMenu(): Promise<DietMenu | null> {
@@ -48,10 +49,10 @@ export function checkMeal(m: MenuMeal, eaten: { kcal: number; protein: number; c
   const plan = m.items.map((x) => x.text.split(/\s+או\s+/)[0]).join(', ');
   const kcal = mealKcal(m);
   const protein = mealProtein(m);
-  if (!eaten.count) return state === 'past' ? { chip: 'לא נרשמה', tone: 'off', plan } : { chip: 'בהמשך', tone: 'later', plan };
+  if (!eaten.count) return state === 'past' ? { chip: tr('לא נרשמה', 'Not logged'), tone: 'off', plan } : { chip: tr('בהמשך', 'Later'), tone: 'later', plan };
   const over = eaten.kcal - kcal;
-  if (over > Math.max(120, kcal * 0.25)) return { chip: `${Math.round(over)} מעל`, tone: 'off', plan };
-  if (protein >= 10 && eaten.protein < protein * 0.75) return { chip: `חסרים ${Math.round(protein - eaten.protein)} ג' חלבון`, tone: 'off', plan };
-  if (state === 'past' && eaten.kcal < kcal * 0.5) return { chip: 'פחות מהתפריט', tone: 'off', plan };
-  return { chip: 'לפי התפריט', tone: 'good', plan };
+  if (over > Math.max(120, kcal * 0.25)) return { chip: tr(`${Math.round(over)} מעל`, `${Math.round(over)} over`), tone: 'off', plan };
+  if (protein >= 10 && eaten.protein < protein * 0.75) return { chip: tr(`חסרים ${Math.round(protein - eaten.protein)} ג' חלבון`, `${Math.round(protein - eaten.protein)} g protein missing`), tone: 'off', plan };
+  if (state === 'past' && eaten.kcal < kcal * 0.5) return { chip: tr('פחות מהתפריט', 'Less than the menu'), tone: 'off', plan };
+  return { chip: tr('לפי התפריט', 'By the menu'), tone: 'good', plan };
 }

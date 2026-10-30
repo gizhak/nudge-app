@@ -9,6 +9,7 @@ import { readWaterToday } from '../health/water';
 import { waterTarget } from '../nutrition/water';
 import { loadPlaceState } from './store';
 
+import { t as tr } from '../i18n';
 const DAY = 24 * 3600 * 1000;
 
 const startOfDay = (d: Date) => {
@@ -43,13 +44,13 @@ const CRITICAL = ['Steps', 'SleepSession', 'Nutrition', 'Weight', 'ExerciseSessi
 
 async function checkHc(): Promise<string | null> {
   try {
-    if ((await getSdkStatus()) !== SdkAvailabilityStatus.SDK_AVAILABLE) return 'Health Connect לא זמין';
-    if (!(await initialize())) return 'Health Connect לא מאותחל';
+    if ((await getSdkStatus()) !== SdkAvailabilityStatus.SDK_AVAILABLE) return tr('Health Connect לא זמין', 'Health Connect is not available');
+    if (!(await initialize())) return tr('Health Connect לא מאותחל', 'Health Connect is not initialized');
     const granted = new Set((await getGrantedPermissions()).map((p) => `${p.accessType}:${p.recordType}`));
     const missing = CRITICAL.filter((t) => !granted.has(`read:${t}`));
-    return missing.length ? `חסרות הרשאות: ${missing.join(', ')}` : null;
+    return missing.length ? tr(`חסרות הרשאות: ${missing.join(', ')}`, `Missing permissions: ${missing.join(', ')}`) : null;
   } catch (e: any) {
-    return String(e?.message ?? 'Health Connect לא מגיב');
+    return String(e?.message ?? tr('Health Connect לא מגיב', 'Health Connect is not responding'));
   }
 }
 

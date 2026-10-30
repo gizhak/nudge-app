@@ -1,4 +1,5 @@
 // Maps Health Connect data origins (package names) to readable labels.
+import { t } from '../i18n';
 const SOURCE_LABELS: Record<string, string> = {
   'com.xiaomi.wearable': 'Mi Fitness',
   'com.mi.health': 'Mi Fitness',
@@ -13,12 +14,12 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 export function sourceLabel(packageName: string | undefined): string {
-  if (!packageName) return 'לא ידוע';
-  if (packageName.startsWith('com.android.healthconnect.phone')) return 'חיישן הטלפון';
+  if (!packageName) return t('לא ידוע', 'Unknown');
+  if (packageName.startsWith('com.android.healthconnect.phone')) return t('חיישן הטלפון', 'Phone sensor');
   return SOURCE_LABELS[packageName] ?? packageName;
 }
 
 export function sourceLabels(packages: (string | undefined)[]): string {
   const unique = Array.from(new Set(packages.filter(Boolean).map(sourceLabel)));
-  return unique.length ? unique.join(' + ') : 'אין מקור';
+  return unique.length ? unique.join(' + ') : t('אין מקור', 'No source');
 }

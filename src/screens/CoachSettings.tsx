@@ -29,19 +29,19 @@ import { Choice } from '../ui/inputs';
 import { CONTAINERS } from '../nutrition/water';
 import { C, FONT, T } from '../ui/theme';
 
-import { ROW, START } from '../i18n';
+import { ROW, START, t as tr } from '../i18n';
 const LEVELS: { key: NagLevel; label: string }[] = [
-  { key: 'quiet', label: 'שקט' },
-  { key: 'normal', label: 'רגיל' },
-  { key: 'close', label: 'צמוד' },
-  { key: 'drill', label: 'דומיננטי' },
+  { key: 'quiet', label: tr('שקט', 'Quiet') },
+  { key: 'normal', label: tr('רגיל', 'Normal') },
+  { key: 'close', label: tr('צמוד', 'Close') },
+  { key: 'drill', label: tr('דומיננטי', 'Dominant') },
 ];
 
 const LEVEL_TEXT: Record<NagLevel, string> = {
-  quiet: 'רק דברים חשובים, כל נושא פעם ביום.',
-  normal: 'כולל תזונה, שינה ומים, כל נושא פעם ביום.',
-  close: 'כולל צעדים ועידוד. מה שלא טופל חוזר כל כמה שעות.',
-  drill: 'לא מרפה: שקילה, אימון, מים, ארוחות וסנכרון חוזרים עד שמטופלים.',
+  quiet: tr('רק דברים חשובים, כל נושא פעם ביום.', 'Only important things, each topic once a day.'),
+  normal: tr('כולל תזונה, שינה ומים, כל נושא פעם ביום.', 'Includes nutrition, sleep and water, each topic once a day.'),
+  close: tr('כולל צעדים ועידוד. מה שלא טופל חוזר כל כמה שעות.', 'Includes steps and encouragement. What was not handled comes back every few hours.'),
+  drill: tr('לא מרפה: שקילה, אימון, מים, ארוחות וסנכרון חוזרים עד שמטופלים.', 'Does not let go: weigh-in, workout, water, meals and sync come back until handled.'),
 };
 
 const PLACE_ORDER: PlaceId[] = ['home', 'office', 'gym'];
@@ -99,12 +99,12 @@ export default function CoachSettings() {
     if (!(await askConsent())) return false;
     const fg = await Location.requestForegroundPermissionsAsync();
     if (!fg.granted) {
-      setMessage({ text: 'בלי הרשאת מיקום המאמן לא יזהה בית, משרד וחדר כושר.', ok: false });
+      setMessage({ text: tr('בלי הרשאת מיקום המאמן לא יזהה בית, משרד וחדר כושר.', 'Without location permission the coach will not recognize home, office and gym.'), ok: false });
       return false;
     }
     const bg = await Location.requestBackgroundPermissionsAsync();
     if (!bg.granted) {
-      setMessage({ text: 'כדי לזהות הגעה ויציאה צריך לבחור "אפשר כל הזמן" בהרשאת המיקום.', ok: false });
+      setMessage({ text: tr('כדי לזהות הגעה ויציאה צריך לבחור "אפשר כל הזמן" בהרשאת המיקום.', 'To notice arriving and leaving, choose "Allow all the time" in the location permission.'), ok: false });
     }
     return true;
   };
@@ -114,7 +114,7 @@ export default function CoachSettings() {
     setPlaces(next);
     await savePlaces(next);
     setStatus(await startCoach());
-    setMessage({ text: `${PLACE_NAMES[id]} נשמר: ${label}`, ok: true });
+    setMessage({ text: tr(`${PLACE_NAMES[id]} נשמר: ${label}`, `${PLACE_NAMES[id]} saved: ${label}`), ok: true });
   };
 
   const openEditor = (id: PlaceId) => {
@@ -126,7 +126,7 @@ export default function CoachSettings() {
   };
 
   const search = async () => {
-    if (!query.trim()) return setMessage({ text: 'כתוב שם מקום או כתובת, למשל "קניון יבנה"', ok: false });
+    if (!query.trim()) return setMessage({ text: tr('כתוב שם מקום או כתובת, למשל "קניון יבנה"', 'Write a place name or an address, for example "Yavne Mall"'), ok: false });
     setBusy('search');
     setMessage(null);
     setFound(null);
@@ -141,12 +141,12 @@ export default function CoachSettings() {
       await Location.requestForegroundPermissionsAsync();
       const list = await searchPlaces(query.trim(), describe);
       if (!list.length) {
-        return setMessage({ text: 'לא נמצא. נסה להוסיף עיר, או הדבק קואורדינטות מ Google Maps.', ok: false });
+        return setMessage({ text: tr('לא נמצא. נסה להוסיף עיר, או הדבק קואורדינטות מ Google Maps.', 'Not found. Try adding a city, or paste coordinates from Google Maps.'), ok: false });
       }
       if (list.length === 1) setFound(list[0]);
       else setResults(list);
     } catch {
-      setMessage({ text: 'החיפוש נכשל. בדוק חיבור לאינטרנט ונסה שוב.', ok: false });
+      setMessage({ text: tr('החיפוש נכשל. בדוק חיבור לאינטרנט ונסה שוב.', 'The search failed. Check the internet connection and try again.'), ok: false });
     } finally {
       setBusy(null);
     }
@@ -171,7 +171,7 @@ export default function CoachSettings() {
       await savePlace(id, latitude, longitude, await describe(latitude, longitude));
       setEditing(null);
     } catch {
-      setMessage({ text: 'לא הצלחתי לקבל מיקום. ודא שה GPS דלוק ונסה שוב.', ok: false });
+      setMessage({ text: tr('לא הצלחתי לקבל מיקום. ודא שה GPS דלוק ונסה שוב.', 'Could not get a location. Make sure GPS is on and try again.'), ok: false });
     } finally {
       setBusy(null);
     }
@@ -194,11 +194,11 @@ export default function CoachSettings() {
     try {
       const sent = await runCoach(undefined, new Date(), { manual: true });
       setMessage({
-        text: sent.length ? `נשלחו ${sent.length} הודעות` : 'שעות שקט, והמאמן לא מצא סיבה להעיר אותך.',
+        text: sent.length ? tr(`נשלחו ${sent.length} הודעות`, `${sent.length} messages sent`) : tr('שעות שקט, והמאמן לא מצא סיבה להעיר אותך.', 'Quiet hours, and the coach found no reason to wake you.'),
         ok: true,
       });
     } catch {
-      setMessage({ text: 'הבדיקה נכשלה', ok: false });
+      setMessage({ text: tr('הבדיקה נכשלה', 'The check failed'), ok: false });
     } finally {
       setBusy(null);
     }
@@ -209,9 +209,9 @@ export default function CoachSettings() {
   return (
     <>
       <Anchor id="coach">
-      <Card title="המאמן">
+      <Card title={tr("המאמן", 'The coach')}>
         <View style={s.row}>
-          <Text style={[T.bold, s.text]}>מאמן פעיל</Text>
+          <Text style={[T.bold, s.text]}>{tr('מאמן פעיל', 'Coach active')}</Text>
           <Switch
             value={prefs.enabled}
             onValueChange={(v) => update({ ...prefs, enabled: v })}
@@ -219,7 +219,7 @@ export default function CoachSettings() {
             thumbColor="#fff"
           />
         </View>
-        <Text style={[T.bold, s.text]}>כמה נודניק</Text>
+        <Text style={[T.bold, s.text]}>{tr('כמה נודניק', 'How much nagging')}</Text>
         <View style={s.segment}>
           {LEVELS.map((l) => (
             <Pressable
@@ -234,18 +234,18 @@ export default function CoachSettings() {
           ))}
         </View>
         <Text style={[T.muted, { fontSize: 13 }]}>
-          עד {LEVEL_RULES[prefs.level].maxPerDay} הודעות ביום, בלי התגובות לארוחות.{' '}
+          {tr('עד', 'Up to')} {LEVEL_RULES[prefs.level].maxPerDay} {tr('הודעות ביום, בלי התגובות לארוחות.', 'messages a day, not counting meal replies.')}{' '}
           {LEVEL_TEXT[prefs.level] ?? ''}
         </Text>
         <Text style={[T.muted, { fontSize: 13 }]}>
-          שקט מ{hhmm(prefs.quietStart)} עד {hhmm(prefs.quietEnd)}, לפי שעות השינה בפרופיל. תזכורת שינה חצי שעה לפני.
+          {tr('שקט מ', 'Quiet from ')}{hhmm(prefs.quietStart)} {tr('עד', 'to')} {hhmm(prefs.quietEnd)}{tr(', לפי שעות השינה בפרופיל. תזכורת שינה חצי שעה לפני.', ', by the sleep hours in your profile. Sleep reminder half an hour before.')}
         </Text>
       </Card>
       </Anchor>
 
       <Anchor id="meals">
-      <Card title="ארוחות">
-        <Text style={[T.muted, { fontSize: 13 }]}>סמן את הארוחות שאתה אוכל. המאמן יזכיר רק אם ארוחה לא נרשמה, ובימי אימון ערב ארוחת הערב זזה לאחרי האימון.</Text>
+      <Card title={tr("ארוחות", 'Meals')}>
+        <Text style={[T.muted, { fontSize: 13 }]}>{tr('סמן את הארוחות שאתה אוכל. המאמן יזכיר רק אם ארוחה לא נרשמה, ובימי אימון ערב ארוחת הערב זזה לאחרי האימון.', 'Mark the meals you eat. The coach reminds you only if a meal was not logged, and on evening workout days dinner moves to after the workout.')}</Text>
         <View style={s.slotWrap}>
           {SLOTS.map((slot) => {
             const on = prefs.mealSlots.includes(slot.id);
@@ -269,23 +269,23 @@ export default function CoachSettings() {
           })}
         </View>
         <View style={s.row}>
-          <Text style={[T.bold, s.text]}>תזכורות לארוחות</Text>
+          <Text style={[T.bold, s.text]}>{tr('תזכורות לארוחות', 'Meal reminders')}</Text>
           <Switch value={prefs.mealReminders} onValueChange={(v) => update({ ...prefs, mealReminders: v })} trackColor={{ true: C.accent, false: C.track }} thumbColor="#fff" />
         </View>
         <View style={s.row}>
-          <Text style={[T.bold, s.text]}>משוב על כל ארוחה</Text>
+          <Text style={[T.bold, s.text]}>{tr('משוב על כל ארוחה', 'Feedback on every meal')}</Text>
           <Switch value={prefs.mealFeedback} onValueChange={(v) => update({ ...prefs, mealFeedback: v })} trackColor={{ true: C.accent, false: C.track }} thumbColor="#fff" />
         </View>
       </Card>
       </Anchor>
 
       <Anchor id="water">
-      <Card title="מים">
+      <Card title={tr("מים", 'Water')}>
         <View style={s.row}>
-          <Text style={[T.bold, s.text]}>תזכורות לשתות מים</Text>
+          <Text style={[T.bold, s.text]}>{tr('תזכורות לשתות מים', 'Water reminders')}</Text>
           <Switch value={prefs.waterReminders} onValueChange={(v) => update({ ...prefs, waterReminders: v })} trackColor={{ true: C.accent, false: C.track }} thumbColor="#fff" />
         </View>
-        <Text style={[T.bold, s.text]}>ממה אתה שותה?</Text>
+        <Text style={[T.bold, s.text]}>{tr('ממה אתה שותה?', 'What do you drink from?')}</Text>
         <Choice
           options={CONTAINERS}
           value={prefs.waterContainer}
@@ -298,14 +298,14 @@ export default function CoachSettings() {
       </Anchor>
 
       <Anchor id="alerts">
-      <Card title="רכב, הגעה ולילה">
+      <Card title={tr("רכב, הגעה ולילה", 'Car, arrivals and night')}>
         <View style={s.row}>
-          <Text style={[T.bold, s.text]}>הודעות הגעה ויציאה (בית, עבודה, חדר כושר)</Text>
+          <Text style={[T.bold, s.text]}>{tr('הודעות הגעה ויציאה (בית, עבודה, חדר כושר)', 'Arrival and leaving messages (home, work, gym)')}</Text>
           <Switch value={prefs.placeMessages !== false} onValueChange={(v) => update({ ...prefs, placeMessages: v })} trackColor={{ true: C.accent, false: C.track }} thumbColor="#fff" />
         </View>
         <CarPicker />
         <View style={s.row}>
-          <Text style={[T.bold, s.text]}>שומר לילה</Text>
+          <Text style={[T.bold, s.text]}>{tr('שומר לילה', 'Night guard')}</Text>
           <Switch
             value={prefs.nightGuard}
             onValueChange={async (v) => {
@@ -317,21 +317,21 @@ export default function CoachSettings() {
           />
         </View>
         <Text style={[T.muted, { fontSize: 13 }]}>
-          פתחת את הטלפון אחרי שעת השינה? תקבל הודעה. דורש התראה קבועה קטנה בשורת המצב.
+          {tr('פתחת את הטלפון אחרי שעת השינה? תקבל הודעה. דורש התראה קבועה קטנה בשורת המצב.', 'Opened the phone after bedtime? You will get a message. Needs a small permanent notification in the status bar.')}
         </Text>
       </Card>
       </Anchor>
 
       <Anchor id="places">
-      <Card title="מקומות">
-        <Text style={[T.muted, { fontSize: 13 }]}>הגדר לפי כתובת, או לחץ "אני כאן" כשאתה במקום. המאמן יזהה הגעה ויציאה.</Text>
+      <Card title={tr("מקומות", 'Places')}>
+        <Text style={[T.muted, { fontSize: 13 }]}>{tr('הגדר לפי כתובת, או לחץ "אני כאן" כשאתה במקום. המאמן יזהה הגעה ויציאה.', 'Set by address, or tap "I am here" when you are at the place. The coach will notice arriving and leaving.')}</Text>
         {PLACE_ORDER.map((id) => (
           <View key={id} style={s.place}>
             <View style={s.row}>
               <View style={{ flex: 1 }}>
                 <Text style={[T.bold, s.text]}>{PLACE_NAMES[id]}</Text>
                 <Text style={[T.muted, { fontSize: 13, color: places[id] ? C.accent : C.muted }]} numberOfLines={2}>
-                  {places[id] ? places[id]!.label || 'מוגדר' : 'לא מוגדר'}
+                  {places[id] ? places[id]!.label || tr('מוגדר', 'Set') : tr('לא מוגדר', 'Not set')}
                 </Text>
               </View>
               {busy === id ? (
@@ -339,10 +339,10 @@ export default function CoachSettings() {
               ) : (
                 <View style={s.btnPair}>
                   <Pressable onPress={() => openEditor(id)} style={s.smallBtn}>
-                    <Text style={[T.bold, { color: C.accent, fontSize: 14 }]}>כתובת</Text>
+                    <Text style={[T.bold, { color: C.accent, fontSize: 14 }]}>{tr('כתובת', 'Address')}</Text>
                   </Pressable>
                   <Pressable onPress={() => setHere(id)} style={s.smallBtn}>
-                    <Text style={[T.bold, { color: C.accent, fontSize: 14 }]}>אני כאן</Text>
+                    <Text style={[T.bold, { color: C.accent, fontSize: 14 }]}>{tr('אני כאן', 'I am here')}</Text>
                   </Pressable>
                 </View>
               )}
@@ -356,23 +356,23 @@ export default function CoachSettings() {
                     setFound(null);
                     setResults([]);
                   }}
-                  placeholder="שם מקום או כתובת, למשל קניון יבנה"
+                  placeholder={tr("שם מקום או כתובת, למשל קניון יבנה", 'Place name or address, for example Yavne Mall')}
                   placeholderTextColor={C.muted}
                   style={s.input}
                   returnKeyType="search"
                   onSubmitEditing={search}
                 />
-                <Text style={[T.muted, { fontSize: 12 }]}>אפשר גם להדביק קואורדינטות מ Google Maps, למשל 31.8781, 34.7394</Text>
+                <Text style={[T.muted, { fontSize: 12 }]}>{tr('אפשר גם להדביק קואורדינטות מ Google Maps, למשל 31.8781, 34.7394', 'You can also paste coordinates from Google Maps, for example 31.8781, 34.7394')}</Text>
                 {busy === 'search' ? (
                   <ActivityIndicator color={C.accent} />
                 ) : found ? (
                   <View style={{ gap: 8 }}>
-                    <Text style={[T.bold, { fontSize: 14 }]}>נמצא: {found.label}</Text>
-                    <PrimaryButton label={`שמור כ${PLACE_NAMES[id]}`} onPress={confirmFound} />
+                    <Text style={[T.bold, { fontSize: 14 }]}>{tr('נמצא:', 'Found:')} {found.label}</Text>
+                    <PrimaryButton label={tr(`שמור כ${PLACE_NAMES[id]}`, `Save as ${PLACE_NAMES[id]}`)} onPress={confirmFound} />
                   </View>
                 ) : results.length ? (
                   <View style={{ gap: 6 }}>
-                    <Text style={[T.bold, { fontSize: 14 }]}>בחר את המקום הנכון</Text>
+                    <Text style={[T.bold, { fontSize: 14 }]}>{tr('בחר את המקום הנכון', 'Choose the right place')}</Text>
                     {results.map((r, i) => (
                       <Pressable
                         key={i}
@@ -389,7 +389,7 @@ export default function CoachSettings() {
                     ))}
                   </View>
                 ) : (
-                  <PrimaryButton label="חפש" onPress={search} />
+                  <PrimaryButton label={tr("חפש", 'Search')} onPress={search} />
                 )}
               </View>
             )}
@@ -403,18 +403,18 @@ export default function CoachSettings() {
       </Anchor>
 
       <Anchor id="status">
-      <Card title="מצב">
-        <StatusRow label="מיקום ברקע" ok={!!status?.backgroundLocation} />
-        <StatusRow label={`זיהוי מקומות (${status?.places ?? 0} מתוך 3)`} ok={!!status?.geofencing} />
-        <StatusRow label="בדיקה תקופתית כל 15 דקות בערך" ok={!!status?.periodic} />
-        <StatusRow label="שומר לילה: מזהה פתיחת טלפון אחרי שעת השינה" ok={!!status?.nightGuard} />
+      <Card title={tr("מצב", 'Status')}>
+        <StatusRow label={tr("מיקום ברקע", 'Background location')} ok={!!status?.backgroundLocation} />
+        <StatusRow label={tr(`זיהוי מקומות (${status?.places ?? 0} מתוך 3)`, `Place detection (${status?.places ?? 0} of 3)`)} ok={!!status?.geofencing} />
+        <StatusRow label={tr("בדיקה תקופתית כל 15 דקות בערך", 'Periodic check about every 15 minutes')} ok={!!status?.periodic} />
+        <StatusRow label={tr("שומר לילה: מזהה פתיחת טלפון אחרי שעת השינה", 'Night guard: notices the phone opened after bedtime')} ok={!!status?.nightGuard} />
         {message && <Text style={[T.base, { fontSize: 14, color: message.ok ? C.accent : C.bad }]}>{message.text}</Text>}
         {busy === 'activate' || busy === 'run' ? (
           <ActivityIndicator color={C.accent} />
         ) : ready ? (
-          <PrimaryButton label="הרץ את המאמן עכשיו" onPress={runNow} />
+          <PrimaryButton label={tr("הרץ את המאמן עכשיו", 'Run the coach now')} onPress={runNow} />
         ) : (
-          <PrimaryButton label="הפעל מאמן" onPress={activate} />
+          <PrimaryButton label={tr("הפעל מאמן", 'Turn on the coach')} onPress={activate} />
         )}
       </Card>
       </Anchor>

@@ -1,6 +1,7 @@
 // Pure: turns today's raw message log into a short, readable journal.
 import type { SentMessage } from './store';
 
+import { t } from '../i18n';
 const baseOf = (id: string) => id.split('@')[0];
 const isMeal = (id: string) => /^meal_\d+$/.test(id);
 const isStatus = (id: string) => /^status_\d+$/.test(id);
@@ -36,8 +37,8 @@ export function journal(log: SentMessage[]): JournalEntry[] {
   const out = [...groups.values()];
   for (const g of out) {
     if (g.key === 'food' && g.count > 1) {
-      g.title = `אוכל: ${g.count} משובים`;
-      g.body = `האחרון: ${g.items![0].body}`;
+      g.title = t(`אוכל: ${g.count} משובים`, `Food: ${g.count} feedbacks`);
+      g.body = t(`האחרון: ${g.items![0].body}`, `The last: ${g.items![0].body}`);
     }
   }
   return out.sort((a, b) => b.at - a.at);

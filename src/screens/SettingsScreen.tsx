@@ -182,7 +182,7 @@ export default function SettingsScreen({ onEditProfile, onOpenReadiness, onEditS
             {(
               [
                 ['he', 'עברית', ''],
-                ['en', 'English', t('בבנייה: חלק מהטקסטים עדיין בעברית', 'In progress: some text is still in Hebrew')],
+                ['en', 'English', ''],
               ] as [Lang, string, string][]
             ).map(([k, label, note]) => {
               const on = (langPicked ?? LANG) === k;

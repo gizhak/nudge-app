@@ -14,6 +14,7 @@ import { sourceLabels } from '../config/sources';
 import { loadProfile } from '../profile/profile';
 import { activityApp, foodApp } from './devices';
 
+import { t as tr } from '../i18n';
 export type CheckStatus = 'ok' | 'warn' | 'error' | 'manual';
 
 export type ActionKey =
@@ -93,12 +94,12 @@ async function latest(type: 'Steps' | 'SleepSession' | 'HeartRate' | 'ExerciseSe
 function manufacturerHint(): string {
   const c: any = Platform.constants ?? {};
   const brand = String(c.Brand ?? c.Manufacturer ?? '').toLowerCase();
-  if (/xiaomi|redmi|poco/.test(brand)) return 'בשיאומי: הגדרות, אפליקציות, Coach: הפעל "הפעלה אוטומטית" ובחר "ללא הגבלות" בחיסכון סוללה.';
-  if (/huawei|honor/.test(brand)) return 'בהואווי: הגדרות, סוללה, הפעלת אפליקציות: Coach בניהול ידני, עם כל שלוש האפשרויות פעילות.';
-  if (/oppo|realme|oneplus/.test(brand)) return 'הגדרות, סוללה, Coach: אפשר פעילות ברקע והפעלה אוטומטית.';
-  if (/samsung/.test(brand)) return 'בסמסונג: הגדרות, סוללה, מגבלות שימוש ברקע: ודא ש Coach לא ברשימת האפליקציות הרדומות.';
-  if (/vivo/.test(brand)) return 'בויוו: הגדרות, סוללה, צריכת חשמל ברקע: אפשר עבור Coach.';
-  return 'הגדרות, אפליקציות, Coach, סוללה: בחר "ללא הגבלות".';
+  if (/xiaomi|redmi|poco/.test(brand)) return tr('בשיאומי: הגדרות, אפליקציות, Coach: הפעל "הפעלה אוטומטית" ובחר "ללא הגבלות" בחיסכון סוללה.', 'On Xiaomi: Settings, Apps, Coach: turn on "Autostart" and choose "No restrictions" in battery saver.');
+  if (/huawei|honor/.test(brand)) return tr('בהואווי: הגדרות, סוללה, הפעלת אפליקציות: Coach בניהול ידני, עם כל שלוש האפשרויות פעילות.', 'On Huawei: Settings, Battery, App launch: Coach on manual, with all three options on.');
+  if (/oppo|realme|oneplus/.test(brand)) return tr('הגדרות, סוללה, Coach: אפשר פעילות ברקע והפעלה אוטומטית.', 'Settings, Battery, Coach: allow background activity and autostart.');
+  if (/samsung/.test(brand)) return tr('בסמסונג: הגדרות, סוללה, מגבלות שימוש ברקע: ודא ש Coach לא ברשימת האפליקציות הרדומות.', 'On Samsung: Settings, Battery, Background usage limits: make sure Coach is not in the sleeping apps list.');
+  if (/vivo/.test(brand)) return tr('בויוו: הגדרות, סוללה, צריכת חשמל ברקע: אפשר עבור Coach.', 'On vivo: Settings, Battery, Background power consumption: allow for Coach.');
+  return tr('הגדרות, אפליקציות, Coach, סוללה: בחר "ללא הגבלות".', 'Settings, Apps, Coach, Battery: choose "Unrestricted".');
 }
 
 export async function runReadiness(): Promise<Readiness> {
@@ -111,10 +112,10 @@ export async function runReadiness(): Promise<Readiness> {
   add({
     id: 'hc_available',
     group: 'Health Connect',
-    title: 'Health Connect מותקן',
+    title: tr('Health Connect מותקן', 'Health Connect installed'),
     status: hcReady ? 'ok' : 'error',
-    detail: hcReady ? 'זמין' : 'לא מותקן או דורש עדכון. בלעדיו האפליקציה לא מקבלת נתונים.',
-    actions: hcReady ? undefined : [{ key: 'install_hc', label: 'התקן או עדכן' }],
+    detail: hcReady ? tr('זמין', 'Available') : tr('לא מותקן או דורש עדכון. בלעדיו האפליקציה לא מקבלת נתונים.', 'Not installed or needs an update. Without it the app gets no data.'),
+    actions: hcReady ? undefined : [{ key: 'install_hc', label: tr('התקן או עדכן', 'Install or update') }],
   });
 
   let granted = new Set<string>();
@@ -135,46 +136,46 @@ export async function runReadiness(): Promise<Readiness> {
     add({
       id: 'hc_read',
       group: 'Health Connect',
-      title: 'הרשאות קריאה',
+      title: tr('הרשאות קריאה', 'Read permissions'),
       status: missingCritical.length ? 'error' : missingOptional.length ? 'warn' : 'ok',
-      detail: missingCritical.length || missingOptional.length ? `חסרות: ${[...missingCritical, ...missingOptional].join(', ')}` : 'כל ההרשאות ניתנו',
-      actions: missingCritical.length || missingOptional.length ? [{ key: 'request_hc', label: 'אשר הרשאות' }, { key: 'open_hc', label: 'הגדרות' }] : undefined,
+      detail: missingCritical.length || missingOptional.length ? tr(`חסרות: ${[...missingCritical, ...missingOptional].join(', ')}`, `Missing: ${[...missingCritical, ...missingOptional].join(', ')}`) : tr('כל ההרשאות ניתנו', 'All permissions granted'),
+      actions: missingCritical.length || missingOptional.length ? [{ key: 'request_hc', label: tr('אשר הרשאות', 'Approve permissions') }, { key: 'open_hc', label: tr('הגדרות', 'Settings') }] : undefined,
     });
     add({
       id: 'hc_background',
       group: 'Health Connect',
-      title: 'קריאה ברקע',
+      title: tr('קריאה ברקע', 'Background reading'),
       status: background ? 'ok' : 'warn',
-      detail: background ? 'המאמן יכול לבדוק נתונים כשהאפליקציה סגורה' : 'בלעדיה המאמן לא יראה ארוחות ושינה כשהאפליקציה סגורה',
-      actions: background ? undefined : [{ key: 'request_hc', label: 'אשר' }],
+      detail: background ? tr('המאמן יכול לבדוק נתונים כשהאפליקציה סגורה', 'The coach can check data while the app is closed') : tr('בלעדיה המאמן לא יראה ארוחות ושינה כשהאפליקציה סגורה', 'Without it the coach will not see meals and sleep while the app is closed'),
+      actions: background ? undefined : [{ key: 'request_hc', label: tr('אשר', 'Approve') }],
     });
     add({
       id: 'hc_write_weight',
       group: 'Health Connect',
-      title: 'שמירת משקל',
+      title: tr('שמירת משקל', 'Saving weight'),
       status: granted.has('write:Weight') ? 'ok' : 'warn',
-      detail: granted.has('write:Weight') ? 'משקל שמוזן באפליקציה נשמר' : 'בלי ההרשאה לא ניתן לשמור משקל',
-      actions: granted.has('write:Weight') ? undefined : [{ key: 'request_hc', label: 'אשר' }],
+      detail: granted.has('write:Weight') ? tr('משקל שמוזן באפליקציה נשמר', 'Weight entered in the app is saved') : tr('בלי ההרשאה לא ניתן לשמור משקל', 'Without the permission weight cannot be saved'),
+      actions: granted.has('write:Weight') ? undefined : [{ key: 'request_hc', label: tr('אשר', 'Approve') }],
     });
     add({
       id: 'hc_write_water',
       group: 'Health Connect',
-      title: 'שמירת מים',
+      title: tr('שמירת מים', 'Saving water'),
       status: granted.has('write:Hydration') ? 'ok' : 'warn',
-      detail: granted.has('write:Hydration') ? 'כוסות מים שנרשמות באפליקציה נשמרות' : 'בלי ההרשאה לא ניתן לרשום מים',
-      actions: granted.has('write:Hydration') ? undefined : [{ key: 'request_hc', label: 'אשר' }],
+      detail: granted.has('write:Hydration') ? tr('כוסות מים שנרשמות באפליקציה נשמרות', 'Cups of water logged in the app are saved') : tr('בלי ההרשאה לא ניתן לרשום מים', 'Without the permission water cannot be logged'),
+      actions: granted.has('write:Hydration') ? undefined : [{ key: 'request_hc', label: tr('אשר', 'Approve') }],
     });
   }
 
   // Data actually arriving, per type
   if (hcReady) {
     const types = [
-      { type: 'Steps', title: 'צעדים', fresh: 2, watch: true },
-      { type: 'SleepSession', title: 'שינה', fresh: 2, watch: true },
-      { type: 'HeartRate', title: 'דופק', fresh: 2, watch: true },
-      { type: 'ExerciseSession', title: 'אימונים', fresh: 14, watch: true },
-      { type: 'Nutrition', title: 'תזונה', fresh: 2, watch: false },
-      { type: 'Weight', title: 'משקל', fresh: 14, watch: false },
+      { type: 'Steps', title: tr('צעדים', 'Steps'), fresh: 2, watch: true },
+      { type: 'SleepSession', title: tr('שינה', 'Sleep'), fresh: 2, watch: true },
+      { type: 'HeartRate', title: tr('דופק', 'Heart rate'), fresh: 2, watch: true },
+      { type: 'ExerciseSession', title: tr('אימונים', 'Workouts'), fresh: 14, watch: true },
+      { type: 'Nutrition', title: tr('תזונה', 'Nutrition'), fresh: 2, watch: false },
+      { type: 'Weight', title: tr('משקל', 'Weight'), fresh: 14, watch: false },
     ] as const;
     for (const t of types) {
       const canRead = granted.has(`read:${t.type}`);
@@ -182,19 +183,19 @@ export async function runReadiness(): Promise<Readiness> {
       const age = hit ? daysAgo(hit.when) : null;
       const status: CheckStatus = !canRead ? 'error' : hit === null ? (t.watch && t.type !== 'ExerciseSession' ? 'error' : 'warn') : age! > t.fresh ? 'warn' : 'ok';
       const detail = !canRead
-        ? 'אין הרשאת קריאה'
+        ? tr('אין הרשאת קריאה', 'No read permission')
         : hit === null
           ? t.type === 'Nutrition'
-            ? 'עוד לא נרשמו ארוחות ב30 יום.'
+            ? tr('עוד לא נרשמו ארוחות ב30 יום.', 'No meals logged in 30 days yet.')
             : t.type === 'Weight'
-              ? 'עוד אין שקילות. מזינים במסך ההתקדמות.'
+              ? tr('עוד אין שקילות. מזינים במסך ההתקדמות.', 'No weigh-ins yet. Enter them on the Progress screen.')
               : t.type === 'ExerciseSession'
-                ? 'אין אימונים רשומים ב30 יום'
-                : 'לא מגיעים נתונים. בדוק שאפליקציית השעון מורשית לכתוב ל Health Connect.'
-          : `${hit.sources} · ${age === 0 ? 'היום' : `לפני ${age} ימים`}`;
+                ? tr('אין אימונים רשומים ב30 יום', 'No workouts logged in 30 days')
+                : tr('לא מגיעים נתונים. בדוק שאפליקציית השעון מורשית לכתוב ל Health Connect.', 'No data is coming in. Check that the watch app is allowed to write to Health Connect.')
+          : tr(`${hit.sources} · ${age === 0 ? 'היום' : `לפני ${age} ימים`}`, `${hit.sources} · ${age === 0 ? 'today' : `${age} days ago`}`);
       add({
         id: `data_${t.type}`,
-        group: 'נתונים שמגיעים',
+        group: tr('נתונים שמגיעים', 'Data coming in'),
         title: t.title,
         status,
         detail,
@@ -202,11 +203,11 @@ export async function runReadiness(): Promise<Readiness> {
           status === 'ok'
             ? undefined
             : !canRead
-              ? [{ key: 'request_hc', label: 'אשר הרשאה' }]
+              ? [{ key: 'request_hc', label: tr('אשר הרשאה', 'Approve permission') }]
               : t.type === 'Nutrition'
-              ? [{ key: 'open_zepp', label: 'פתח Zepp' }]
+              ? [{ key: 'open_zepp', label: tr('פתח Zepp', 'Open Zepp') }]
               : t.watch
-                ? [{ key: 'open_hc_data', label: 'הרשאות מקורות' }]
+                ? [{ key: 'open_hc_data', label: tr('הרשאות מקורות', 'Source permissions') }]
                 : undefined,
       });
     }
@@ -219,16 +220,16 @@ export async function runReadiness(): Promise<Readiness> {
   const prof = await loadProfile();
   const want = activityApp(prof.watch);
   if (prof.watch === 'none') {
-    add({ id: 'apps_watch', group: 'אפליקציות', title: 'שעון', status: 'ok', detail: 'אין שעון: צעדים מהטלפון, בלי שינה ודופק.' });
+    add({ id: 'apps_watch', group: tr('אפליקציות', 'Apps'), title: tr('שעון', 'Watch'), status: 'ok', detail: tr('אין שעון: צעדים מהטלפון, בלי שינה ודופק.', 'No watch: steps from the phone, no sleep and heart rate.') });
   } else {
     const ok = want ? installed.some((a) => a.pkg === want.pkg) : watchApps.length > 0;
     add({
       id: 'apps_watch',
-      group: 'אפליקציות',
-      title: want ? `אפליקציית השעון (${want.name})` : 'אפליקציית שעון',
+      group: tr('אפליקציות', 'Apps'),
+      title: want ? tr(`אפליקציית השעון (${want.name})`, `Watch app (${want.name})`) : tr('אפליקציית שעון', 'Watch app'),
       status: ok ? 'ok' : 'error',
-      detail: ok ? (want ? `${want.name} מותקנת.` : watchApps.map((a) => a.name).join(', ')) : 'לא מותקנת. האשף יגיד מה להתקין ואיך לחבר.',
-      actions: ok ? undefined : [{ key: 'open_wizard', label: 'אשף החיבורים' }],
+      detail: ok ? (want ? tr(`${want.name} מותקנת.`, `${want.name} is installed.`) : watchApps.map((a) => a.name).join(', ')) : tr('לא מותקנת. האשף יגיד מה להתקין ואיך לחבר.', 'Not installed. The wizard will tell you what to install and how to connect it.'),
+      actions: ok ? undefined : [{ key: 'open_wizard', label: tr('אשף החיבורים', 'Connection wizard') }],
     });
   }
   const food = foodApp(prof.foodApp);
@@ -236,11 +237,11 @@ export async function runReadiness(): Promise<Readiness> {
     const has = installed.some((a) => a.pkg === food.pkg) || (await isInstalled(food.pkg));
     add({
       id: 'apps_food',
-      group: 'אפליקציות',
-      title: `רישום ארוחות (${food.name})`,
+      group: tr('אפליקציות', 'Apps'),
+      title: tr(`רישום ארוחות (${food.name})`, `Meal logging (${food.name})`),
       status: has ? 'ok' : 'warn',
-      detail: has ? `מותקן. ודא שב ${food.name} מופעל חיבור ל Health Connect.` : 'לא מותקן. בלי אפליקציית אוכל אין תזונה.',
-      actions: has ? undefined : [{ key: 'open_wizard', label: 'אשף החיבורים' }],
+      detail: has ? tr(`מותקן. ודא שב ${food.name} מופעל חיבור ל Health Connect.`, `Installed. Make sure the Health Connect connection is on in ${food.name}.`) : tr('לא מותקן. בלי אפליקציית אוכל אין תזונה.', 'Not installed. Without a food app there is no nutrition.'),
+      actions: has ? undefined : [{ key: 'open_wizard', label: tr('אשף החיבורים', 'Connection wizard') }],
     });
   }
 
@@ -248,11 +249,11 @@ export async function runReadiness(): Promise<Readiness> {
   const notif = await Notifications.getPermissionsAsync().catch(() => null);
   add({
     id: 'notifications',
-    group: 'התראות ורקע',
-    title: 'התראות',
+    group: tr('התראות ורקע', 'Notifications and background'),
+    title: tr('התראות', 'Notifications'),
     status: notif?.granted ? 'ok' : 'error',
-    detail: notif?.granted ? 'מאושרות' : 'חסומות. המאמן לא יוכל לשלוח הודעות.',
-    actions: notif?.granted ? undefined : [{ key: 'request_notifications', label: 'אפשר' }],
+    detail: notif?.granted ? tr('מאושרות', 'Allowed') : tr('חסומות. המאמן לא יוכל לשלוח הודעות.', 'Blocked. The coach will not be able to send messages.'),
+    actions: notif?.granted ? undefined : [{ key: 'request_notifications', label: tr('אפשר', 'Allow') }],
   });
 
   const bgStatus = await BackgroundTask.getStatusAsync().catch(() => null);
@@ -260,11 +261,11 @@ export async function runReadiness(): Promise<Readiness> {
   const bgOk = bgStatus === BackgroundTask.BackgroundTaskStatus.Available && registered;
   add({
     id: 'background_task',
-    group: 'התראות ורקע',
-    title: 'בדיקה תקופתית של המאמן',
+    group: tr('התראות ורקע', 'Notifications and background'),
+    title: tr('בדיקה תקופתית של המאמן', 'Coach periodic check'),
     status: bgOk ? 'ok' : 'error',
-    detail: bgOk ? 'פעילה, בערך כל 15 דקות' : 'לא רשומה או חסומה במכשיר',
-    actions: bgOk ? undefined : [{ key: 'start_coach', label: 'הפעל' }],
+    detail: bgOk ? tr('פעילה, בערך כל 15 דקות', 'Active, about every 15 minutes') : tr('לא רשומה או חסומה במכשיר', 'Not registered or blocked on the device'),
+    actions: bgOk ? undefined : [{ key: 'start_coach', label: tr('הפעל', 'Turn on') }],
   });
 
   const fg = await Location.getForegroundPermissionsAsync().catch(() => null);
@@ -273,37 +274,37 @@ export async function runReadiness(): Promise<Readiness> {
   const placeCount = Object.keys(places).length;
   add({
     id: 'location',
-    group: 'התראות ורקע',
-    title: 'מיקום ומקומות',
+    group: tr('התראות ורקע', 'Notifications and background'),
+    title: tr('מיקום ומקומות', 'Location and places'),
     status: bg?.granted && placeCount > 0 ? 'ok' : fg?.granted ? 'warn' : 'warn',
     detail: !fg?.granted
-      ? 'אין הרשאת מיקום. המאמן לא יזהה בית, משרד וחדר כושר.'
+      ? tr('אין הרשאת מיקום. המאמן לא יזהה בית, משרד וחדר כושר.', 'No location permission. The coach will not recognize home, office and gym.')
       : !bg?.granted
-        ? 'צריך "אפשר כל הזמן" כדי לזהות הגעה ויציאה'
+        ? tr('צריך "אפשר כל הזמן" כדי לזהות הגעה ויציאה', '"Allow all the time" is needed to notice arriving and leaving')
         : placeCount === 0
-          ? 'לא הוגדרו מקומות'
-          : `${placeCount} מתוך 3 מקומות מוגדרים`,
-    actions: bg?.granted && placeCount > 0 ? undefined : bg?.granted ? [{ key: 'go_coach', label: 'הגדר מקומות' }] : [{ key: 'request_location', label: 'אפשר מיקום' }],
+          ? tr('לא הוגדרו מקומות', 'No places set')
+          : tr(`${placeCount} מתוך 3 מקומות מוגדרים`, `${placeCount} of 3 places set`),
+    actions: bg?.granted && placeCount > 0 ? undefined : bg?.granted ? [{ key: 'go_coach', label: tr('הגדר מקומות', 'Set places') }] : [{ key: 'request_location', label: tr('אפשר מיקום', 'Allow location') }],
   });
 
   const batteryConfirmed = (await AsyncStorage.getItem(BATTERY_KEY).catch(() => null)) === '1';
   add({
     id: 'battery',
-    group: 'התראות ורקע',
-    title: 'חיסכון סוללה',
+    group: tr('התראות ורקע', 'Notifications and background'),
+    title: tr('חיסכון סוללה', 'Battery saver'),
     status: batteryConfirmed ? 'ok' : 'manual',
-    detail: batteryConfirmed ? 'סומן כמוגדר' : `אנדרואיד לא מאפשר לבדוק את זה אוטומטית. ${manufacturerHint()}`,
-    actions: batteryConfirmed ? undefined : [{ key: 'battery', label: 'פתח הגדרה' }, { key: 'confirm_battery', label: 'עשיתי' }],
+    detail: batteryConfirmed ? tr('סומן כמוגדר', 'Marked as set') : tr(`אנדרואיד לא מאפשר לבדוק את זה אוטומטית. ${manufacturerHint()}`, `Android does not let us check this automatically. ${manufacturerHint()}`),
+    actions: batteryConfirmed ? undefined : [{ key: 'battery', label: tr('פתח הגדרה', 'Open setting') }, { key: 'confirm_battery', label: tr('עשיתי', 'Done it') }],
   });
 
   const profile = await loadProfile();
   add({
     id: 'profile',
-    group: 'פרופיל',
-    title: 'שאלון ותוכנית',
+    group: tr('פרופיל', 'Profile'),
+    title: tr('שאלון ותוכנית', 'Questions and plan'),
     status: profile.completed ? 'ok' : 'error',
-    detail: profile.completed ? 'הושלם' : 'עוד לא מולא',
-    actions: profile.completed ? undefined : [{ key: 'edit_profile', label: 'מלא' }],
+    detail: profile.completed ? tr('הושלם', 'Completed') : tr('עוד לא מולא', 'Not filled in yet'),
+    actions: profile.completed ? undefined : [{ key: 'edit_profile', label: tr('מלא', 'Fill in') }],
   });
 
   const result: Readiness = {

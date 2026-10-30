@@ -4,6 +4,7 @@
 import type { SlotId } from '../nutrition/meals';
 import { DIET_FOODS, DietFood, EXCHANGES, Unit } from './foods';
 
+import { t } from '../i18n';
 export interface MenuItem {
   /** The line as he will recognize it */
   text: string;
@@ -174,12 +175,12 @@ function slotFor(h: string, found: SlotId[]): SlotId {
 }
 
 const SLOT_TITLE: Record<SlotId, string> = {
-  breakfast: 'ארוחת בוקר',
-  snack_am: 'ביניים בבוקר',
-  lunch: 'ארוחת צהריים',
-  snack_pm: 'ביניים אחר הצהריים',
-  dinner: 'ארוחת ערב',
-  night: 'ארוחת לילה',
+  breakfast: t('ארוחת בוקר', 'Breakfast'),
+  snack_am: t('ביניים בבוקר', 'Morning snack'),
+  lunch: t('ארוחת צהריים', 'Lunch'),
+  snack_pm: t('ביניים אחר הצהריים', 'Afternoon snack'),
+  dinner: t('ארוחת ערב', 'Dinner'),
+  night: t('ארוחת לילה', 'Late meal'),
 };
 export const slotTitle = (s: SlotId) => SLOT_TITLE[s];
 

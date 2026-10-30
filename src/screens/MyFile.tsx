@@ -9,25 +9,25 @@ import { cups, waterTarget } from '../nutrition/water';
 import { Bar, Card, PrimaryButton } from '../ui/components';
 import { C, fmt, T } from '../ui/theme';
 
-import { END, ROW } from '../i18n';
+import { END, ROW, t } from '../i18n';
 const hhmm = (m: number) => `${pad2(Math.floor(m / 60) % 24)}:${pad2(m % 60)}`;
-const list = (xs: string[]) => (xs.length ? xs.join(', ') : 'אין');
+const list = (xs: string[]) => (xs.length ? xs.join(', ') : t('אין', 'None'));
 const L = {
-  goal: { lose: 'ירידה במשקל', recomp: 'ירידה בשומן ובניית שריר', gain: 'בניית שריר', maintain: 'שמירה' },
-  pace: { moderate: 'מתון', fast: 'מהיר' },
-  exp: { beginner: 'מתחיל', returning: 'חוזר אחרי הפסקה', regular: 'מתאמן קבוע' },
-  pain: { knees: 'ברכיים', back: 'גב', shoulders: 'כתפיים' },
-  chronic: { bp: 'לחץ דם', diabetes: 'סוכרת', heart: 'לב' },
-  stop: { work: 'עומס בעבודה', family: 'משפחה', injury: 'פציעה', motivation: 'מוטיבציה', never: 'לא הפסקתי' },
-  work: { office: 'משרד', home: 'מהבית', hybrid: 'משולב' },
-  load: { desk: 'יושב', mixed: 'חלק בעמידה', physical: 'פיזית' },
-  rel: { single: 'רווק', partner: 'בזוגיות', separated: 'גרוש או פרוד' },
-  kids: { none: 'אין ילדים', baby: 'תינוק', young: 'ילדים קטנים', older: 'ילדים גדולים' },
-  place: { gym: 'חדר כושר', home: 'בית', outdoor: 'בחוץ' },
-  diet: { vegetarian: 'צמחוני', kosher: 'כשר', no_dairy: 'בלי חלב' },
-  hard: { evening: 'ערב', stress: 'לחץ', boredom: 'שעמום', weekend: 'סוף שבוע' },
-  level: { quiet: 'שקט', normal: 'רגיל', close: 'צמוד', drill: 'דומיננטי' },
-  tone: { direct: 'ישיר', encouraging: 'מעודד' },
+  goal: { lose: t('ירידה במשקל', 'Lose weight'), recomp: t('ירידה בשומן ובניית שריר', 'Lose fat and build muscle'), gain: t('בניית שריר', 'Build muscle'), maintain: t('שמירה', 'Maintain') },
+  pace: { moderate: t('מתון', 'Moderate'), fast: t('מהיר', 'Fast') },
+  exp: { beginner: t('מתחיל', 'Beginner'), returning: t('חוזר אחרי הפסקה', 'Back after a break'), regular: t('מתאמן קבוע', 'Trains regularly') },
+  pain: { knees: t('ברכיים', 'Knees'), back: t('גב', 'Back'), shoulders: t('כתפיים', 'Shoulders') },
+  chronic: { bp: t('לחץ דם', 'Blood pressure'), diabetes: t('סוכרת', 'Diabetes'), heart: t('לב', 'Heart') },
+  stop: { work: t('עומס בעבודה', 'Busy at work'), family: t('משפחה', 'Family'), injury: t('פציעה', 'Injury'), motivation: t('מוטיבציה', 'Motivation'), never: t('לא הפסקתי', 'Never stopped') },
+  work: { office: t('משרד', 'Office'), home: t('מהבית', 'From home'), hybrid: t('משולב', 'Hybrid') },
+  load: { desk: t('יושב', 'Sitting'), mixed: t('חלק בעמידה', 'Partly standing'), physical: t('פיזית', 'Physical') },
+  rel: { single: t('רווק', 'Single'), partner: t('בזוגיות', 'In a relationship'), separated: t('גרוש או פרוד', 'Divorced or separated') },
+  kids: { none: t('אין ילדים', 'No kids'), baby: t('תינוק', 'Baby'), young: t('ילדים קטנים', 'Young kids'), older: t('ילדים גדולים', 'Older kids') },
+  place: { gym: t('חדר כושר', 'Gym'), home: t('בית', 'Home'), outdoor: t('בחוץ', 'Outdoors') },
+  diet: { vegetarian: t('צמחוני', 'Vegetarian'), kosher: t('כשר', 'Kosher'), no_dairy: t('בלי חלב', 'No dairy') },
+  hard: { evening: t('ערב', 'Evening'), stress: t('לחץ', 'Stress'), boredom: t('שעמום', 'Boredom'), weekend: t('סוף שבוע', 'Weekend') },
+  level: { quiet: t('שקט', 'Quiet'), normal: t('רגיל', 'Normal'), close: t('צמוד', 'Close'), drill: t('דומיננטי', 'Dominant') },
+  tone: { direct: t('ישיר', 'Direct'), encouraging: t('מעודד', 'Encouraging') },
 };
 
 interface Line {
@@ -47,85 +47,85 @@ function sections(p: Profile): Section[] {
   return [
     {
       step: 0,
-      title: 'עליך',
-      effect: 'קלוריות, חלבון ויעד מים',
+      title: t('עליך', 'About you'),
+      effect: t('קלוריות, חלבון ויעד מים', 'Calories, protein and water target'),
       lines: [
-        { label: 'שם', value: p.name?.trim() ? p.name.trim() : null },
-        { label: 'גיל', value: String(p.age) },
-        { label: 'גובה', value: `${p.heightCm} ס"מ` },
-        { label: 'משקל בשאלון', value: `${fmt(p.weightKg, 1)} ק"ג` },
+        { label: t('שם', 'Name'), value: p.name?.trim() ? p.name.trim() : null },
+        { label: t('גיל', 'Age'), value: String(p.age) },
+        { label: t('גובה', 'Height'), value: t(`${p.heightCm} ס"מ`, `${p.heightCm} cm`) },
+        { label: t('משקל בשאלון', 'Weight in the questions'), value: t(`${fmt(p.weightKg, 1)} ק"ג`, `${fmt(p.weightKg, 1)} kg`) },
       ],
     },
     {
       step: 1,
-      title: 'המטרה',
-      effect: 'גירעון קלורי, תאריך יעד, והמשפט שהמאמן מזכיר כשקשה',
+      title: t('המטרה', 'The goal'),
+      effect: t('גירעון קלורי, תאריך יעד, והמשפט שהמאמן מזכיר כשקשה', 'Calorie deficit, target date, and the sentence the coach reminds you of when it is hard'),
       lines: [
-        { label: 'מטרה', value: L.goal[p.goal] },
-        { label: 'קצב', value: L.pace[p.pace] },
-        { label: 'משקל יעד', value: p.targetWeightKg ? `${p.targetWeightKg} ק"ג` : 'לא הוגדר' },
-        { label: 'למה עכשיו', value: p.whyNow?.trim() ? `"${p.whyNow.trim()}"` : null },
+        { label: t('מטרה', 'Goal'), value: L.goal[p.goal] },
+        { label: t('קצב', 'Pace'), value: L.pace[p.pace] },
+        { label: t('משקל יעד', 'Target weight'), value: p.targetWeightKg ? t(`${p.targetWeightKg} ק"ג`, `${p.targetWeightKg} kg`) : t('לא הוגדר', 'Not set') },
+        { label: t('למה עכשיו', 'Why now'), value: p.whyNow?.trim() ? `"${p.whyNow.trim()}"` : null },
       ],
     },
     {
       step: 2,
-      title: 'בריאות וניסיון',
-      effect: 'בחירת תרגילים, עצימות, וזיהוי מוקדם של נפילה',
+      title: t('בריאות וניסיון', 'Health and experience'),
+      effect: t('בחירת תרגילים, עצימות, וזיהוי מוקדם של נפילה', 'Choice of moves, intensity, and spotting a slip early'),
       lines: [
-        { label: 'ניסיון', value: L.exp[p.experience] },
-        { label: 'כאבים', value: list(p.pains.map((x) => L.pain[x])) },
-        { label: 'מגבלה רפואית', value: p.medicalLimit ? 'כן' : 'לא' },
-        { label: 'מצב רפואי', value: p.chronic === undefined ? null : list(p.chronic.map((x) => L.chronic[x])) },
-        ...(p.experience !== 'beginner' ? [{ label: 'מה הפיל בפעם הקודמת', value: p.stopReason ? L.stop[p.stopReason] : null }] : []),
+        { label: t('ניסיון', 'Experience'), value: L.exp[p.experience] },
+        { label: t('כאבים', 'Pain'), value: list(p.pains.map((x) => L.pain[x])) },
+        { label: t('מגבלה רפואית', 'Medical limit'), value: p.medicalLimit ? t('כן', 'Yes') : t('לא', 'No') },
+        { label: t('מצב רפואי', 'Medical condition'), value: p.chronic === undefined ? null : list(p.chronic.map((x) => L.chronic[x])) },
+        ...(p.experience !== 'beginner' ? [{ label: t('מה הפיל בפעם הקודמת', 'What made you stop last time'), value: p.stopReason ? L.stop[p.stopReason] : null }] : []),
       ],
     },
     {
       step: 3,
-      title: 'עבודה ולוח זמנים',
-      effect: 'תזכורות ארוחות, ימי ושעות אימון, יעד צעדים',
+      title: t('עבודה ולוח זמנים', 'Work and schedule'),
+      effect: t('תזכורות ארוחות, ימי ושעות אימון, יעד צעדים', 'Meal reminders, workout days and hours, step target'),
       lines: [
-        { label: 'עבודה', value: `${L.work[p.workMode]}, ${hhmm(p.workStart)} עד ${hhmm(p.workEnd)}` },
-        { label: 'כמה פיזית', value: p.workLoad ? L.load[p.workLoad] : null },
-        { label: 'משמרות', value: p.shiftWork === undefined ? null : p.shiftWork ? 'כן' : 'לא' },
-        { label: 'סוף שבוע', value: p.weekendStyle === 'same' ? 'כמו כל יום' : `${(p.weekendDays?.length ? p.weekendDays : defaultWeekend()).map((d) => DAY_NAMES[d]).join(' ו')}, ${p.weekendStyle === 'flex' ? 'גמיש' : 'רגיל'}` },
-        { label: 'אימונים', value: p.slots.length ? p.slots.map((s) => `${DAY_NAMES[s.day]} ${hhmm(s.time)}`).join(', ') : 'אין' },
-        { label: 'מקום', value: `${L.place[p.trainPlace]}, ${p.sessionMinutes} דקות` },
-        { label: 'חלוקה', value: SPLITS.find((x) => x.key === (p.split ?? 'full'))?.label ?? 'גוף מלא' },
-        { label: 'בסוף כל אימון', value: [p.rope && 'חבל', p.abs && 'בטן'].filter(Boolean).join(', ') || 'כלום' },
+        { label: t('עבודה', 'Work'), value: t(`${L.work[p.workMode]}, ${hhmm(p.workStart)} עד ${hhmm(p.workEnd)}`, `${L.work[p.workMode]}, ${hhmm(p.workStart)} to ${hhmm(p.workEnd)}`) },
+        { label: t('כמה פיזית', 'How physical'), value: p.workLoad ? L.load[p.workLoad] : null },
+        { label: t('משמרות', 'Shifts'), value: p.shiftWork === undefined ? null : p.shiftWork ? t('כן', 'Yes') : t('לא', 'No') },
+        { label: t('סוף שבוע', 'Weekend'), value: p.weekendStyle === 'same' ? t('כמו כל יום', 'Like any day') : t(`${(p.weekendDays?.length ? p.weekendDays : defaultWeekend()).map((d) => DAY_NAMES[d]).join(' ו')}, ${p.weekendStyle === 'flex' ? 'גמיש' : 'רגיל'}`, `${(p.weekendDays?.length ? p.weekendDays : defaultWeekend()).map((d) => DAY_NAMES[d]).join(' and ')}, ${p.weekendStyle === 'flex' ? 'flexible' : 'normal'}`) },
+        { label: t('אימונים', 'Workouts'), value: p.slots.length ? p.slots.map((s) => `${DAY_NAMES[s.day]} ${hhmm(s.time)}`).join(', ') : t('אין', 'None') },
+        { label: t('מקום', 'Place'), value: t(`${L.place[p.trainPlace]}, ${p.sessionMinutes} דקות`, `${L.place[p.trainPlace]}, ${p.sessionMinutes} minutes`) },
+        { label: t('חלוקה', 'Split'), value: SPLITS.find((x) => x.key === (p.split ?? 'full'))?.label ?? t('גוף מלא', 'Full body') },
+        { label: t('בסוף כל אימון', 'After each workout'), value: [p.rope && t('חבל', 'Rope'), p.abs && t('בטן', 'Abs')].filter(Boolean).join(', ') || t('כלום', 'Nothing') },
       ],
     },
     {
       step: 4,
-      title: 'משפחה ובית',
-      effect: 'איך המאמן קורא לילה קטוע, ואיך הוא מתכנן ימים עם הילדים',
+      title: t('משפחה ובית', 'Family and home'),
+      effect: t('איך המאמן קורא לילה קטוע, ואיך הוא מתכנן ימים עם הילדים', 'How the coach reads a broken night, and how it plans days with the kids'),
       lines: [
-        { label: 'מצב משפחתי', value: p.relationship ? L.rel[p.relationship] : null },
-        { label: 'ילדים', value: L.kids[p.kids] },
+        { label: t('מצב משפחתי', 'Relationship status'), value: p.relationship ? L.rel[p.relationship] : null },
+        { label: t('ילדים', 'Kids'), value: L.kids[p.kids] },
         ...(separatedWithKids
-          ? [{ label: 'ימים עם הילדים', value: p.kidsDays?.length ? p.kidsDays.map((d) => DAY_LETTERS[d]).join(' ') : null }]
+          ? [{ label: t('ימים עם הילדים', 'Days with the kids'), value: p.kidsDays?.length ? p.kidsDays.map((d) => DAY_LETTERS[d]).join(' ') : null }]
           : []),
       ],
     },
     {
       step: 5,
-      title: 'שגרה ואוכל',
-      effect: 'שעות שקט, שומר לילה, זמני ארוחות ותזכורות מקדימות',
+      title: t('שגרה ואוכל', 'Routine and food'),
+      effect: t('שעות שקט, שומר לילה, זמני ארוחות ותזכורות מקדימות', 'Quiet hours, night guard, meal times and early reminders'),
       lines: [
-        { label: 'שינה', value: `${hhmm(p.bedTime)} עד ${hhmm(p.wakeTime)}` },
-        { label: 'התעוררויות בלילה', value: p.nightWakeups ? 'כן' : 'לא' },
-        { label: 'צהריים', value: p.naps ? 'ישן' : 'לא ישן' },
-        { label: 'ארוחות ביום', value: String(p.mealsPerDay) },
-        { label: 'הגבלות', value: list(p.diet.map((x) => L.diet[x])) },
-        { label: 'הכי קשה', value: p.hardTimes === undefined ? null : list(p.hardTimes.map((x) => L.hard[x])) },
+        { label: t('שינה', 'Sleep'), value: t(`${hhmm(p.bedTime)} עד ${hhmm(p.wakeTime)}`, `${hhmm(p.bedTime)} to ${hhmm(p.wakeTime)}`) },
+        { label: t('התעוררויות בלילה', 'Waking at night'), value: p.nightWakeups ? t('כן', 'Yes') : t('לא', 'No') },
+        { label: t('צהריים', 'Noon'), value: p.naps ? t('ישן', 'Naps') : t('לא ישן', 'No nap') },
+        { label: t('ארוחות ביום', 'Meals a day'), value: String(p.mealsPerDay) },
+        { label: t('הגבלות', 'Restrictions'), value: list(p.diet.map((x) => L.diet[x])) },
+        { label: t('הכי קשה', 'Hardest'), value: p.hardTimes === undefined ? null : list(p.hardTimes.map((x) => L.hard[x])) },
       ],
     },
     {
       step: 6,
-      title: 'המאמן',
-      effect: 'כמה הודעות ובאיזה טון',
+      title: t('המאמן', 'The coach'),
+      effect: t('כמה הודעות ובאיזה טון', 'How many messages and in what tone'),
       lines: [
-        { label: 'רמה', value: L.level[p.level] },
-        { label: 'טון', value: L.tone[p.tone] },
+        { label: t('רמה', 'Level'), value: L.level[p.level] },
+        { label: t('טון', 'Tone'), value: L.tone[p.tone] },
       ],
     },
   ];
@@ -156,29 +156,29 @@ export default function MyFile({
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }} stickyHeaderIndices={[0]}>
       <View style={s.head}>
-        <Text style={[T.bold, { fontSize: 28, lineHeight: 36 }]}>התיק שלי</Text>
+        <Text style={[T.bold, { fontSize: 28, lineHeight: 36 }]}>{t('התיק שלי', 'My file')}</Text>
         <Pressable onPress={onClose} hitSlop={10}>
-          <Text style={[T.bold, { color: C.muted, fontSize: 15 }]}>סגור</Text>
+          <Text style={[T.bold, { color: C.muted, fontSize: 15 }]}>{t('סגור', 'Close')}</Text>
         </Pressable>
       </View>
 
       <Card>
         <View style={s.rowBetween}>
-          <Text style={[T.bold, { fontSize: 16 }]}>התיק מלא ב {Math.round((answered / lines.length) * 100)}%</Text>
+          <Text style={[T.bold, { fontSize: 16 }]}>{t('התיק מלא ב', 'Your file is complete at')} {Math.round((answered / lines.length) * 100)}%</Text>
           {gaps.length > 0 && <View style={s.dot} />}
         </View>
         <Bar value={answered} max={lines.length} height={6} />
         <Text style={[T.muted, { fontSize: 13 }]}>
-          {gaps.length ? `חסרות תשובות ב: ${gaps.map((g) => g.title).join(', ')}. כל תשובה עושה את המאמן מדויק יותר.` : 'כל השאלות נענו. המאמן ישאל עוד בהמשך, כשזה יהיה רלוונטי.'}
+          {gaps.length ? t(`חסרות תשובות ב: ${gaps.map((g) => g.title).join(', ')}. כל תשובה עושה את המאמן מדויק יותר.`, `Missing answers in: ${gaps.map((g) => g.title).join(', ')}. Every answer makes the coach more accurate.`) : t('כל השאלות נענו. המאמן ישאל עוד בהמשך, כשזה יהיה רלוונטי.', 'All questions answered. The coach will ask more later, when it is relevant.')}
         </Text>
       </Card>
 
-      <Card title="המספרים שלך">
-        <Num label="קלוריות ביום" value={fmt(d.goals.calories)} how={`חילוף חומרים ${fmt(d.bmr)}, שמירה ${fmt(d.maintenance)}, לפי המטרה`} />
-        <Num label="חלבון" value={`${d.goals.proteinG} ג'`} how="לפי המשקל והמטרה" />
-        <Num label="מים" value={`${cups(waterTarget(profile.weightKg, false))} כוסות`} how={'35 מ"ל לכל ק"ג, ועוד 2 כוסות ביום אימון'} />
-        <Num label="צעדים" value={fmt(d.goals.steps)} how={profile.workLoad === 'physical' ? 'עבודה פיזית' : 'ברירת מחדל'} />
-        <Num label="אימונים בשבוע" value={String(trainingDays)} how="לפי הימים שבחרת" />
+      <Card title={t("המספרים שלך", 'Your numbers')}>
+        <Num label={t("קלוריות ביום", 'Calories a day')} value={fmt(d.goals.calories)} how={t(`חילוף חומרים ${fmt(d.bmr)}, שמירה ${fmt(d.maintenance)}, לפי המטרה`, `Metabolism ${fmt(d.bmr)}, maintenance ${fmt(d.maintenance)}, by the goal`)} />
+        <Num label={t("חלבון", 'Protein')} value={t(`${d.goals.proteinG} ג'`, `${d.goals.proteinG} g`)} how={t("לפי המשקל והמטרה", 'By weight and goal')} />
+        <Num label={t("מים", 'Water')} value={t(`${cups(waterTarget(profile.weightKg, false))} כוסות`, `${cups(waterTarget(profile.weightKg, false))} cups`)} how={t('35 מ"ל לכל ק"ג, ועוד 2 כוסות ביום אימון', '35 ml per kg, plus 2 cups on a workout day')} />
+        <Num label={t("צעדים", 'Steps')} value={fmt(d.goals.steps)} how={profile.workLoad === 'physical' ? t('עבודה פיזית', 'Physical work') : t('ברירת מחדל', 'Default')} />
+        <Num label={t("אימונים בשבוע", 'Workouts a week')} value={String(trainingDays)} how={t("לפי הימים שבחרת", 'By the days you chose')} />
       </Card>
 
       {all.map((sec) => {
@@ -191,24 +191,24 @@ export default function MyFile({
                   {missing && <View style={s.dot} />}
                   <Text style={[T.bold, { fontSize: 17 }]}>{sec.title}</Text>
                 </View>
-                <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>עריכה</Text>
+                <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>{t('עריכה', 'Edit')}</Text>
               </View>
               {sec.lines.map((l) => (
                 <View key={l.label} style={s.rowBetween}>
                   <Text style={[T.muted, { fontSize: 14 }]}>{l.label}</Text>
                   <Text style={[T.bold, { fontSize: 14, flexShrink: 1, textAlign: END }, l.value === null && { color: C.signal }]}>
-                    {l.value ?? 'חסר'}
+                    {l.value ?? t('חסר', 'Missing')}
                   </Text>
                 </View>
               ))}
-              <Text style={[T.muted, { fontSize: 12 }]}>משפיע על: {sec.effect}</Text>
+              <Text style={[T.muted, { fontSize: 12 }]}>{t('משפיע על:', 'Affects:')} {sec.effect}</Text>
             </Card>
           </Pressable>
         );
       })}
 
       {d.notes.length > 0 && (
-        <Card title="מה המאמן הסיק">
+        <Card title={t("מה המאמן הסיק", 'What the coach concluded')}>
           {d.notes.map((n) => (
             <Text key={n} style={[T.base, { fontSize: 14, lineHeight: 21 }]}>
               {n}
@@ -217,11 +217,11 @@ export default function MyFile({
         </Card>
       )}
 
-      <PrimaryButton label="לעבור על כל השאלון מההתחלה" onPress={onRedoAll} />
+      <PrimaryButton label={t("לעבור על כל השאלון מההתחלה", 'Go through all the questions from the start')} onPress={onRedoAll} />
 
-      <Card title="גיבוי והעברה לטלפון חדש">
+      <Card title={t("גיבוי והעברה לטלפון חדש", 'Backup and moving to a new phone')}>
         <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>
-          הייצוא יוצר טקסט עם התיק, ההגדרות והמקומות. שלח אותו לעצמך, ובטלפון החדש הדבק אותו כאן. ההיסטוריה של צעדים, שינה ואוכל לא נכללת, היא נשמרת ב Health Connect.
+          {t('הייצוא יוצר טקסט עם התיק, ההגדרות והמקומות. שלח אותו לעצמך, ובטלפון החדש הדבק אותו כאן. ההיסטוריה של צעדים, שינה ואוכל לא נכללת, היא נשמרת ב Health Connect.', 'The export makes a text with your file, settings and places. Send it to yourself, and paste it here on the new phone. The history of steps, sleep and food is not included, it is kept in Health Connect.')}
         </Text>
         <Pressable
           style={s.outline}
@@ -229,29 +229,29 @@ export default function MyFile({
             await Share.share({ message: await exportBackup() });
           }}
         >
-          <Text style={[T.bold, { textAlign: 'center', fontSize: 15 }]}>ייצוא התיק</Text>
+          <Text style={[T.bold, { textAlign: 'center', fontSize: 15 }]}>{t('ייצוא התיק', 'Export my file')}</Text>
         </Pressable>
-        <TextField value={backup} onChange={setBackup} placeholder="להדבקת גיבוי" />
+        <TextField value={backup} onChange={setBackup} placeholder={t("להדבקת גיבוי", 'Paste the backup')} />
         {backup.trim().length > 0 && (
           <Pressable
             style={s.outline}
             onPress={async () => {
               const err = await importBackup(backup);
-              setBackupNote(err ?? 'הגיבוי שוחזר.');
+              setBackupNote(err ?? t('הגיבוי שוחזר.', 'The backup was restored.'));
               if (!err) {
                 setBackup('');
                 onReload();
               }
             }}
           >
-            <Text style={[T.bold, { textAlign: 'center', fontSize: 15 }]}>שחזור מהגיבוי</Text>
+            <Text style={[T.bold, { textAlign: 'center', fontSize: 15 }]}>{t('שחזור מהגיבוי', 'Restore from the backup')}</Text>
           </Pressable>
         )}
         {backupNote && <Text style={[T.bold, { fontSize: 13 }]}>{backupNote}</Text>}
       </Card>
 
       <Text style={[T.muted, { fontSize: 12, lineHeight: 18 }]}>
-        Nudge הוא כלי עזר ולא תחליף לרופא, דיאטנית או מאמן מוסמך. האחריות לבריאות שלך היא שלך. במצב רפואי, התייעץ עם רופא לפני שינוי באימונים או בתזונה.
+        {t('Nudge הוא כלי עזר ולא תחליף לרופא, דיאטנית או מאמן מוסמך. האחריות לבריאות שלך היא שלך. במצב רפואי, התייעץ עם רופא לפני שינוי באימונים או בתזונה.', 'Nudge is a helper, not a replacement for a doctor, dietitian or certified trainer. You are responsible for your health. With a medical condition, talk to a doctor before changing your workouts or diet.')}
       </Text>
     </ScrollView>
   );
