@@ -122,6 +122,10 @@ export interface Report {
   action: string;
   flags: string[];
   read?: boolean;
+  /** The language it was written in, and the targets of its period, so it can be written again
+   *  in another language without its numbers changing */
+  lang?: 'he' | 'en';
+  targets?: Targets;
 }
 
 // ---------- small helpers ----------

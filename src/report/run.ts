@@ -10,6 +10,7 @@ import { loadCheckpoints } from '../progress/store';
 import { collectBody, collectDays } from './collect';
 import { buildReport, DAY, lastWeeklyDue, monthPeriod, ReportKind, Targets, weekPeriod } from './compute';
 import { loadReportPrefs, loadReports, saveReport } from './store';
+import { LANG } from '../i18n';
 
 let running: Promise<number> | null = null;
 
@@ -58,7 +59,7 @@ async function make(kind: ReportKind, start: number, end: number, noNewMeasure?:
     weekend: derive(profile).weekend,
     vacation: (await loadPrefs().catch(() => null))?.vacation ?? null,
   });
-  await saveReport(report);
+  await saveReport({ ...report, lang: LANG, targets });
 }
 
 const startOfDayMs = (t: number) => {
