@@ -66,7 +66,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" 2>&1 | tee build.log
+          ./gradlew assembleRelease bundleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" 2>&1 | tee build.log
 
       # Put the cause of a failed build where it can be read without signing in (annotations)
       - name: Report failure
@@ -88,4 +88,6 @@ jobs:
           name: Nudge build ${{ github.run_number }}
           body: ${{ github.event.head_commit.message || 'Manual build' }}
           make_latest: true
-          files: android/app/build/outputs/apk/release/app-release.apk
+          files: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab

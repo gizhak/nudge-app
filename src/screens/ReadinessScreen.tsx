@@ -1,3 +1,4 @@
+import { useLocationConsent } from '../setup/LocationConsent';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -42,6 +43,7 @@ export default function ReadinessScreen({
 }) {
   const [result, setResult] = useState<Readiness | null>(null);
   const [running, setRunning] = useState(false);
+  const [askConsent, consentSheet] = useLocationConsent();
 
   const check = useCallback(async () => {
     setRunning(true);
@@ -81,6 +83,7 @@ export default function ReadinessScreen({
           if (!(await ensurePermission())) await Linking.openSettings();
           break;
         case 'request_location': {
+          if (!(await askConsent())) break;
           const fg = await Location.requestForegroundPermissionsAsync();
           const bg = fg.granted ? await Location.requestBackgroundPermissionsAsync() : null;
           if (!bg?.granted) await Linking.openSettings();
@@ -156,6 +159,7 @@ export default function ReadinessScreen({
           {onContinue && <PrimaryButton label={continueLabel ?? 'המשך'} onPress={onContinue} />}
         </>
       )}
+      {consentSheet}
     </Screen>
   );
 }

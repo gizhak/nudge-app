@@ -1,3 +1,4 @@
+import { useLocationConsent } from '../setup/LocationConsent';
 import { loadProfile, saveProfile } from '../profile/profile';
 import CarPicker from './CarPicker';
 import WifiPlaces from './WifiPlaces';
@@ -76,6 +77,7 @@ export default function CoachSettings() {
   const [query, setQuery] = useState('');
   const [found, setFound] = useState<{ latitude: number; longitude: number; label: string } | null>(null);
   const [results, setResults] = useState<PlaceResult[]>([]);
+  const [askConsent, consentSheet] = useLocationConsent();
 
   useEffect(() => {
     loadPrefs().then(setPrefs);
@@ -94,6 +96,7 @@ export default function CoachSettings() {
   };
 
   const enableLocation = async (): Promise<boolean> => {
+    if (!(await askConsent())) return false;
     const fg = await Location.requestForegroundPermissionsAsync();
     if (!fg.granted) {
       setMessage({ text: 'בלי הרשאת מיקום המאמן לא יזהה בית, משרד וחדר כושר.', ok: false });
@@ -415,6 +418,7 @@ export default function CoachSettings() {
         )}
       </Card>
       </Anchor>
+      {consentSheet}
     </>
   );
 }
