@@ -15,7 +15,7 @@ import { TimeStepper } from '../ui/inputs';
 import { Sheet } from '../ui/Sheet';
 import { C, FONT, T } from '../ui/theme';
 
-import { CHEVRON_BACK, ROW as ROW_DIR, t as tr } from '../i18n';
+import { CHEVRON_BACK, ROW as ROW_DIR, t as tr, LANG } from '../i18n';
 type Slot = { session: string; time: number } | null;
 const ROW = 62;
 const HOLD_MS = 280;
@@ -191,8 +191,8 @@ export default function WeekPlanner({ open, onClose, done }: { open: boolean; on
             return (
               <View key={i} style={[s.row, i > 0 && s.sep]}>
                 <View style={{ width: 54 }}>
-                  <Text style={[T.bold, { fontSize: 15, fontFamily: FONT.black, color: i === today ? C.signal : lock ? C.muted : C.ink }]}>{DAY_NAMES[i]}</Text>
-                  <Text style={[T.muted, { fontSize: 11 }]}>{i === today ? (done.has(i) ? tr('היום, בוצע', 'Today, done') : tr('היום', 'Today')) : lock ? tr('עבר', 'Past') : ''}</Text>
+                  <Text style={[T.bold, { fontSize: 15, fontFamily: FONT.black, color: i === today ? C.signal : lock ? C.muted : C.ink }]} numberOfLines={1}>{LANG === 'en' ? DAY_NAMES[i].slice(0, 3) : DAY_NAMES[i]}</Text>
+                  <Text style={[T.muted, { fontSize: 11 }]} numberOfLines={1} adjustsFontSizeToFit>{i === today ? (done.has(i) ? tr('היום, בוצע', 'Today, done') : tr('היום', 'Today')) : lock ? tr('עבר', 'Past') : ''}</Text>
                 </View>
                 {x ? (
                   <View style={[s.chip, lock && s.chipLocked, drag === i && { opacity: 0.25 }, target && s.chipTarget, landed === i && s.chipLanded]}>

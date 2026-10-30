@@ -3,6 +3,7 @@
 // Values are for a typical portion and are approximate.
 import { MORE_FOODS } from './foodTable';
 
+import { LANG } from '../i18n';
 export type CravingKind = 'sweet' | 'salty' | 'cold' | 'savory' | 'drink';
 
 export interface Food {
@@ -115,7 +116,10 @@ export function personalFoods(items: { name: string; kcal: number; protein: numb
   return out.sort((a, b) => (b.mine ?? 0) - (a.mine ?? 0));
 }
 
-export const KIND_LABEL: Record<CravingKind, string> = { sweet: 'מתוק', salty: 'מלוח', cold: 'משהו קר', savory: 'משהו של אוכל', drink: 'לשתות' };
+export const KIND_LABEL: Record<CravingKind, string> =
+  LANG === 'en'
+    ? { sweet: 'Sweet', salty: 'Salty', cold: 'Something cold', savory: 'Something savory', drink: 'A drink' }
+    : { sweet: 'מתוק', salty: 'מלוח', cold: 'משהו קר', savory: 'משהו של אוכל', drink: 'לשתות' };
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/[׳']/g, "'");
 

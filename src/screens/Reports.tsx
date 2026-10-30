@@ -63,7 +63,7 @@ const diffText = (a?: number, b?: number, unit = '', digits = 1) =>
 /** The report itself: verdict, body, what drove it, patterns, forecast and one action. */
 export function ReportView({ r }: { r: Report }) {
   const b = r.body;
-  const next = r.kind === 'week' ? tr('לשבוע הקרוב', 'For the coming week') : tr('לחודש הקרוב', 'For the coming month');
+  const next = r.kind === 'week' ? tr('לשבוע הקרוב', 'for the coming week') : tr('לחודש הקרוב', 'for the coming month');
   return (
     <View style={{ gap: 14 }}>
       <View style={{ gap: 6 }}>
@@ -249,7 +249,7 @@ export function ReportsCard({
         ))}
       </Sheet>
 
-      <Sheet open={!!open} onClose={onClose} title={view ? tr(`דוח ${kindName(view)} · ${period(view)}`, `${kindName(view)} report · ${period(view)}`) : undefined}>
+      <Sheet open={!!open} onClose={onClose} title={view ? tr(`דוח ${kindName(view)} · ${period(view)}`, `${kindName(view).replace(/^./, (x) => x.toUpperCase())} report · ${period(view)}`) : undefined}>
         {view && (
           <>
             <ReportView r={view} />
