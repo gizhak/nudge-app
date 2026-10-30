@@ -2,6 +2,7 @@
 // standard nutrition tables, not any one product's label.
 // [id, name, aliases, kinds, portion, kcal, protein, sugar, fat]
 import type { CravingKind, Food } from './cravings';
+import { LANG } from '../i18n';
 
 type Row = [string, string, string[], CravingKind[], string, number, number, number, number];
 
@@ -154,4 +155,15 @@ const ROWS: Row[] = [
   ['almond_milk', 'חלב שקדים', [], D, 'כוס, ללא סוכר', 30, 1, 0, 2.5],
 ];
 
-export const MORE_FOODS: Food[] = ROWS.map(([id, name, aliases, kinds, portion, kcal, protein, sugar, fat]) => ({ id, name, aliases, kinds, portion, kcal, protein, sugar, fat }));
+/** English portions, by the Hebrew one */
+const PORTION_EN: Record<string, string> = {"10 יחידות": "10 pieces", "150 גרם": "150 grams", "2 אצבעות": "2 fingers", "2 ביצים": "2 eggs", "2 יחידות": "2 pieces", "2 כוסות קוביות": "2 cups of cubes", "2 כפות": "2 tablespoons", "2 פרוסות": "2 slices", "3 טריות": "3 fresh", "3 יחידות": "3 pieces", "3 כוסות": "3 cups", "30 גרם": "30 grams", "30 גרם קלופים": "30 grams shelled", "4 פרוסות": "4 slices", "4 קוביות": "4 squares", "40 גרם": "40 grams", "5 יחידות": "5 pieces", "50 גרם": "50 grams", "8 יחידות": "8 pieces", "אחד": "One", "אחת": "One", "בפיתה": "In a pita", "גביע": "A cup", "גביע 200 גרם": "A 200 gram cup", "חבילה, 2 אצבעות": "A pack, 2 fingers", "חופן, 30 גרם": "A handful, 30 grams", "חצי": "Half", "חצי כוס גרעינים": "Half a cup of seeds", "חצי כוס, 50 גרם": "Half a cup, 50 grams", "כדור": "A scoop", "כוס": "A cup", "כוס מבושל": "A cup cooked", "כוס קוביות": "A cup of cubes", "כוס קטנה": "A small cup", "כוס, ללא סוכר": "A cup, no sugar", "כף": "A tablespoon", "מנה": "A serving", "מנה בינונית": "A medium serving", "פחית": "A can", "פרוסה": "A slice", "צלחת": "A plate", "צ׳ייסר": "A shot", "קערה": "A bowl", "קערה עם חלב": "A bowl with milk", "קערה, בלי שמן": "A bowl, no oil", "שקית 40 גרם": "A 40 gram bag", "שקית 50 גרם": "A 50 gram bag", "שקית קטנה": "A small bag"};
+
+/** "cherries_frozen" is "Cherries frozen": the id is the English name */
+const idName = (id: string) => id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, ' ');
+
+// In English the name comes from the id, and the Hebrew name still matches what he types
+export const MORE_FOODS: Food[] = ROWS.map(([id, name, aliases, kinds, portion, kcal, protein, sugar, fat]) =>
+  LANG === 'en'
+    ? { id, name: idName(id), aliases: [name, ...aliases], kinds, portion: PORTION_EN[portion] ?? portion, kcal, protein, sugar, fat }
+    : { id, name, aliases, kinds, portion, kcal, protein, sugar, fat },
+);

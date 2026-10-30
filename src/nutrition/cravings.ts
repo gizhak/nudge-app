@@ -111,7 +111,8 @@ export function personalFoods(items: { name: string; kcal: number; protein: numb
       kcal > 0 && (sugar * 4) / kcal >= 0.3 ? ['sweet'] : known ? known.kinds : (protein * 4) / kcal >= 0.25 ? ['savory'] : ['savory'];
     out.push({
       id: `my:${key}`,
-      name: list[list.length - 1].name.trim(),
+      // A food the app knows shows under its name in the app's language
+      name: LANG === 'en' && known && [norm(known.name), ...(known.aliases ?? []).map(norm), norm(HE_NAME.get(known.name) ?? '')].includes(key) ? known.name : list[list.length - 1].name.trim(),
       kinds,
       portion: list.length > 1 ? t(`כמו שאתה רושם, ${list.length} פעמים`, `As you log it, ${list.length} times`) : t('כמו שרשמת', 'As you logged it'),
       kcal,

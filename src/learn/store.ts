@@ -1,5 +1,6 @@
 // What the coach learned, what it sent (kept longer than the journal, for learning), when it
 // ran in the background, and what he marked as wrong. All on the phone.
+import { LANG } from '../i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { readRecords } from 'react-native-health-connect';
 import { isWeekend } from '../config/goals';
@@ -37,6 +38,8 @@ export const loadBeats = () => read<Beat[]>(K.beats, []);
 
 export interface Learned {
   at: number;
+  /** The language its texts were written in */
+  lang?: 'he' | 'en';
   facts: Fact[];
   effects: Effect[];
 }
@@ -85,7 +88,8 @@ export async function noteAct(kind: 'water', at = Date.now()) {
 /** The learning pass: at most every 12 hours, over the last 3 weeks. */
 export async function learn(now = Date.now(), force = false): Promise<Learned> {
   const last = await loadLearned();
-  if (!force && now - last.at < 12 * 3600000) return last;
+  // Texts written in another language are learned again at once
+  if (!force && now - last.at < 12 * 3600000 && (last.lang ?? 'he') === LANG) return last;
   const from = now - 22 * DAY;
   const [w, h, n, x, sl] = await Promise.all([
     recs('Weight', from, now),
@@ -104,7 +108,7 @@ export async function learn(now = Date.now(), force = false): Promise<Learned> {
   };
   const sent = await read<Sent[]>(K.sent, []);
   const { facts, effects } = learnAll(ev, sent, now, isWeekend);
-  const out = { at: now, facts, effects };
+  const out: Learned = { at: now, lang: LANG, facts, effects };
   await AsyncStorage.setItem(K.facts, JSON.stringify(out)).catch(() => undefined);
   return out;
 }

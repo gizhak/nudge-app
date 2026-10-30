@@ -110,7 +110,7 @@ export default function Craving({ kcalLeft, proteinLeft, bedTime }: { kcalLeft: 
           <Pressable key={f.id} onPress={() => setFood(f)} style={({ pressed }) => [s.item, pressed && { opacity: 0.7 }]}>
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={[T.bold, { fontSize: 15, color: no ? C.bad : C.ink }]}>{f.name}</Text>
-              <Text style={[T.muted, { fontSize: 12 }]}>{f.mine ? t(`שלך · ${f.portion}`, `yours · ${f.portion}`) : f.portion}</Text>
+              <Text style={[T.muted, { fontSize: 12 }]}>{f.mine ? t(`שלך · ${f.portion}`, `Yours · ${f.portion}`) : f.portion}</Text>
               {alt && (
                 <Text style={[T.base, { fontSize: 12, color: C.ink }]} numberOfLines={1}>
                   {t('במקום:', 'Instead:')} {alt.name}, {alt.kcal} {t('קלוריות', 'calories')}

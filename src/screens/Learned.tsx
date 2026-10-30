@@ -10,7 +10,7 @@ import { loadSettings } from '../notifications/settings';
 import { Card, PrimaryButton } from '../ui/components';
 import { C, T } from '../ui/theme';
 
-import { SIDE_END, LOCALE, t as tr } from '../i18n';
+import { LANG, SIDE_END, LOCALE, t as tr } from '../i18n';
 const HOUR = 3600000;
 
 /**
@@ -65,6 +65,8 @@ export default function Learned() {
 
   const load = useCallback(async () => {
     const [a, b, c] = await Promise.all([loadLearned(), loadOff(), loadBeats()]);
+    // Learned in the other language: shown after learning again, so the texts match the app
+    if ((a.lang ?? 'he') !== LANG) learn().then(setL).catch(() => undefined);
     setL(a);
     setOffList(b);
     setBeats(c);
