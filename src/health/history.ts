@@ -3,7 +3,7 @@ import { insertRecords, readRecords } from 'react-native-health-connect';
 import { sleepMinutesInWindow } from './today';
 import { dedupeNutrition, mealId, mealKey } from './meals';
 import { withoutHidden } from './hiddenMeals';
-import { merge } from '../report/weightWhy';
+import { merge, onePerDay } from '../report/weightWhy';
 import { currentEatingDayStart, eatingDayStart, SleepSpan } from './eatingDay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadManual, morningKey } from '../sleep/manual';
@@ -99,9 +99,8 @@ export async function readProteinByDay(days = 7, now = new Date()) {
   return out;
 }
 
-/** Latest weight per day for the last `days` days, oldest first. */
 /**
- * One weigh-in a day for the trend: the day's last, from the same scale as the latest weigh-in
+ * One weigh-in a day for the trend: the day's first (onePerDay), from the same scale as the latest weigh-in
  * (another scale shows another number), and of two readings minutes apart that disagree, the
  * one that fits the other days (the same cleaning as the weight explanation).
  */
@@ -114,14 +113,7 @@ export async function readWeights(days = 60, now = new Date()) {
   const main = points.length ? points[points.length - 1].source : undefined;
   const same = points.filter((p) => p.source === main);
   const use = same.length >= 2 ? same : points;
-  const byDay = new Map<number, { date: Date; kg: number; source?: string }>();
-  for (const p of use) {
-    const t = new Date(p.time);
-    const key = startOfDay(t).getTime();
-    const prev = byDay.get(key);
-    if (!prev || prev.date < t) byDay.set(key, { date: t, kg: p.kg, source: p.source });
-  }
-  return [...byDay.values()].sort((a, b) => a.date.getTime() - b.date.getTime());
+  return onePerDay(use).map((p) => ({ date: new Date(p.time), kg: p.kg, source: p.source }));
 }
 
 export async function saveWeight(kg: number, at = new Date()) {

@@ -86,6 +86,19 @@ export function merge(points: WeighPoint[], odd: string[]): WeighPoint[] {
   });
 }
 
+/**
+ * One weigh-in a day, the day's first: the morning number, before food and drink, is the one
+ * that compares fairly between days. Every chart and every sum of the weight uses this.
+ */
+export function onePerDay<P extends { time: number }>(points: P[]): P[] {
+  const byDay = new Map<number, P>();
+  for (const p of [...points].sort((a, b) => a.time - b.time)) {
+    const k = startOfDay(p.time);
+    if (!byDay.has(k)) byDay.set(k, p);
+  }
+  return [...byDay.values()];
+}
+
 export function explainWeight(
   points: WeighPoint[],
   days: DayLite[],
@@ -101,7 +114,8 @@ export function explainWeight(
   const main = recent[recent.length - 1].source;
   const same = recent.filter((p) => p.source === main);
   const others = [...new Set(recent.filter((p) => p.source !== main).map((p) => label(p.source)))];
-  const series = same.length >= 2 ? same : recent;
+  const series = onePerDay(same.length >= 2 ? same : recent);
+  if (series.length < 2) return null;
   const first = series[0];
   const last = series[series.length - 1];
   // Averages of up to two weigh-ins at each end soften a single odd morning
@@ -190,7 +204,7 @@ export function explainWeight(
  * or a gain explained before it worries him. Same scale only. Null when nothing to say.
  */
 export function weightNews(points: WeighPoint[], now: number): { title: string; body: string } | null {
-  const merged = merge(points.filter((p) => p.time >= now - 10 * DAY && p.time <= now), []);
+  const merged = onePerDay(merge(points.filter((p) => p.time >= now - 10 * DAY && p.time <= now), []));
   if (merged.length < 2) return null;
   const last = merged[merged.length - 1];
   if (startOfDay(last.time) !== startOfDay(now)) return null;
