@@ -2,6 +2,7 @@
 // height, there is no calorie deficit: the plan becomes keeping the weight, with strength and habits.
 import type { Goal, Profile } from './profile';
 
+import { t } from '../i18n';
 export const ADULT_AGE = 18;
 export const HEALTHY_BMI = 18.5;
 
@@ -37,7 +38,7 @@ export function safeGoal(p: Pick<Profile, 'goal' | 'age' | 'weightKg' | 'heightC
 }
 
 export function blockText(b: DeficitBlock): string | null {
-  if (b === 'minor') return 'מתחת לגיל 18 המאמן לא מתכנן ירידה במשקל. אפשר לעבוד על כוח, כושר והרגלי אוכל טובים.';
-  if (b === 'underweight') return 'לפי הגובה והמשקל שלך, ירידה במשקל לא מומלצת. המאמן יעבוד איתך על כוח, אוכל מלא והרגלים.';
+  if (b === 'minor') return t('מתחת לגיל 18 המאמן לא מתכנן ירידה במשקל. אפשר לעבוד על כוח, כושר והרגלי אוכל טובים.', 'Under 18 the coach does not plan weight loss. You can work on strength, fitness and good eating habits.');
+  if (b === 'underweight') return t('לפי הגובה והמשקל שלך, ירידה במשקל לא מומלצת. המאמן יעבוד איתך על כוח, אוכל מלא והרגלים.', 'By your height and weight, losing weight is not recommended. The coach will work with you on strength, whole food and habits.');
   return null;
 }

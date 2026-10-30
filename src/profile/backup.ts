@@ -2,6 +2,7 @@
 import { loadPlaces, loadPrefs, savePlaces, savePrefs } from '../coach/store';
 import { loadProfile, saveProfile } from './profile';
 
+import { t } from '../i18n';
 const MARK = 'nudge-backup';
 
 export async function exportBackup(): Promise<string> {
@@ -16,9 +17,9 @@ export async function importBackup(text: string): Promise<string | null> {
     // tolerate text around the JSON, as messaging apps sometimes add it
     data = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
   } catch {
-    return 'זה לא נראה כמו גיבוי של Nudge. העתק את כל הטקסט שיצא בייצוא.';
+    return t('זה לא נראה כמו גיבוי של Nudge. העתק את כל הטקסט שיצא בייצוא.', 'This does not look like a Nudge backup. Copy all the text the export produced.');
   }
-  if (data?.[MARK] !== 1 || !data.profile?.completed) return 'זה לא נראה כמו גיבוי של Nudge.';
+  if (data?.[MARK] !== 1 || !data.profile?.completed) return t('זה לא נראה כמו גיבוי של Nudge.', 'This does not look like a Nudge backup.');
   await saveProfile(data.profile);
   if (data.prefs) await savePrefs({ ...(await loadPrefs()), ...data.prefs });
   if (data.places) await savePlaces(data.places);

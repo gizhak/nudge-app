@@ -14,26 +14,26 @@ import { Bar, Card, PrimaryButton, Row, Wordmark } from '../ui/components';
 import { Choice, Multi, NumberField, Question, TextField, TimeStepper } from '../ui/inputs';
 import { C, fmt, T } from '../ui/theme';
 
-import { CHEVRON_ON, ROW } from '../i18n';
+import { CHEVRON_ON, ROW, t as tr } from '../i18n';
 /** A new user answers only these; family, routine and the coach's style wait for My File */
 const FIRST_RUN_LAST = 3;
 
-export const STEPS = ['עליך', 'המטרה', 'בריאות וניסיון', 'עבודה ולוח זמנים', 'משפחה ובית', 'שגרה ואוכל', 'המאמן'];
-const DAY_SHORT = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+export const STEPS = [tr('עליך', 'About you'), tr('המטרה', 'The goal'), tr('בריאות וניסיון', 'Health and experience'), tr('עבודה ולוח זמנים', 'Work and schedule'), tr('משפחה ובית', 'Family and home'), tr('שגרה ואוכל', 'Routine and food'), tr('המאמן', 'The coach')];
+const DAY_SHORT = [tr('א', 'S'), tr('ב', 'M'), tr('ג', 'T'), tr('ד', 'W'), tr('ה', 'T'), tr('ו', 'F'), tr('ש', 'S')];
 
 type Field = 'age' | 'height' | 'weight' | 'target';
 type Problem = { field: Field; text: string };
 
 function validate(step: number, p: Profile): Problem | null {
   if (step === 0) {
-    if (!(p.age >= 16 && p.age <= 90)) return { field: 'age', text: p.age > 0 && p.age < 16 ? 'האפליקציה מיועדת מגיל 16' : 'גיל בשנים, בין 16 ל90' };
-    if (!(p.heightCm >= 130 && p.heightCm <= 230)) return { field: 'height', text: 'גובה בסנטימטרים, בין 130 ל230' };
-    if (!(p.weightKg >= 35 && p.weightKg <= 250)) return { field: 'weight', text: 'משקל בקילוגרמים, בין 35 ל250' };
+    if (!(p.age >= 16 && p.age <= 90)) return { field: 'age', text: p.age > 0 && p.age < 16 ? tr('האפליקציה מיועדת מגיל 16', 'The app is for ages 16 and up') : tr('גיל בשנים, בין 16 ל90', 'Age in years, between 16 and 90') };
+    if (!(p.heightCm >= 130 && p.heightCm <= 230)) return { field: 'height', text: tr('גובה בסנטימטרים, בין 130 ל230', 'Height in centimeters, between 130 and 230') };
+    if (!(p.weightKg >= 35 && p.weightKg <= 250)) return { field: 'weight', text: tr('משקל בקילוגרמים, בין 35 ל250', 'Weight in kilograms, between 35 and 250') };
   }
   if (step === 1 && p.targetWeightKg !== undefined) {
     const min = minHealthyKg(p.heightCm);
-    if (min !== null && p.targetWeightKg < min) return { field: 'target', text: `היעד הנמוך הבריא לגובה שלך: ${fmt(min, 1)} ק"ג. אפשר גם להשאיר ריק.` };
-    if (p.targetWeightKg > 250) return { field: 'target', text: 'משקל יעד עד 250 ק"ג, או להשאיר ריק' };
+    if (min !== null && p.targetWeightKg < min) return { field: 'target', text: tr(`היעד הנמוך הבריא לגובה שלך: ${fmt(min, 1)} ק"ג. אפשר גם להשאיר ריק.`, `The lowest healthy target for your height: ${fmt(min, 1)} kg. You can also leave it empty.`) };
+    if (p.targetWeightKg > 250) return { field: 'target', text: tr('משקל יעד עד 250 ק"ג, או להשאיר ריק', 'Target weight up to 250 kg, or leave it empty') };
   }
   return null;
 }
@@ -120,27 +120,27 @@ export default function Onboarding({
       <View style={{ flex: 1, backgroundColor: C.bg }}>
         <ScrollView contentContainerStyle={[s.body, { paddingTop: 48 }]} keyboardShouldPersistTaps="handled">
           <Wordmark size={40} />
-          <Text style={[T.bold, { fontSize: 26, lineHeight: 34 }]}>מאמן ותזונאי אישי, שלא מרפה.</Text>
+          <Text style={[T.bold, { fontSize: 26, lineHeight: 34 }]}>{tr('מאמן ותזונאי אישי, שלא מרפה.', 'A personal trainer and nutritionist that does not let go.')}</Text>
           <Card>
             {[
-              'קורא את מה שהשעון והמשקל כבר מודדים, ואת מה שאתה רושם באפליקציית האוכל.',
-              'אומר לך מה לעשות עכשיו: לאכול, לשתות, להתאמן או ללכת לישון.',
-              'מסביר למה המשקל זז, ושולח דוח שבועי עם פעולה אחת לשבוע הבא.',
+              tr('קורא את מה שהשעון והמשקל כבר מודדים, ואת מה שאתה רושם באפליקציית האוכל.', 'Reads what your watch and scale already measure, and what you log in your food app.'),
+              tr('אומר לך מה לעשות עכשיו: לאכול, לשתות, להתאמן או ללכת לישון.', 'Tells you what to do now: eat, drink, train or go to sleep.'),
+              tr('מסביר למה המשקל זז, ושולח דוח שבועי עם פעולה אחת לשבוע הבא.', 'Explains why your weight moved, and sends a weekly report with one action for the next week.'),
             ].map((t, i) => (
               <Text key={t} style={[T.base, { fontSize: 15, lineHeight: 23 }]}>
                 {i + 1}. {t}
               </Text>
             ))}
           </Card>
-          <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>הנתונים נשארים בטלפון שלך. אין שרת ואין חשבון.</Text>
-          <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>4 שאלות קצרות, בערך שתי דקות. את השאר אפשר להשלים אחר כך.</Text>
+          <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{tr('הנתונים נשארים בטלפון שלך. אין שרת ואין חשבון.', 'Your data stays on your phone. No server and no account.')}</Text>
+          <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{tr('4 שאלות קצרות, בערך שתי דקות. את השאר אפשר להשלים אחר כך.', '4 short questions, about two minutes. The rest can be filled in later.')}</Text>
           {restore ? (
-            <Card title="שחזור מגיבוי">
-              <Text style={[T.muted, { fontSize: 13 }]}>הדבק כאן את הגיבוי שייצאת מהתיק שלי בטלפון הקודם.</Text>
-              <TextField value={backup} onChange={setBackup} placeholder="להדבקת גיבוי" />
+            <Card title={tr("שחזור מגיבוי", 'Restore from backup')}>
+              <Text style={[T.muted, { fontSize: 13 }]}>{tr('הדבק כאן את הגיבוי שייצאת מהתיק שלי בטלפון הקודם.', 'Paste here the backup you exported from My file on your old phone.')}</Text>
+              <TextField value={backup} onChange={setBackup} placeholder={tr("להדבקת גיבוי", 'Paste the backup')} />
               {backup.trim().length > 0 && (
                 <PrimaryButton
-                  label="שחזור מהגיבוי"
+                  label={tr("שחזור מהגיבוי", 'Restore from the backup')}
                   onPress={async () => {
                     const err = await importBackup(backup);
                     if (err) setError(err);
@@ -152,13 +152,13 @@ export default function Onboarding({
             </Card>
           ) : (
             <Pressable onPress={() => setRestore(true)} hitSlop={8}>
-              <Text style={[T.bold, { fontSize: 14, color: C.muted, textDecorationLine: 'underline' }]}>עברת מטלפון אחר? שחזור מגיבוי</Text>
+              <Text style={[T.bold, { fontSize: 14, color: C.muted, textDecorationLine: 'underline' }]}>{tr('עברת מטלפון אחר? שחזור מגיבוי', 'Moved from another phone? Restore from backup')}</Text>
             </Pressable>
           )}
         </ScrollView>
         <View style={s.footer}>
           <View style={{ flex: 1 }}>
-            <PrimaryButton label="בוא נתחיל" onPress={() => setWelcome(false)} />
+            <PrimaryButton label={tr("בוא נתחיל", 'Let\'s start')} onPress={() => setWelcome(false)} />
           </View>
         </View>
       </View>
@@ -169,39 +169,39 @@ export default function Onboarding({
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={s.header}>
         <View style={s.headRow}>
-          <Text style={[T.muted, { fontSize: 14 }]}>{summary ? 'התוכנית שלך' : single ? 'עדכון התיק' : `שלב ${step + 1} מתוך ${total}`}</Text>
+          <Text style={[T.muted, { fontSize: 14 }]}>{summary ? tr('התוכנית שלך', 'Your plan') : single ? tr('עדכון התיק', 'Update your file') : tr(`שלב ${step + 1} מתוך ${total}`, `Step ${step + 1} of ${total}`)}</Text>
           {onCancel && (
             <Pressable onPress={onCancel} hitSlop={8}>
-              <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>סגור</Text>
+              <Text style={[T.bold, { fontSize: 14, color: C.muted }]}>{tr('סגור', 'Close')}</Text>
             </Pressable>
           )}
         </View>
         <Bar value={Math.min(step + 1, total)} max={total} height={6} />
-        <Text style={[T.bold, { fontSize: 26, lineHeight: 34 }]}>{summary ? 'כך המאמן יעבוד איתך' : STEPS[step]}</Text>
+        <Text style={[T.bold, { fontSize: 26, lineHeight: 34 }]}>{summary ? tr('כך המאמן יעבוד איתך', 'How the coach will work with you') : STEPS[step]}</Text>
       </View>
 
       <View style={{ flex: 1 }}>
       <ScrollView ref={scroll} contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
         {step === 0 && (
           <>
-            <Question title="איך לקרוא לך?" hint="המאמן פונה אליך בשם, כמו מאמן אמיתי">
-              <TextField value={p.name ?? ''} onChange={(name) => set({ name: name.trim() ? name : undefined })} placeholder="השם שלך" />
+            <Question title={tr("איך לקרוא לך?", 'What should I call you?')} hint={tr("המאמן פונה אליך בשם, כמו מאמן אמיתי", 'The coach calls you by name, like a real coach')}>
+              <TextField value={p.name ?? ''} onChange={(name) => set({ name: name.trim() ? name : undefined })} placeholder={tr("השם שלך", 'Your name')} />
             </Question>
-            <Question title="מין" hint="משפיע על חישוב חילוף החומרים">
-              <Choice options={[{ key: 'male', label: 'גבר' }, { key: 'female', label: 'אישה' }]} value={p.sex} onChange={(sex) => set({ sex })} />
+            <Question title={tr("מין", 'Sex')} hint={tr("משפיע על חישוב חילוף החומרים", 'Affects the metabolism calculation')}>
+              <Choice options={[{ key: 'male', label: tr('גבר', 'Male') }, { key: 'female', label: tr('אישה', 'Female') }]} value={p.sex} onChange={(sex) => set({ sex })} />
             </Question>
-            <NumberField label="גיל" unit="שנים" value={p.age} onChange={(n) => set({ age: n ?? 0 })} error={errOf('age')} onLayoutY={at('age')} />
-            <NumberField label="גובה" unit='ס"מ' value={p.heightCm} onChange={(n) => set({ heightCm: n ?? 0 })} error={errOf('height')} onLayoutY={at('height')} />
-            <NumberField label="משקל" unit='ק"ג' value={p.weightKg} onChange={(n) => set({ weightKg: n ?? 0 })} error={errOf('weight')} onLayoutY={at('weight')} />
-            <NumberField label="היקף מותניים" unit='ס"מ' value={p.waistCm} onChange={(n) => set({ waistCm: n })} optional />
-            <Text style={[T.muted, { fontSize: 13 }]}>היקף המותניים מראה ירידה בשומן גם כשהמשקל לא זז, כי השריר מתחיל לעלות.</Text>
+            <NumberField label={tr("גיל", 'Age')} unit={tr("שנים", 'years')} value={p.age} onChange={(n) => set({ age: n ?? 0 })} error={errOf('age')} onLayoutY={at('age')} />
+            <NumberField label={tr("גובה", 'Height')} unit={tr('ס"מ', 'cm')} value={p.heightCm} onChange={(n) => set({ heightCm: n ?? 0 })} error={errOf('height')} onLayoutY={at('height')} />
+            <NumberField label={tr("משקל", 'Weight')} unit={tr('ק"ג', 'kg')} value={p.weightKg} onChange={(n) => set({ weightKg: n ?? 0 })} error={errOf('weight')} onLayoutY={at('weight')} />
+            <NumberField label={tr("היקף מותניים", 'Waist')} unit={tr('ס"מ', 'cm')} value={p.waistCm} onChange={(n) => set({ waistCm: n })} optional />
+            <Text style={[T.muted, { fontSize: 13 }]}>{tr('היקף המותניים מראה ירידה בשומן גם כשהמשקל לא זז, כי השריר מתחיל לעלות.', 'Your waist shows fat loss even when the weight does not move, because muscle starts to grow.')}</Text>
             {!initial.completed && !firstRun && (
-              <Card title="עברת מטלפון אחר?">
-                <Text style={[T.muted, { fontSize: 13 }]}>הדבק כאן את הגיבוי שייצאת מהתיק שלי, ותדלג על השאלון.</Text>
-                <TextField value={backup} onChange={setBackup} placeholder="להדבקת גיבוי" />
+              <Card title={tr("עברת מטלפון אחר?", 'Moved from another phone?')}>
+                <Text style={[T.muted, { fontSize: 13 }]}>{tr('הדבק כאן את הגיבוי שייצאת מהתיק שלי, ותדלג על השאלון.', 'Paste here the backup you exported from My file, and skip the questions.')}</Text>
+                <TextField value={backup} onChange={setBackup} placeholder={tr("להדבקת גיבוי", 'Paste the backup')} />
                 {backup.trim().length > 0 && (
                   <PrimaryButton
-                    label="שחזור מהגיבוי"
+                    label={tr("שחזור מהגיבוי", 'Restore from the backup')}
                     onPress={async () => {
                       const err = await importBackup(backup);
                       if (err) setError(err);
@@ -216,14 +216,14 @@ export default function Onboarding({
 
         {step === 1 && (
           <>
-            <Question title="מה המטרה?">
+            <Question title={tr("מה המטרה?", 'What is the goal?')}>
               <Choice
                 options={(
                   [
-                    { key: 'lose', label: 'ירידה במשקל' },
-                    { key: 'recomp', label: 'ירידה בשומן ובניית שריר' },
-                    { key: 'gain', label: 'בניית שריר' },
-                    { key: 'maintain', label: 'שמירה' },
+                    { key: 'lose', label: tr('ירידה במשקל', 'Lose weight') },
+                    { key: 'recomp', label: tr('ירידה בשומן ובניית שריר', 'Lose fat and build muscle') },
+                    { key: 'gain', label: tr('בניית שריר', 'Build muscle') },
+                    { key: 'maintain', label: tr('שמירה', 'Maintain') },
                   ] as { key: Profile['goal']; label: string }[]
                 ).filter((o) => !block || !DEFICIT_GOALS.includes(o.key))}
                 value={p.goal}
@@ -232,63 +232,63 @@ export default function Onboarding({
               {block && <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>{blockText(block)}</Text>}
             </Question>
             {p.goal === 'lose' && (
-              <Question title="קצב" hint="מהיר יותר קשה יותר לשמור, ויש בו סיכון גבוה יותר לאבד שריר">
-                <Choice options={[{ key: 'moderate', label: 'מתון, חצי ק"ג בשבוע' }, { key: 'fast', label: 'מהיר' }]} value={p.pace} onChange={(pace) => set({ pace })} />
+              <Question title={tr("קצב", 'Pace')} hint={tr("מהיר יותר קשה יותר לשמור, ויש בו סיכון גבוה יותר לאבד שריר", 'Faster is harder to keep, and risks losing more muscle')}>
+                <Choice options={[{ key: 'moderate', label: tr('מתון, חצי ק"ג בשבוע', 'Moderate, half a kilo a week') }, { key: 'fast', label: tr('מהיר', 'Fast') }]} value={p.pace} onChange={(pace) => set({ pace })} />
               </Question>
             )}
-            <NumberField label="משקל יעד" unit='ק"ג' value={p.targetWeightKg} onChange={(n) => set({ targetWeightKg: n })} optional error={errOf('target')} onLayoutY={at('target')} />
-            <Question title="למה עכשיו?" hint="משפט אחד במילים שלך. המאמן יזכיר לך אותו כשיהיה קשה.">
-              <TextField value={p.whyNow} onChange={(whyNow) => set({ whyNow })} placeholder="למשל: רוצה להיות בכושר בשביל הילדים" />
+            <NumberField label={tr("משקל יעד", 'Target weight')} unit={tr('ק"ג', 'kg')} value={p.targetWeightKg} onChange={(n) => set({ targetWeightKg: n })} optional error={errOf('target')} onLayoutY={at('target')} />
+            <Question title={tr("למה עכשיו?", 'Why now?')} hint={tr("משפט אחד במילים שלך. המאמן יזכיר לך אותו כשיהיה קשה.", 'One sentence in your own words. The coach will remind you of it when it gets hard.')}>
+              <TextField value={p.whyNow} onChange={(whyNow) => set({ whyNow })} placeholder={tr("למשל: רוצה להיות בכושר בשביל הילדים", 'For example: I want to be fit for my kids')} />
             </Question>
           </>
         )}
 
         {step === 2 && (
           <>
-            <Question title="ניסיון באימוני כוח">
+            <Question title={tr("ניסיון באימוני כוח", 'Strength training experience')}>
               <Choice
                 options={[
-                  { key: 'beginner', label: 'מתחיל' },
-                  { key: 'returning', label: 'חוזר אחרי הפסקה' },
-                  { key: 'regular', label: 'מתאמן קבוע' },
+                  { key: 'beginner', label: tr('מתחיל', 'Beginner') },
+                  { key: 'returning', label: tr('חוזר אחרי הפסקה', 'Coming back after a break') },
+                  { key: 'regular', label: tr('מתאמן קבוע', 'Train regularly') },
                 ]}
                 value={p.experience}
                 onChange={(experience) => set({ experience })}
               />
             </Question>
-            <Question title="כאבים או פציעות" hint="תרגילים שמעמיסים על האזור יוחלפו">
+            <Question title={tr("כאבים או פציעות", 'Pain or injuries')} hint={tr("תרגילים שמעמיסים על האזור יוחלפו", 'Moves that load the area will be swapped')}>
               <Multi
                 options={[
-                  { key: 'knees', label: 'ברכיים' },
-                  { key: 'back', label: 'גב' },
-                  { key: 'shoulders', label: 'כתפיים' },
+                  { key: 'knees', label: tr('ברכיים', 'Knees') },
+                  { key: 'back', label: tr('גב', 'Back') },
+                  { key: 'shoulders', label: tr('כתפיים', 'Shoulders') },
                 ]}
                 values={p.pains}
                 onChange={(pains) => set({ pains })}
               />
             </Question>
-            <Question title="רופא הגביל אותך בפעילות גופנית?">
-              <Choice options={[{ key: 'no', label: 'לא' }, { key: 'yes', label: 'כן' }]} value={p.medicalLimit ? 'yes' : 'no'} onChange={(v) => set({ medicalLimit: v === 'yes' })} />
+            <Question title={tr("רופא הגביל אותך בפעילות גופנית?", 'Has a doctor limited your physical activity?')}>
+              <Choice options={[{ key: 'no', label: tr('לא', 'No') }, { key: 'yes', label: tr('כן', 'Yes') }]} value={p.medicalLimit ? 'yes' : 'no'} onChange={(v) => set({ medicalLimit: v === 'yes' })} />
             </Question>
-            <Question title="אחד מאלה רלוונטי?" hint="משפיע על עצימות האימונים">
+            <Question title={tr("אחד מאלה רלוונטי?", 'Do any of these apply?')} hint={tr("משפיע על עצימות האימונים", 'Affects how hard the workouts are')}>
               <Multi
                 options={[
-                  { key: 'bp', label: 'לחץ דם' },
-                  { key: 'diabetes', label: 'סוכרת' },
-                  { key: 'heart', label: 'בעיית לב' },
+                  { key: 'bp', label: tr('לחץ דם', 'Blood pressure') },
+                  { key: 'diabetes', label: tr('סוכרת', 'Diabetes') },
+                  { key: 'heart', label: tr('בעיית לב', 'Heart condition') },
                 ]}
                 values={p.chronic ?? []}
                 onChange={(chronic) => set({ chronic })}
               />
             </Question>
             {p.experience !== 'beginner' && (
-              <Question title="מה גרם לך להפסיק בפעם הקודמת?" hint="כדי לזהות את זה מוקדם אם זה חוזר">
+              <Question title={tr("מה גרם לך להפסיק בפעם הקודמת?", 'What made you stop last time?')} hint={tr("כדי לזהות את זה מוקדם אם זה חוזר", 'To notice it early if it comes back')}>
                 <Choice
                   options={[
-                    { key: 'work', label: 'עומס בעבודה' },
-                    { key: 'family', label: 'משפחה' },
-                    { key: 'injury', label: 'פציעה' },
-                    { key: 'motivation', label: 'חוסר מוטיבציה' },
+                    { key: 'work', label: tr('עומס בעבודה', 'Busy at work') },
+                    { key: 'family', label: tr('משפחה', 'Family') },
+                    { key: 'injury', label: tr('פציעה', 'Injury') },
+                    { key: 'motivation', label: tr('חוסר מוטיבציה', 'Lack of motivation') },
                   ]}
                   value={p.stopReason}
                   onChange={(stopReason) => set({ stopReason })}
@@ -297,7 +297,7 @@ export default function Onboarding({
             )}
             <Card>
               <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>
-                Nudge הוא כלי עזר ולא תחליף לרופא, דיאטנית או מאמן מוסמך. האחריות לבריאות שלך היא שלך. אם יש לך מצב רפואי, התייעץ עם רופא לפני שמתחילים, ועצור מיד אם יש כאב, סחרחורת או קוצר נשימה.
+                {tr('Nudge הוא כלי עזר ולא תחליף לרופא, דיאטנית או מאמן מוסמך. האחריות לבריאות שלך היא שלך. אם יש לך מצב רפואי, התייעץ עם רופא לפני שמתחילים, ועצור מיד אם יש כאב, סחרחורת או קוצר נשימה.', 'Nudge is a helper, not a replacement for a doctor, dietitian or certified trainer. You are responsible for your health. If you have a medical condition, talk to a doctor before you start, and stop at once if you feel pain, dizziness or shortness of breath.')}
               </Text>
             </Card>
           </>
@@ -305,59 +305,59 @@ export default function Onboarding({
 
         {step === 3 && (
           <>
-            <Question title="איפה אתה עובד?">
+            <Question title={tr("איפה אתה עובד?", 'Where do you work?')}>
               <Choice
                 options={[
-                  { key: 'office', label: 'משרד' },
-                  { key: 'home', label: 'מהבית' },
-                  { key: 'hybrid', label: 'משולב' },
+                  { key: 'office', label: tr('משרד', 'Office') },
+                  { key: 'home', label: tr('מהבית', 'From home') },
+                  { key: 'hybrid', label: tr('משולב', 'Hybrid') },
                 ]}
                 value={p.workMode}
                 onChange={(workMode) => set({ workMode })}
               />
             </Question>
-            <Question title="כמה העבודה פיזית?" hint="משנה את יעד הקלוריות והצעדים">
+            <Question title={tr("כמה העבודה פיזית?", 'How physical is your work?')} hint={tr("משנה את יעד הקלוריות והצעדים", 'Changes the calorie and step targets')}>
               <Choice
                 options={[
-                  { key: 'desk', label: 'יושב רוב היום' },
-                  { key: 'mixed', label: 'חלק בעמידה' },
-                  { key: 'physical', label: 'עבודה פיזית' },
+                  { key: 'desk', label: tr('יושב רוב היום', 'Sitting most of the day') },
+                  { key: 'mixed', label: tr('חלק בעמידה', 'Partly standing') },
+                  { key: 'physical', label: tr('עבודה פיזית', 'Physical work') },
                 ]}
                 value={p.workLoad}
                 onChange={(workLoad) => set({ workLoad })}
               />
             </Question>
-            <Question title="עבודה במשמרות?" hint="משמרות לילה משנות את שעות השקט">
-              <Choice options={[{ key: 'no', label: 'לא' }, { key: 'yes', label: 'כן' }]} value={p.shiftWork === undefined ? undefined : p.shiftWork ? 'yes' : 'no'} onChange={(v) => set({ shiftWork: v === 'yes' })} />
+            <Question title={tr("עבודה במשמרות?", 'Shift work?')} hint={tr("משמרות לילה משנות את שעות השקט", 'Night shifts change the quiet hours')}>
+              <Choice options={[{ key: 'no', label: tr('לא', 'No') }, { key: 'yes', label: tr('כן', 'Yes') }]} value={p.shiftWork === undefined ? undefined : p.shiftWork ? 'yes' : 'no'} onChange={(v) => set({ shiftWork: v === 'yes' })} />
             </Question>
             <View style={s.timeRow}>
-              <Text style={[T.bold, s.label]}>יום העבודה מתחיל</Text>
+              <Text style={[T.bold, s.label]}>{tr('יום העבודה מתחיל', 'The work day starts')}</Text>
               <TimeStepper value={p.workStart} onChange={(workStart) => set({ workStart })} step={30} />
             </View>
             <View style={s.timeRow}>
-              <Text style={[T.bold, s.label]}>ונגמר</Text>
+              <Text style={[T.bold, s.label]}>{tr('ונגמר', 'and ends')}</Text>
               <TimeStepper value={p.workEnd} onChange={(workEnd) => set({ workEnd })} step={30} />
             </View>
-            <Question title="איך אתה רוצה את סוף השבוע?">
+            <Question title={tr("איך אתה רוצה את סוף השבוע?", 'How do you want the weekend?')}>
               <Choice
                 options={[
-                  { key: 'same', label: 'כמו כל יום' },
-                  { key: 'normal', label: 'רגיל' },
-                  { key: 'flex', label: 'גמיש' },
+                  { key: 'same', label: tr('כמו כל יום', 'Like any day') },
+                  { key: 'normal', label: tr('רגיל', 'Normal') },
+                  { key: 'flex', label: tr('גמיש', 'Flexible') },
                 ]}
                 value={p.weekendStyle ?? 'normal'}
                 onChange={(weekendStyle) => set({ weekendStyle })}
               />
               <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>
                 {(p.weekendStyle ?? 'normal') === 'same'
-                  ? 'אין לסוף השבוע שום יחס מיוחד: אותם יעדים, אותן שעות, אותו מאמן.'
+                  ? tr('אין לסוף השבוע שום יחס מיוחד: אותם יעדים, אותן שעות, אותו מאמן.', 'The weekend gets no special treatment: same targets, same hours, same coach.')
                   : (p.weekendStyle ?? 'normal') === 'normal'
-                    ? 'אותם יעדים. רק השעות זזות: שקילה מאוחרת יותר, ואימון בסוף השבוע מוצע בבוקר.'
-                    : 'תקציב קלוריות שבועי: מעט פחות בימי חול, ויותר בסוף השבוע, למשל לארוחה בחוץ. סך השבוע נשאר אותו דבר.'}
+                    ? tr('אותם יעדים. רק השעות זזות: שקילה מאוחרת יותר, ואימון בסוף השבוע מוצע בבוקר.', 'Same targets. Only the hours move: a later weigh-in, and weekend workouts offered in the morning.')
+                    : tr('תקציב קלוריות שבועי: מעט פחות בימי חול, ויותר בסוף השבוע, למשל לארוחה בחוץ. סך השבוע נשאר אותו דבר.', 'A weekly calorie budget: a little less on weekdays, and more on the weekend, for example for a meal out. The week\'s total stays the same.')}
               </Text>
             </Question>
             {(p.weekendStyle ?? 'normal') !== 'same' && (
-            <Question title="ימי סוף שבוע" hint="ימים בלי עבודה">
+            <Question title={tr("ימי סוף שבוע", 'Weekend days')} hint={tr("ימים בלי עבודה", 'Days without work')}>
               <View style={s.days}>
                 {DAY_SHORT.map((l, day) => {
                   const on = weekend.includes(day);
@@ -370,7 +370,7 @@ export default function Onboarding({
               </View>
             </Question>
             )}
-            <Question title="באילו ימים להתאמן?" hint="בחר ימים, ואז שעה לכל יום">
+            <Question title={tr("באילו ימים להתאמן?", 'Which days to train?')} hint={tr("בחר ימים, ואז שעה לכל יום", 'Choose days, then a time for each day')}>
               <View style={s.days}>
                 {DAY_SHORT.map((l, day) => {
                   const on = p.slots.some((x) => x.day === day);
@@ -384,22 +384,22 @@ export default function Onboarding({
             </Question>
             {p.slots.map((slot) => (
               <View key={slot.day} style={s.timeRow}>
-                <Text style={[T.base, s.label]}>יום {DAY_NAMES[slot.day]}</Text>
+                <Text style={[T.base, s.label]}>{tr('יום', 'Day')} {DAY_NAMES[slot.day]}</Text>
                 <TimeStepper
                   value={slot.time}
                   onChange={(time) => set({ slots: p.slots.map((x) => (x.day === slot.day ? { ...x, time } : x)) })}
                 />
               </View>
             ))}
-            <Question title="אורך אימון">
-              <Choice options={[{ key: 30, label: '30 דקות' }, { key: 45, label: '45 דקות' }, { key: 60, label: '60 דקות' }]} value={p.sessionMinutes} onChange={(sessionMinutes) => set({ sessionMinutes })} />
+            <Question title={tr("אורך אימון", 'Workout length')}>
+              <Choice options={[{ key: 30, label: tr('30 דקות', '30 minutes') }, { key: 45, label: tr('45 דקות', '45 minutes') }, { key: 60, label: tr('60 דקות', '60 minutes') }]} value={p.sessionMinutes} onChange={(sessionMinutes) => set({ sessionMinutes })} />
             </Question>
-            <Question title="איפה מתאמנים?">
+            <Question title={tr("איפה מתאמנים?", 'Where do you train?')}>
               <Choice
                 options={[
-                  { key: 'gym', label: 'חדר כושר' },
-                  { key: 'home', label: 'בבית' },
-                  { key: 'outdoor', label: 'בחוץ' },
+                  { key: 'gym', label: tr('חדר כושר', 'Gym') },
+                  { key: 'home', label: tr('בבית', 'At home') },
+                  { key: 'outdoor', label: tr('בחוץ', 'Outdoors') },
                 ]}
                 value={p.trainPlace}
                 onChange={(trainPlace) => set({ trainPlace })}
@@ -410,26 +410,26 @@ export default function Onboarding({
               const chosen = p.split ?? rec.split;
               const options = SPLITS.filter((x) => p.slots.length >= x.minDays).map((x) => ({
                 key: x.key,
-                label: x.key === rec.split ? `${x.label} (מומלץ)` : x.label,
+                label: x.key === rec.split ? tr(`${x.label} (מומלץ)`, `${x.label} (recommended)`) : x.label,
               }));
               return (
-                <Question title="איך לחלק את האימונים?" hint={SPLITS.find((x) => x.key === chosen)?.hint}>
+                <Question title={tr("איך לחלק את האימונים?", 'How to split the workouts?')} hint={SPLITS.find((x) => x.key === chosen)?.hint}>
                   <Choice options={options} value={chosen} onChange={(split) => set({ split })} />
                   <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>
-                    {chosen === rec.split ? rec.why : `ההמלצה שלי: ${SPLITS.find((x) => x.key === rec.split)?.label}. ${rec.why} ההחלטה שלך, והתוכנית תיבנה לפי מה שבחרת.`}
+                    {chosen === rec.split ? rec.why : tr(`ההמלצה שלי: ${SPLITS.find((x) => x.key === rec.split)?.label}. ${rec.why} ההחלטה שלך, והתוכנית תיבנה לפי מה שבחרת.`, `My recommendation: ${SPLITS.find((x) => x.key === rec.split)?.label}. ${rec.why} The choice is yours, and the plan is built from what you choose.`)}
                   </Text>
                 </Question>
               );
             })()}
             {p.slots.length > 0 && (
-              <Question title="התרגילים בכל אימון" hint="לפי ההמלצה, או מה שתבחר. נשמר לכל חלוקה בנפרד.">
+              <Question title={tr("התרגילים בכל אימון", 'The moves in each workout')} hint={tr("לפי ההמלצה, או מה שתבחר. נשמר לכל חלוקה בנפרד.", 'As recommended, or what you choose. Kept for each split separately.')}>
                 <View style={s.movesCard}>
                   {editableSessions(p).map((x, i) => (
                     <Pressable key={x.key} onPress={() => setPicking(x)} style={({ pressed }) => [s.movesRow, i > 0 && s.movesSep, pressed && { opacity: 0.6 }]}>
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text style={[T.bold, { fontSize: 16 }]}>{x.title}</Text>
                         <Text style={[T.muted, { fontSize: 13, color: x.picked ? C.signal : C.muted }]}>
-                          {x.picked ? `${x.picked.length} תרגילים · הבחירה שלך` : `${x.recommended.length} תרגילים · לפי ההמלצה`}
+                          {x.picked ? tr(`${x.picked.length} תרגילים · הבחירה שלך`, `${x.picked.length} moves · your choice`) : tr(`${x.recommended.length} תרגילים · לפי ההמלצה`, `${x.recommended.length} moves · as recommended`)}
                         </Text>
                       </View>
                       <Ionicons name={CHEVRON_ON} size={18} color={C.muted} />
@@ -438,19 +438,19 @@ export default function Onboarding({
                 </View>
               </Question>
             )}
-            <Question title="להוסיף בסוף כל אימון?">
+            <Question title={tr("להוסיף בסוף כל אימון?", 'Add at the end of each workout?')}>
               <Multi
                 options={[
-                  { key: 'rope', label: 'קפיצות חבל' },
-                  { key: 'abs', label: 'בטן' },
+                  { key: 'rope', label: tr('קפיצות חבל', 'Jump rope') },
+                  { key: 'abs', label: tr('בטן', 'Abs') },
                 ]}
                 values={[...(p.rope ? ['rope' as const] : []), ...(p.abs ? ['abs' as const] : [])]}
                 onChange={(v) => set({ rope: v.includes('rope'), abs: v.includes('abs') })}
               />
             </Question>
             {p.trainPlace !== 'gym' && (
-              <Question title="יש משקולות או גומיות בבית?">
-                <Choice options={[{ key: 'no', label: 'לא' }, { key: 'yes', label: 'כן' }]} value={p.homeEquipment ? 'yes' : 'no'} onChange={(v) => set({ homeEquipment: v === 'yes' })} />
+              <Question title={tr("יש משקולות או גומיות בבית?", 'Weights or bands at home?')}>
+                <Choice options={[{ key: 'no', label: tr('לא', 'No') }, { key: 'yes', label: tr('כן', 'Yes') }]} value={p.homeEquipment ? 'yes' : 'no'} onChange={(v) => set({ homeEquipment: v === 'yes' })} />
               </Question>
             )}
           </>
@@ -458,31 +458,31 @@ export default function Onboarding({
 
         {step === 4 && (
           <>
-            <Question title="מצב משפחתי">
+            <Question title={tr("מצב משפחתי", 'Relationship status')}>
               <Choice
                 options={[
-                  { key: 'single', label: 'רווק' },
-                  { key: 'partner', label: 'בזוגיות' },
-                  { key: 'separated', label: 'גרוש או פרוד' },
+                  { key: 'single', label: tr('רווק', 'Single') },
+                  { key: 'partner', label: tr('בזוגיות', 'In a relationship') },
+                  { key: 'separated', label: tr('גרוש או פרוד', 'Divorced or separated') },
                 ]}
                 value={p.relationship}
                 onChange={(relationship) => set({ relationship })}
               />
             </Question>
-            <Question title="מי בבית?" hint="כדי שהמאמן יבין לילות קטועים ולא יאשים אותך">
+            <Question title={tr("מי בבית?", 'Who is at home?')} hint={tr("כדי שהמאמן יבין לילות קטועים ולא יאשים אותך", 'So the coach understands broken nights and does not blame you')}>
               <Choice
                 options={[
-                  { key: 'none', label: 'אין ילדים' },
-                  { key: 'baby', label: 'תינוק עד גיל שנה' },
-                  { key: 'young', label: 'ילדים קטנים' },
-                  { key: 'older', label: 'ילדים גדולים' },
+                  { key: 'none', label: tr('אין ילדים', 'No kids') },
+                  { key: 'baby', label: tr('תינוק עד גיל שנה', 'A baby under one') },
+                  { key: 'young', label: tr('ילדים קטנים', 'Young kids') },
+                  { key: 'older', label: tr('ילדים גדולים', 'Older kids') },
                 ]}
                 value={p.kids}
                 onChange={(kids) => set({ kids, nightWakeups: kids === 'baby' || kids === 'young' ? true : p.nightWakeups })}
               />
             </Question>
             {p.relationship === 'separated' && p.kids !== 'none' && (
-              <Question title="באילו ימים הילדים אצלך?" hint="בימים האלה המאמן יתכנן סביבם">
+              <Question title={tr("באילו ימים הילדים אצלך?", 'Which days are the kids with you?')} hint={tr("בימים האלה המאמן יתכנן סביבם", 'On these days the coach plans around them')}>
                 <View style={s.days}>
                   {DAY_SHORT.map((d, i) => {
                     const on = (p.kidsDays ?? []).includes(i);
@@ -505,40 +505,40 @@ export default function Onboarding({
         {step === 5 && (
           <>
             <View style={s.timeRow}>
-              <Text style={[T.bold, s.label]}>שעת השכמה</Text>
+              <Text style={[T.bold, s.label]}>{tr('שעת השכמה', 'Wake up time')}</Text>
               <TimeStepper value={p.wakeTime} onChange={(wakeTime) => set({ wakeTime })} />
             </View>
             <View style={s.timeRow}>
-              <Text style={[T.bold, s.label]}>שעת שינה</Text>
+              <Text style={[T.bold, s.label]}>{tr('שעת שינה', 'Bedtime')}</Text>
               <TimeStepper value={p.bedTime} onChange={(bedTime) => set({ bedTime })} />
             </View>
-            <Question title="יש התעוררויות בלילה?" hint={p.kids === 'baby' || p.kids === 'young' ? 'בגלל הילדים, או גם בלעדיהם' : 'שירותים, חוסר שקט, כל סיבה'}>
-              <Choice options={[{ key: 'no', label: 'לא' }, { key: 'yes', label: 'כן' }]} value={p.nightWakeups ? 'yes' : 'no'} onChange={(v) => set({ nightWakeups: v === 'yes' })} />
+            <Question title={tr("יש התעוררויות בלילה?", 'Do you wake up at night?')} hint={p.kids === 'baby' || p.kids === 'young' ? tr('בגלל הילדים, או גם בלעדיהם', 'Because of the kids, or also without them') : tr('שירותים, חוסר שקט, כל סיבה', 'Bathroom, restlessness, any reason')}>
+              <Choice options={[{ key: 'no', label: tr('לא', 'No') }, { key: 'yes', label: tr('כן', 'Yes') }]} value={p.nightWakeups ? 'yes' : 'no'} onChange={(v) => set({ nightWakeups: v === 'yes' })} />
             </Question>
-            <Question title="נוהג לישון בצהריים?">
-              <Choice options={[{ key: 'no', label: 'לא' }, { key: 'yes', label: 'כן' }]} value={p.naps ? 'yes' : 'no'} onChange={(v) => set({ naps: v === 'yes' })} />
+            <Question title={tr("נוהג לישון בצהריים?", 'Do you nap at noon?')}>
+              <Choice options={[{ key: 'no', label: tr('לא', 'No') }, { key: 'yes', label: tr('כן', 'Yes') }]} value={p.naps ? 'yes' : 'no'} onChange={(v) => set({ naps: v === 'yes' })} />
             </Question>
-            <Question title="כמה ארוחות ביום?">
+            <Question title={tr("כמה ארוחות ביום?", 'How many meals a day?')}>
               <Choice options={[{ key: 3, label: '3' }, { key: 4, label: '4' }, { key: 5, label: '5' }]} value={p.mealsPerDay} onChange={(mealsPerDay) => set({ mealsPerDay })} />
             </Question>
-            <Question title="הגבלות תזונה">
+            <Question title={tr("הגבלות תזונה", 'Diet restrictions')}>
               <Multi
                 options={[
-                  { key: 'vegetarian', label: 'צמחוני' },
-                  { key: 'kosher', label: 'כשר' },
-                  { key: 'no_dairy', label: 'בלי מוצרי חלב' },
+                  { key: 'vegetarian', label: tr('צמחוני', 'Vegetarian') },
+                  { key: 'kosher', label: tr('כשר', 'Kosher') },
+                  { key: 'no_dairy', label: tr('בלי מוצרי חלב', 'No dairy') },
                 ]}
                 values={p.diet}
                 onChange={(diet) => set({ diet })}
               />
             </Question>
-            <Question title="מתי הכי קשה לך לשמור על האוכל?" hint="המאמן יקדים אותך בשעות האלה">
+            <Question title={tr("מתי הכי קשה לך לשמור על האוכל?", 'When is it hardest to stick to the food?')} hint={tr("המאמן יקדים אותך בשעות האלה", 'The coach will get ahead of you at those hours')}>
               <Multi
                 options={[
-                  { key: 'evening', label: 'בערב' },
-                  { key: 'stress', label: 'בלחץ' },
-                  { key: 'boredom', label: 'משעמום' },
-                  { key: 'weekend', label: 'בסוף השבוע' },
+                  { key: 'evening', label: tr('בערב', 'In the evening') },
+                  { key: 'stress', label: tr('בלחץ', 'Under stress') },
+                  { key: 'boredom', label: tr('משעמום', 'When bored') },
+                  { key: 'weekend', label: tr('בסוף השבוע', 'On the weekend') },
                 ]}
                 values={p.hardTimes ?? []}
                 onChange={(hardTimes) => set({ hardTimes })}
@@ -549,23 +549,23 @@ export default function Onboarding({
 
         {step === 6 && (
           <>
-            <Question title="כמה נודניק?" hint="אפשר לשנות בכל רגע בלשונית המאמן">
+            <Question title={tr("כמה נודניק?", 'How much nagging?')} hint={tr("אפשר לשנות בכל רגע בלשונית המאמן", 'You can change it any time in the Coach tab')}>
               <Choice
                 options={[
-                  { key: 'quiet', label: 'שקט' },
-                  { key: 'normal', label: 'רגיל' },
-                  { key: 'close', label: 'צמוד' },
-                  { key: 'drill', label: 'דומיננטי' },
+                  { key: 'quiet', label: tr('שקט', 'Quiet') },
+                  { key: 'normal', label: tr('רגיל', 'Normal') },
+                  { key: 'close', label: tr('צמוד', 'Close') },
+                  { key: 'drill', label: tr('דומיננטי', 'Dominant') },
                 ]}
                 value={p.level}
                 onChange={(level) => set({ level })}
               />
             </Question>
-            <Question title="איך שהמאמן ידבר?">
+            <Question title={tr("איך שהמאמן ידבר?", 'How should the coach talk?')}>
               <Choice
                 options={[
-                  { key: 'direct', label: 'ישיר ועניני' },
-                  { key: 'encouraging', label: 'מעודד' },
+                  { key: 'direct', label: tr('ישיר ועניני', 'Direct and to the point') },
+                  { key: 'encouraging', label: tr('מעודד', 'Encouraging') },
                 ]}
                 value={p.tone}
                 onChange={(tone) => set({ tone })}
@@ -574,39 +574,39 @@ export default function Onboarding({
             <Card>
               <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>
                 {p.tone === 'direct'
-                  ? 'דוגמה: "חסרים 60 גרם חלבון. כדאי שארוחת הערב תהיה עשירה בחלבון."'
-                  : 'דוגמה: "אתה קרוב. חסרים 60 גרם חלבון, ארוחת ערב עשירה בחלבון תסגור את זה."'}
+                  ? tr('דוגמה: "חסרים 60 גרם חלבון. כדאי שארוחת הערב תהיה עשירה בחלבון."', 'Example: "60 grams of protein missing. Make dinner rich in protein."')
+                  : tr('דוגמה: "אתה קרוב. חסרים 60 גרם חלבון, ארוחת ערב עשירה בחלבון תסגור את זה."', 'Example: "You are close. 60 grams of protein missing, a protein rich dinner will close it."')}
               </Text>
             </Card>
-            <Text style={[T.muted, { fontSize: 13 }]}>את הבית, המשרד וחדר הכושר מגדירים בלשונית המאמן אחרי הסיום.</Text>
+            <Text style={[T.muted, { fontSize: 13 }]}>{tr('את הבית, המשרד וחדר הכושר מגדירים בלשונית המאמן אחרי הסיום.', 'Home, office and gym are set in the Coach tab after you finish.')}</Text>
           </>
         )}
 
         {summary && d && (
           <>
-            <Card title="יעדים יומיים">
-              <Row label="קלוריות" value={fmt(d.goals.calories)} />
-              <Row label="חלבון" value={`${d.goals.proteinG} ג'`} />
-              <Row label="צעדים" value={fmt(d.goals.steps)} />
-              <Row label="שינה" value={`${d.goals.sleepHours} שעות`} />
+            <Card title={tr("יעדים יומיים", 'Daily targets')}>
+              <Row label={tr("קלוריות", 'Calories')} value={fmt(d.goals.calories)} />
+              <Row label={tr("חלבון", 'Protein')} value={tr(`${d.goals.proteinG} ג'`, `${d.goals.proteinG} g`)} />
+              <Row label={tr("צעדים", 'Steps')} value={fmt(d.goals.steps)} />
+              <Row label={tr("שינה", 'Sleep')} value={tr(`${d.goals.sleepHours} שעות`, `${d.goals.sleepHours} hours`)} />
               <Text style={[T.muted, { fontSize: 13 }]}>
-                תחזוקה משוערת: {fmt(d.maintenance)} קלוריות.
-                {d.weeklyRateKg > 0 && p.goal !== 'gain' ? ` קצב צפוי: ${d.weeklyRateKg} ק"ג בשבוע.` : ''}
-                {d.weeksToTarget ? ` משקל היעד בעוד כ${d.weeksToTarget} שבועות.` : ''}
+                {tr('תחזוקה משוערת:', 'Estimated maintenance:')} {fmt(d.maintenance)} {tr('קלוריות.', 'calories.')}
+                {d.weeklyRateKg > 0 && p.goal !== 'gain' ? tr(` קצב צפוי: ${d.weeklyRateKg} ק"ג בשבוע.`, ` Expected pace: ${d.weeklyRateKg} kg a week.`) : ''}
+                {d.weeksToTarget ? tr(` משקל היעד בעוד כ${d.weeksToTarget} שבועות.`, ` Target weight in about ${d.weeksToTarget} weeks.`) : ''}
               </Text>
             </Card>
-            <Card title={`אימונים בשבוע: ${d.plan.length}`}>
-              {d.plan.length === 0 && <Text style={[T.muted, { fontSize: 14 }]}>לא נבחרו ימים</Text>}
+            <Card title={tr(`אימונים בשבוע: ${d.plan.length}`, `Workouts a week: ${d.plan.length}`)}>
+              {d.plan.length === 0 && <Text style={[T.muted, { fontSize: 14 }]}>{tr('לא נבחרו ימים', 'No days chosen')}</Text>}
               {d.plan.map((w) => (
                 <Row
                   key={w.day}
                   label={`${DAY_NAMES[w.day]} ${pad2(w.hour)}:${pad2(w.minute)}`}
-                  value={`${d.sessions[w.session].title}, ${d.sessions[w.session].minutes} דק'`}
+                  value={tr(`${d.sessions[w.session].title}, ${d.sessions[w.session].minutes} דק'`, `${d.sessions[w.session].title}, ${d.sessions[w.session].minutes} min`)}
                 />
               ))}
             </Card>
             {d.notes.length > 0 && (
-              <Card title="חשוב לדעת">
+              <Card title={tr("חשוב לדעת", 'Good to know')}>
                 {d.notes.map((n) => (
                   <Text key={n} style={[T.base, { fontSize: 14, lineHeight: 21 }]}>
                     {n}
@@ -615,11 +615,11 @@ export default function Onboarding({
               </Card>
             )}
             {firstRun ? (
-              <Card title="כדי שהמאמן יכיר אותך יותר">
-                <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>משפחה ובית, שגרת שינה ואוכל, וכמה נודניק המאמן יהיה: אפשר להשלים בכל רגע בלשונית המאמן, תחת "התיק שלי". עד אז המאמן עובד עם ברירות מחדל סבירות.</Text>
+              <Card title={tr("כדי שהמאמן יכיר אותך יותר", 'So the coach knows you better')}>
+                <Text style={[T.base, { fontSize: 14, lineHeight: 21 }]}>{tr('משפחה ובית, שגרת שינה ואוכל, וכמה נודניק המאמן יהיה: אפשר להשלים בכל רגע בלשונית המאמן, תחת "התיק שלי". עד אז המאמן עובד עם ברירות מחדל סבירות.', 'Family and home, sleep and food routine, and how much the coach nags: you can fill these in any time in the Coach tab, under My file. Until then the coach works with sensible defaults.')}</Text>
               </Card>
             ) : (
-              <Text style={[T.muted, { fontSize: 13 }]}>אפשר לחזור ולשנות תשובות בכל רגע ממסך המאמן.</Text>
+              <Text style={[T.muted, { fontSize: 13 }]}>{tr('אפשר לחזור ולשנות תשובות בכל רגע ממסך המאמן.', 'You can come back and change answers any time from the Coach screen.')}</Text>
             )}
           </>
         )}
@@ -647,7 +647,7 @@ export default function Onboarding({
             <View style={{ flex: 1 }}>
               {single ? (
                 <PrimaryButton
-                  label="שמור"
+                  label={tr("שמור", 'Save')}
                   onPress={() => {
                     const problem = validate(step, p);
                     if (problem) return showProblem(problem);
@@ -655,12 +655,12 @@ export default function Onboarding({
                   }}
                 />
               ) : (
-                <PrimaryButton label={summary ? 'יאללה, מתחילים' : step === (firstRun ? FIRST_RUN_LAST : STEPS.length - 1) ? 'הצג את התוכנית' : 'הבא'} onPress={summary ? finish : next} />
+                <PrimaryButton label={summary ? tr('יאללה, מתחילים', 'Let\'s go') : step === (firstRun ? FIRST_RUN_LAST : STEPS.length - 1) ? tr('הצג את התוכנית', 'Show the plan') : tr('הבא', 'Next')} onPress={summary ? finish : next} />
               )}
             </View>
             {!single && (step > 0 || firstRun) && (
               <Pressable onPress={() => (step === 0 ? setWelcome(true) : setStep(firstRun && summary ? FIRST_RUN_LAST : step - 1))} style={s.back}>
-                <Text style={[T.bold, { fontSize: 16, color: C.accent }]}>חזרה</Text>
+                <Text style={[T.bold, { fontSize: 16, color: C.accent }]}>{tr('חזרה', 'Back')}</Text>
               </Pressable>
             )}
           </>

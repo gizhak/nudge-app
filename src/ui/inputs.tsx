@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { C, FONT, T } from './theme';
 
-import { ROW, START } from '../i18n';
+import { ROW, START, t as tr } from '../i18n';
 export function Choice<K extends string | number>({
   options,
   value,
@@ -76,7 +76,7 @@ export function NumberField({
     <View style={s.field} onLayout={onLayoutY ? (e) => onLayoutY(e.nativeEvent.layout.y) : undefined}>
       <Text style={[T.bold, s.label]}>
         {label}
-        {optional ? <Text style={T.muted}> (לא חובה)</Text> : null}
+        {optional ? <Text style={T.muted}> {tr('(לא חובה)', '(optional)')}</Text> : null}
       </Text>
       <View style={s.numRow}>
         <TextInput
