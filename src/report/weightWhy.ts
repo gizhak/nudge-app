@@ -87,16 +87,22 @@ export function merge(points: WeighPoint[], odd: string[]): WeighPoint[] {
 }
 
 /**
- * One weigh-in a day, the day's first: the morning number, before food and drink, is the one
- * that compares fairly between days. Every chart and every sum of the weight uses this.
+ * One weigh-in a day: the morning weighing, before food and drink, is the one that compares
+ * fairly between days. The morning is the day's first weighing and any re-weigh within 90
+ * minutes of it, and of those the last one stands: stepping on again right away is a
+ * correction (clothes, a bad step), as Zepp shows it. A weighing later in the day is left out.
+ * Every chart and every sum of the weight uses this.
  */
 export function onePerDay<P extends { time: number }>(points: P[]): P[] {
-  const byDay = new Map<number, P>();
+  const byDay = new Map<number, P[]>();
   for (const p of [...points].sort((a, b) => a.time - b.time)) {
     const k = startOfDay(p.time);
-    if (!byDay.has(k)) byDay.set(k, p);
+    byDay.set(k, [...(byDay.get(k) ?? []), p]);
   }
-  return [...byDay.values()];
+  return [...byDay.values()].map((ps) => {
+    const morning = ps.filter((p) => p.time - ps[0].time <= 90 * 60000);
+    return morning[morning.length - 1];
+  });
 }
 
 export function explainWeight(

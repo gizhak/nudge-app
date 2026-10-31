@@ -8,7 +8,7 @@ import { readNutritionByEatingDay, readSleepByNight } from '../health/history';
 import { workoutsOnly } from '../health/isWorkout';
 import { derive } from '../profile/derive';
 import { loadProfile } from '../profile/profile';
-import { explainWeight, merge, WeightWhy } from './weightWhy';
+import { explainWeight, merge, onePerDay, WeightWhy } from './weightWhy';
 
 import { t as tr } from '../i18n';
 const DAY = 24 * 3600 * 1000;
@@ -76,9 +76,11 @@ export async function readWeightStory(days = 14): Promise<WeightStory> {
   // The day's number on the scale of the latest weigh-in, as the explanation measures it
   const merged = merge(points, []);
   const main = merged[merged.length - 1]?.source;
+  // The same one weigh-in a day as the chart and the explanation
+  const daily = onePerDay(merged.filter((p) => p.source === main));
   const kgOf = (day: number) => {
-    const same = merged.filter((p) => sod(p.time) === day && p.source === main);
-    return same.length ? same[same.length - 1].kg : null;
+    const same = daily.find((p) => sod(p.time) === day);
+    return same ? same.kg : null;
   };
   const target = GOALS.calories;
   const rows: DayRow[] = lite.map((d) => ({ ...d, kg: kgOf(d.day), logged: d.meals >= 2 && d.kcal >= target * 0.45 }));
