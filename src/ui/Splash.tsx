@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
 import { startEnter } from './enter';
 import { C, FONT } from './theme';
+import { RTL } from '../i18n';
 
 const CYCLE = 2200;
 /** It leaves right after the second landing, when the word is still: about 4 seconds */
@@ -92,5 +93,6 @@ const s = StyleSheet.create({
   letter: { fontFamily: FONT.black, fontSize: 60, lineHeight: 72, color: C.ink, letterSpacing: -1.5, includeFontPadding: false },
   dot: { width: 16, height: 16, borderRadius: 8, backgroundColor: C.signal, marginLeft: 4, marginBottom: 14 },
   track: { position: 'absolute', bottom: 120, width: 120, height: 4, borderRadius: 2, backgroundColor: '#E9E3D9', overflow: 'hidden' },
-  fill: { width: 120, height: 4, borderRadius: 2, backgroundColor: C.ink, transformOrigin: 'right' },
+  // Fills from where reading starts: the right in Hebrew, the left in English
+  fill: { width: 120, height: 4, borderRadius: 2, backgroundColor: C.ink, transformOrigin: RTL ? 'right' : 'left' },
 });
