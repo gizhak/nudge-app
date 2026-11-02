@@ -212,7 +212,11 @@ async function runOnce(
       const m = now.getHours() * 60 + now.getMinutes();
       const plan = planThisWeek(now).find((p) => p.day === now.getDay());
       const lastDone = [...hf.workouts].reverse().find((w) => !w.run && w.minutes >= 10);
-      if (lastDone && now.getTime() - lastDone.end < 3 * 3600000 && now.getTime() >= lastDone.end) {
+      // The watch passes a workout on only when its app syncs, sometimes hours later: a workout of
+      // today is still news the first time it is seen, until 12 hours after it ended (once per workout)
+      const sinceEnd = lastDone ? now.getTime() - lastDone.end : Infinity;
+      if (lastDone && sinceEnd >= 0 && sinceEnd < 12 * 3600000) {
+        const fresh = sinceEnd < 2 * 3600000;
         const planned = plan ? sessionOf(plan.session).minutes : null;
         const vsPlan = planned == null ? '' : lastDone.minutes >= planned + 10 ? tr(` ארוך מהתוכנית ב ${lastDone.minutes - planned} דקות.`, ` ${lastDone.minutes - planned} minutes longer than planned.`) : lastDone.minutes <= planned - 10 ? tr(` קצר מהתוכנית ב ${planned - lastDone.minutes} דקות, בפעם הבאה עד הסוף.`, ` ${planned - lastDone.minutes} minutes shorter than planned, next time all the way.`) : tr(' בדיוק לפי התוכנית.', ' Exactly as planned.');
         const vsPrev = hf.prevWorkout ? (lastDone.minutes > hf.prevWorkout.minutes + 5 ? tr(` ${lastDone.minutes - hf.prevWorkout.minutes} דקות יותר מהאימון הקודם.`, ` ${lastDone.minutes - hf.prevWorkout.minutes} minutes more than the last workout.`) : '') : '';
@@ -220,7 +224,9 @@ async function runOnce(
           id: `workout_done@${lastDone.start}`,
           priority: 2,
           title: plan ? tr('אימון בפנים', 'Workout in') : tr('אימון בונוס', 'Bonus workout'),
-          body: tr(`${lastDone.minutes} דקות.${vsPlan}${vsPrev} עכשיו ארוחה עם 30 גרם חלבון בתוך שעתיים, והרבה מים.`, `${lastDone.minutes} minutes.${vsPlan}${vsPrev} Now a meal with 30 grams of protein within two hours, and plenty of water.`),
+          body: fresh
+            ? tr(`${lastDone.minutes} דקות.${vsPlan}${vsPrev} עכשיו ארוחה עם 30 גרם חלבון בתוך שעתיים, והרבה מים.`, `${lastDone.minutes} minutes.${vsPlan}${vsPrev} Now a meal with 30 grams of protein within two hours, and plenty of water.`)
+            : tr(`${lastDone.minutes} דקות.${vsPlan}${vsPrev} אם עוד לא הייתה ארוחה עם חלבון מאז, זה הזמן.`, `${lastDone.minutes} minutes.${vsPlan}${vsPrev} If there was no meal with protein since, now is the time.`),
         });
         // How the weights felt, for the moves he set a weight for: his answers move the weights over time
         if (plan) {
