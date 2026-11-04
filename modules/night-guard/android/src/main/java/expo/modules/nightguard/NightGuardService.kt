@@ -118,7 +118,7 @@ class NightGuardService : Service() {
 
   companion object {
     const val GUARD_CHANNEL = "nudge_guard"
-    const val COACH_CHANNEL = "coach_urgent"
+    const val COACH_CHANNEL = "coach_urgent2"
     const val GUARD_ID = 7301
     const val ALERT_ID = 7302
     private const val THROTTLE_MS = 20 * 60 * 1000L
@@ -131,7 +131,16 @@ class NightGuardService : Service() {
         nm.createNotificationChannel(NotificationChannel(GUARD_CHANNEL, NightPrefs.tr(ctx, "שומר הלילה", "Night guard"), NotificationManager.IMPORTANCE_MIN))
       }
       if (nm.getNotificationChannel(COACH_CHANNEL) == null) {
-        nm.createNotificationChannel(NotificationChannel(COACH_CHANNEL, NightPrefs.tr(ctx, "Nudge: חשוב", "Nudge: important"), NotificationManager.IMPORTANCE_HIGH))
+        // Same channel as the app's important one, with the same whistle (res/raw/nudge_whistle)
+        val ch = NotificationChannel(COACH_CHANNEL, NightPrefs.tr(ctx, "Nudge: חשוב", "Nudge: important"), NotificationManager.IMPORTANCE_HIGH)
+        val raw = ctx.resources.getIdentifier("nudge_whistle", "raw", ctx.packageName)
+        if (raw != 0) {
+          ch.setSound(
+            android.net.Uri.parse("android.resource://${ctx.packageName}/$raw"),
+            android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION).build(),
+          )
+        }
+        nm.createNotificationChannel(ch)
       }
     }
 

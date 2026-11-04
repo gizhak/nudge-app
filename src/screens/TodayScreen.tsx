@@ -1,3 +1,5 @@
+import Celebrate from '../celebrate/Celebrate';
+import { Celebration, dueCelebration, markSeen } from '../celebrate/due';
 import { workoutsOnly } from '../health/isWorkout';
 import { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -335,6 +337,9 @@ function weekVerdict(w: Week): string | null {
 // Last data shown, so switching back to this tab does not start empty and jump
 const todayCache: { data: TodayData | null; week: Week | null; sit: Situation | null } = { data: null, week: null, sit: null };
 
+/** Once per run of the app, across tab switches */
+const celebratedThisRun = { on: false };
+
 export default function TodayScreen({
   onOpenTraining,
   onReschedule,
@@ -408,6 +413,36 @@ export default function TodayScreen({
     };
   }, [loadPlace]);
   // Taps on the water + and - in a row, shown as rising water until a moment after the last one
+  // A success worth a moment on the screen, once each
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+  useEffect(() => {
+    // At most one per opening of the app
+    if (!data || !sit || celebration || celebratedThisRun.on) return;
+    let alive = true;
+    dueCelebration({
+      now: new Date(),
+      workoutsToday: data.workouts.count,
+      workoutMinutes: data.workouts.minutes,
+      steps: data.steps,
+      kcal: data.nutrition.kcal,
+      protein: data.nutrition.protein,
+      meals: data.nutrition.meals,
+      waterMl: sit.waterMl ?? 0,
+      waterTarget: sit.waterTarget ?? 0,
+    })
+      .then((c) => {
+        if (alive && c && !celebratedThisRun.on) {
+          celebratedThisRun.on = true;
+          setCelebration(c);
+          markSeen(c.key).catch(() => undefined);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, sit]);
   const [burst, setBurst] = useState(0);
   const [bursting, setBursting] = useState(false);
   const burstTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -866,6 +901,7 @@ export default function TodayScreen({
       </Sheet>
     </Screen>
     <WaterWave active={bursting} count={burst} ml={sit?.waterMl ?? 0} target={sit?.waterTarget ?? 0} cup={prefs.waterContainer ?? 250} />
+    {celebration && <Celebrate c={celebration} onDone={() => setCelebration(null)} />}
     </View>
   );
 }

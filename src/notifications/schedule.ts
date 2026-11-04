@@ -11,8 +11,14 @@ import type { Container } from '../nutrition/water';
 import { t } from '../i18n';
 const CHANNEL = 'coach';
 
-/** Three levels, each its own Android channel so its sound and vibration can be set in the phone settings. */
-export const CHANNELS = { urgent: 'coach_urgent', normal: 'coach_normal', info: 'coach_info' } as const;
+/**
+ * Three levels, each its own Android channel so its sound and vibration can be set in the phone settings.
+ * Important and regular sound the app's own whistle. A channel's sound is fixed when it is made, so the
+ * whistle came with new channel ids ("2"); the old ones are removed.
+ */
+export const CHANNELS = { urgent: 'coach_urgent2', normal: 'coach_normal2', info: 'coach_info' } as const;
+export const WHISTLE = 'nudge_whistle.wav';
+const OLD_CHANNELS = ['coach_urgent', 'coach_normal'];
 export type Importance = keyof typeof CHANNELS;
 
 Notifications.setNotificationHandler({
@@ -30,6 +36,7 @@ export async function ensurePermission(): Promise<boolean> {
       name: t('Nudge: חשוב', 'Nudge: important'),
       description: t('אימון, שינה, חיבורים ומה שאסור לפספס', 'Workout, sleep, connections and what must not be missed'),
       importance: Notifications.AndroidImportance.MAX,
+      sound: WHISTLE,
       vibrationPattern: [0, 300, 200, 300],
       lightColor: '#FF4D2E',
     });
@@ -37,7 +44,9 @@ export async function ensurePermission(): Promise<boolean> {
       name: t('Nudge: רגיל', 'Nudge: regular'),
       description: t('ארוחות, מים, חלבון וצעדים', 'Meals, water, protein and steps'),
       importance: Notifications.AndroidImportance.DEFAULT,
+      sound: WHISTLE,
     });
+    for (const id of OLD_CHANNELS) await Notifications.deleteNotificationChannelAsync(id).catch(() => undefined);
     await Notifications.setNotificationChannelAsync(CHANNELS.info, {
       name: t('Nudge: מידע', 'Nudge: info'),
       description: t('עידוד וסיכומים, בלי צליל', 'Encouragement and summaries, no sound'),
