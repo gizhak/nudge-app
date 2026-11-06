@@ -192,8 +192,16 @@ const ALT_SPLIT = /\s*[\\|]\s*|\s*\/\s*|\s+או\s+/;
 export function parseItem(raw: string, shown?: string): MenuItem {
   // Words that are not food: "חובה 3 סוגי ירק" is 3 vegetables
   const clean = (x: string) => x.replace(/(^|\s)(חובה|רק|גם)(?=\s|$)/g, ' ').trim();
-  const parts = normalize(raw).split(ALT_SPLIT).map(clean).filter((x) => /[א-תa-zA-Z]/.test(x));
-  const shownParts = (shown ?? raw).split(ALT_SPLIT).map(clean).filter((x) => /[א-תa-zA-Z]/.test(x));
+  // "עוף סלמון" in a list of choices is two choices with the slash lost
+  const loose = (x: string) => {
+    const ws = x.split(' ');
+    if (ws.length < 2 || /\d/.test(x) || NAMES.some((n) => n.n === x)) return [x];
+    return ws.every((w) => NAMES.some((n) => n.n === w)) ? ws : [x];
+  };
+  const several = ALT_SPLIT.test(normalize(raw));
+  const split = (src: string) => src.split(ALT_SPLIT).map(clean).filter((x) => /[א-תa-zA-Z]/.test(x)).flatMap((x) => (several ? loose(x) : [x]));
+  const parts = split(normalize(raw));
+  const shownParts = split(shown ?? raw);
   if (!parts.length) return { text: (shown ?? raw).trim(), kcal: 0, protein: 0, known: false };
   const free = /חופשי|ללא הגבלה|כמה שרוצים/.test(parts[0]);
   const carry = amountOf(parts[0]);
@@ -397,10 +405,20 @@ export function parseDiet(text: string, now = Date.now()): DietMenu {
     }
     // Food. A new block at "1:", a named option ("דגים :"), a list after foods, foods after a list,
     // or a line that the next line's "2:" shows is the first option of a new meal.
-    const opt = line.match(/^(\d)\s*:\s*(.*)$/);
+    // "1:", "2:"; Lens sometimes swaps a marker and the amount after it in a right-to-left line:
+    // "2 : 3 ביצים" comes out "3:2 ביצים". The option is the number this meal expects next.
+    let opt = line.match(/^(\d)\s*:\s*(.*)$/);
+    const pair = line.match(/^(\d)\s*:\s*(\d)\s+(.*)$/);
+    if (pair) {
+      const expect = String(Math.min(9, ((block as Block | null)?.options.length ?? 0) + 1));
+      const [a, b2] = [pair[1], pair[2]];
+      const option = b2 === expect || (a !== expect && Number(b2) <= 3 && Number(a) > 3) ? b2 : a;
+      const qty = option === a ? b2 : a;
+      opt = [line, option, `${qty} ${pair[3]}`] as unknown as RegExpMatchArray;
+    }
     const named = !opt && colon > 0 && colon <= 12 && /[א-ת]/.test(head) && !!foodIn(after) && !/^(אפשרויות|תוספת|תוספות)$/.test(head) ? head : null;
     const list = isList(line);
-    const nextIsTwo = /^2\s*:/.test(normalize(raw[i + 1] ?? ''));
+    const nextIsTwo = /^2\s*:|^\d\s*:\s*2\s/.test(normalize(raw[i + 1] ?? ''));
     const continues = block != null && (/^[+\\/|,]/.test(line) || /[+\\/|,]$/.test(normalize(raw[i - 1] ?? '')) || (line.split(' ').length <= 2 && !amountOf(line) && !opt && !named));
     let b = block as Block | null;
     // "או ..." opening a line: another way to eat the whole meal
@@ -411,7 +429,7 @@ export function parseDiet(text: string, now = Date.now()): DietMenu {
     }
     if (opt) {
       if (opt[1] === '1' || !b || b.list) b = newBlock();
-      addLine(b, opt[2], shown.replace(/^\s*\d\s*:\s*/, ''), opt[1]);
+      addLine(b, opt[2], pair ? opt[2] : shown.replace(/^\s*\d\s*:\s*/, ''), opt[1]);
       continue;
     }
     // A list goes on over its wrapped lines (slashes, no "+")
