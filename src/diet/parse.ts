@@ -70,7 +70,7 @@ export interface DietMenu {
 const LETTER = 'א-תa-zA-Z';
 const PREFIX = '[ובהלמשכ]{0,2}';
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const word = (forms: string[]) => new RegExp(`(^|[^${LETTER}])${PREFIX}(${forms.map(esc).join('|')})(?=$|[^${LETTER}])`);
+const word = (forms: string[]) => new RegExp(`(^|[^${LETTER}])${PREFIX}(${forms.map(esc).join('|')})(?=$|[^${LETTER}])`, 'i');
 
 // Every name of every food, longest first, so "חזה עוף" wins over "עוף"
 const NAMES = DIET_FOODS.flatMap((f) => f.names.map((n) => ({ n, f })))
@@ -78,7 +78,15 @@ const NAMES = DIET_FOODS.flatMap((f) => f.names.map((n) => ({ n, f })))
   .map((x) => ({ ...x, re: word([x.n]) }));
 
 const UNITS: { unit: Unit | 'exchange'; re: RegExp }[] = [
-  { unit: 'gram', re: /^(גרם|גר'|גר׳|גר|ג'|ג׳|ג|מ"ל|מ״ל|מל)(?=$|[^א-ת])/ },
+  { unit: 'gram', re: /^(גרם|גר'|גר׳|גר|ג'|ג׳|ג|מ"ל|מ״ל|מל)(?=$|[^א-ת])|^(grams?|gr|g|ml)\b/i },
+  { unit: 'tsp', re: /^(teaspoons?|tsp)\b/i },
+  { unit: 'tbsp', re: /^(tablespoons?|tbsp)\b/i },
+  { unit: 'cup', re: /^(cups?)\b/i },
+  { unit: 'slice', re: /^(slices?)\b/i },
+  { unit: 'can', re: /^(cans?|tins?)\b/i },
+  { unit: 'handful', re: /^(handfuls?)\b/i },
+  { unit: 'scoop', re: /^(scoops?)\b/i },
+  { unit: 'one', re: /^(pieces?|units?)\b/i },
   { unit: 'tsp', re: /^(כפיות|כפית)/ },
   { unit: 'tbsp', re: /^(כפות|כף)/ },
   { unit: 'cup', re: /^(כוסות|כוס)/ },
@@ -112,6 +120,10 @@ function normalize(s: string): string {
     .replace(/½/g, ' 0.5 ')
     .replace(/¼/g, ' 0.25 ')
     .replace(/¾/g, ' 0.75 ')
+    // A meal's hours are not a range of amounts: "07:00-09:00" stays two times
+    .replace(/(\d{1,2}[:.]\d{2})\s*(?:-|–|עד|to)\s*(\d{1,2}[:.]\d{2})/g, '$1 $2')
+    // "יוגורט 3%" is a yogurt, not three
+    .replace(/\d+(?:\.\d+)?\s*%/g, ' ')
     .replace(/(\d+)\s*\/\s*(\d+)/g, (_, a, b) => String(Number(a) / Number(b)))
     .replace(/(\d+(?:\.\d+)?)\s*(?:-|–|עד)\s*(\d+(?:\.\d+)?)/g, (_, a, b) => String((Number(a) + Number(b)) / 2))
     .replace(/\s+/g, ' ')
@@ -182,7 +194,7 @@ function parseChoice(raw: string, shown?: string, carry?: { qty: number; unit: U
 }
 
 /** Alternatives in a line: "\", "/", "|" or "או". Not a fraction ("1/2" is already 0.5). */
-const ALT_SPLIT = /\s*[\\|]\s*|\s*\/\s*|\s+או\s+/;
+const ALT_SPLIT = /\s*[\\|]\s*|\s*\/\s*|\s+או\s+|\s+or\s+/i;
 
 /**
  * One food line into numbers, with its alternatives: "בננה \ תפוח / 2 תמרים" is one line of three
@@ -247,7 +259,7 @@ const ORDER: SlotId[] = ['breakfast', 'snack_am', 'lunch', 'snack_pm', 'dinner',
  */
 function piecesOf(line: string): string[] {
   const out: string[] = [];
-  for (const chunk of line.split(/\s*[+,;]\s*|\s+עם\s+/)) {
+  for (const chunk of line.split(/\s*[+,;]\s*|\s+עם\s+|\s+with\s+|\s+and\s+/i)) {
     const c = chunk.trim();
     if (!/[א-תa-zA-Z]/.test(c)) continue;
     // Split before a number that follows a known food, unless it is part of an alternative
@@ -270,6 +282,7 @@ function piecesOf(line: string): string[] {
 
 /** Looks like a dietitian's menu (meal headers and amounts), not a restaurant's */
 export function looksLikeDiet(text: string): boolean {
+  if (isAiFormat(text)) return true;
   const lines = text.split(/\r?\n/).map((l) => normalize(l.replace(/^[\s\-•*·●▪◦–—]+/, '')));
   const headers = lines.filter((l) => HEADER.test(l) && /ארוח|בוקר|צהר|ערב|ביניים/.test(l)).length;
   const amounts = lines.filter((l) => /(\d|חצי)\s*(גרם|כף|כפות|כפית|כוס|פרוס|יחיד|מנות|מנה|מנת|גביע|סוגי)/.test(l)).length;
@@ -285,7 +298,28 @@ const TIME = /(\d{1,2})[.:](\d{2})\s*(?:-|–|עד)?\s*(\d{1,2})[.:](\d{2})/;
 const MEAL_LABEL = /^(ארוחת\s+|ארוחה\s+)?(בוקר|ביניים|עשר|צהריים|צהרים|מנחה|אחה"צ|אחה״צ|אחר הצהריים|ערב|לילה|לפני השינה|לפני שינה|לפני אימון|אחרי אימון)$/;
 const SHARED_LABEL = /^(אופציה|אפשרות)(\s+(ל|ב)?(ערב|צהריים|צהרים|בוקר)(\s*[\\/|,]\s*(ערב|צהריים|צהרים|בוקר))*)?$/;
 const EXTRAS_LABEL = /^(תוספת|תוספות)(\s*\+?\s*(אופציות|אפשרויות))?$|^(אופציות|אפשרויות)$/;
-const WATER_RULE = /(\d+(?:\.\d+)?)\s*ליטר/;
+const WATER_RULE = /(\d+(?:\.\d+)?)\s*(?:ליטר|liters?|litres?)/i;
+/** "10 כוסות מים ביום": the water of a day in cups */
+const CUPS_DAY = /(\d+)\s*(?:כוסות|cups|glasses)\s*(?:מים|of water)?\s*(?:ביום|ליום|a day|per day|daily)/i;
+const ONE_TIME = /\(?\s*(\d{1,2})[:.](\d{2})\s*\)?/;
+/** English meal names into the Hebrew the rules read */
+const heLabel = (x: string) =>
+  x
+    .replace(/^(meal\s*\d+\s*[-:]?\s*)/i, '')
+    .replace(/\bbreakfast\b/i, 'ארוחת בוקר')
+    .replace(/\b(mid[- ]?morning snack|morning snack)\b/i, 'עשר')
+    .replace(/\b(afternoon snack)\b/i, 'מנחה')
+    .replace(/\blunch\b/i, 'ארוחת צהריים')
+    .replace(/\b(dinner|supper)\b/i, 'ארוחת ערב')
+    .replace(/\b(before bed|bedtime|late snack|night snack)\b/i, 'לפני השינה')
+    .replace(/\bsnack\b/i, 'ביניים')
+    .replace(/\b(pre[- ]workout)\b/i, 'לפני אימון')
+    .replace(/\b(post[- ]workout)\b/i, 'אחרי אימון')
+    .replace(/[()[\]]/g, ' ')
+    .replace(/\s+-\s+/g, ' ')
+    .replace(/\s*-?\s*(לבחירה|לבחור|בחר אחד|choose one|pick one)\s*/i, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 const CUPS_RULE = /(\d+|כוס)\s*(כוסות|כוס)?\s*מים/;
 const SANDWICH_HEAD = /כריכ/;
 const BREADS = /^(לחמים|לחם|מחמצת|שיפון|כוסמין|פיתת כוסמין|פיתה|פריכיות|טורטייה|לחמניה)(\s|$)/;
@@ -299,6 +333,123 @@ type Seq = { label?: Label; block?: Block };
 /** A line of foods separated by commas and slashes, no "+": the free list */
 const isList = (l: string) => (l.match(/,/g) ?? []).length >= 3 && !/\+/.test(l) && !/^\d\s*:/.test(l);
 
+// ---- The Google AI format --------------------------------------------------------------------------
+
+/**
+ * What he pastes into Google Lens or Gemini with the menu's photo. The answer comes back in a fixed
+ * shape that is read without guessing; what the AI could not read comes marked, for him to fill in.
+ */
+export const AI_PROMPT = t(
+  `סדר את תפריט התזונה שבתמונה בדיוק בפורמט הזה, בלי שום טקסט נוסף לפני או אחרי:
+# שם הארוחה | שעת התחלה-שעת סיום
+אפשרות 1: מאכל + מאכל + מאכל
+אפשרות 2: מאכל + מאכל
+כללים:
+1. כל ארוחה מתחילה בשורה עם #. אם אין שעה, כתוב רק את שם הארוחה.
+2. "+" בין מאכלים שאוכלים יחד. "/" בין מאכלים שאפשר לבחור אחד מהם.
+3. כמויות כמו שכתוב בתפריט, למשל "100 גרם אורז" או "2 כפות שיבולת שועל".
+4. אפשרות שמתאימה לכמה ארוחות, כתוב אותה בכל אחת מהן.
+5. תוספות חופשיות: שורה "# תוספות" ואחריה המאכלים מופרדים בפסיקים.
+6. כריכים: שורה "# כריכים" ואחריה כריך בכל שורה.
+7. מים: שורה "# כללים" ואחריה "מים: X ליטר ביום" ו"כוסות לפני ארוחה: X".
+8. מה שלא הצלחת לקרוא, כולל כתב יד לא ברור, כתוב [לא קריא] במקומו. אל תנחש.
+9. בלי לוגו, כתובת, טלפון, תאריך והערות משפטיות.`,
+  `Arrange the meal plan in the photo exactly in this format, with no other text before or after:
+# Meal name | start time-end time
+Option 1: food + food + food
+Option 2: food + food
+Rules:
+1. Each meal starts with a line beginning with #. Without a time, write only the meal's name.
+2. "+" between foods eaten together. "/" between foods to choose one of.
+3. Amounts as written in the plan, like "100 g rice" or "2 tbsp oats".
+4. An option that fits several meals: write it in each of them.
+5. Free additions: a line "# Additions" and then the foods separated by commas.
+6. Sandwiches: a line "# Sandwiches" and then one sandwich per line.
+7. Water: a line "# Rules" and then "Water: X liters a day" and "Cups before a meal: X".
+8. Whatever you could not read, unclear handwriting included, write [unreadable] in its place. Do not guess.
+9. No logo, address, phone, date or legal notes.`,
+);
+
+/** Text in the AI format: meal lines starting with "#" */
+export const isAiFormat = (text: string) => (text.match(/^\s*#\s*\S/gm) ?? []).length >= 2;
+
+const UNREAD = /\[(לא קריא|unreadable)\]/i;
+
+function parseAiFormat(text: string, now: number): DietMenu {
+  const rules: MenuRules = { useWater: true, useCups: true };
+  const meals: MenuMeal[] = [];
+  const extras: string[] = [];
+  const sandwiches: string[] = [];
+  let mode: 'meal' | 'extras' | 'sandwiches' | 'rules' | null = null;
+  let cur: MenuMeal | null = null;
+  const lines = text.split(/\r?\n/).map((l) => l.replace(/[‏‎*]/g, '').trim()).filter(Boolean);
+  for (const shown of lines) {
+    const line = normalize(shown);
+    // The header as written: normalizing would read "08:00-10:00" as a range of numbers
+    const head = shown.match(/^#\s*(.+)$/);
+    if (head) {
+      const [name, time] = head[1].split('|').map((x) => x.trim());
+      if (/תוספ|addition/i.test(name)) mode = 'extras';
+      else if (/כריכ|sandwich/i.test(name)) mode = 'sandwiches';
+      else if (/^(כללים|rules)$/i.test(name)) mode = 'rules';
+      else {
+        mode = 'meal';
+        const tm = (time ?? name).match(TIME);
+        const from = tm ? toMin(tm[1], tm[2]) : undefined;
+        const to = tm ? toMin(tm[3], tm[4]) : undefined;
+        const en = /breakfast|lunch|dinner|snack|night|late/i.test(name);
+        const he = en
+          ? name.replace(/breakfast/i, 'בוקר').replace(/lunch/i, 'צהריים').replace(/dinner/i, 'ערב').replace(/(night|late)/i, 'לילה').replace(/snack/i, 'ביניים')
+          : name;
+        const slot = slotFor(he, meals.map((m) => m.slot), from);
+        cur = meals.find((m) => m.slot === slot) ?? null;
+        if (!cur) {
+          cur = { slot, title: SLOT_TITLE[slot], options: [], pick: 0, from, to };
+          meals.push(cur);
+        }
+      }
+      continue;
+    }
+    if (mode === 'rules') {
+      const w = line.match(WATER_RULE) ?? line.match(/(\d+(?:\.\d+)?)\s*(?:liters?|l)\b/i);
+      if (w && /מים|water/i.test(line)) rules.waterL = Number(w[1]);
+      const c = line.match(/(\d+)/);
+      if (c && /כוס|cup/i.test(line) && /לפני|before/i.test(line)) rules.cupsBefore = Number(c[1]);
+      continue;
+    }
+    if (mode === 'extras') {
+      extras.push(...shown.split(/\s*[,/\\|]\s*/).map((x) => x.trim()).filter((x) => /[א-תa-zA-Z]/.test(x) && !UNREAD.test(x)));
+      continue;
+    }
+    if (mode === 'sandwiches') {
+      if (!UNREAD.test(shown)) sandwiches.push(shown.replace(/^([-•]|\d+[.)])\s*/, ''));
+      continue;
+    }
+    if (!cur) continue;
+    const opt = shown.match(/^(?:אפשרות|אופציה|option)\s*(\d*)\s*[:.-]\s*(.*)$/i);
+    const body = opt ? opt[2] : shown.replace(/^[-•\s]+/, '');
+    if (opt || !cur.options.length) cur.options.push({ label: opt?.[1] ?? '', items: [] });
+    const o = cur.options[cur.options.length - 1];
+    for (const piece of body.split(/\s*\+\s*/).map((x) => x.trim()).filter(Boolean)) {
+      if (UNREAD.test(piece)) {
+        o.items.push({ text: t('לא קריא, לכתוב מה כתוב', 'Unreadable, write what it says'), kcal: 0, protein: 0, known: false });
+        continue;
+      }
+      o.items.push(parseItem(piece));
+    }
+  }
+  for (const m of meals) {
+    m.options = m.options.filter((o) => o.items.length);
+    m.options.forEach((o, k) => {
+      if (!o.label || /^\d+$/.test(o.label)) o.label = t(`אפשרות ${k + 1}`, `Option ${k + 1}`);
+    });
+  }
+  // An option written the same in two meals is one shared option
+  for (const m of meals) for (const o of m.options) if (meals.some((x) => x !== m && x.options.some((y) => JSON.stringify(y.items) === JSON.stringify(o.items)))) o.shared = true;
+  meals.sort((a, b) => ORDER.indexOf(a.slot) - ORDER.indexOf(b.slot));
+  return { v: 2, meals: meals.filter((m) => m.options.length), extras: [...new Set(extras)], sandwiches, rules, ignored: [], text, createdAt: now };
+}
+
 /**
  * A dietitian's menu from its text. Works whether Lens read the table row by row (a label, then its
  * foods) or column by column (all the foods, then all the labels): labels and food blocks are found
@@ -306,6 +457,7 @@ const isList = (l: string) => (l.match(/,/g) ?? []).length >= 3 && !/\+/.test(l)
  * a line, "+" foods eaten together.
  */
 export function parseDiet(text: string, now = Date.now()): DietMenu {
+  if (isAiFormat(text)) return parseAiFormat(text, now);
   const rules: MenuRules = { useWater: true, useCups: true };
   const ignored: string[] = [];
   const extras: string[] = [];
@@ -330,17 +482,20 @@ export function parseDiet(text: string, now = Date.now()): DietMenu {
 
   for (let i = 0; i < raw.length; i++) {
     const shown = raw[i];
-    const line = normalize(shown);
+    let line = normalize(shown);
     if (!/[א-תa-zA-Z]/.test(line) && !TIME.test(line)) continue;
     // Rules: water a day, cups before a meal
-    if (/מים/.test(line) && (WATER_RULE.test(line) || (CUPS_RULE.test(line) && /לפני/.test(line))) && !foodIn(line.replace(/מים/g, ''))) {
+    if (/מים|water/i.test(line) && (WATER_RULE.test(line) || CUPS_DAY.test(line) || (CUPS_RULE.test(line) && /לפני/.test(line))) && !foodIn(line.replace(/מים|water/gi, ''))) {
       const w = line.match(WATER_RULE);
       if (w) rules.waterL = Number(w[1]);
+      const cd = line.match(CUPS_DAY);
+      if (cd && !w) rules.waterL = Math.round(Number(cd[1]) * 0.25 * 10) / 10;
       const c = line.match(CUPS_RULE);
       if (c && /לפני/.test(line)) rules.cupsBefore = Math.max(rules.cupsBefore ?? 0, c[1] === 'כוס' ? 1 : Number(c[1]));
       continue;
     }
-    if (NOISE.test(line) || NOISE.test(shown) || (/^[A-Za-z\s.,'-]+$/.test(line) && !foodIn(line)) || (line.length > 70 && !foodIn(line))) {
+    const labelish = MEAL_LABEL.test(heLabel(line.replace(TIME, '').replace(ONE_TIME, '')).replace(/[:.]$/, ''));
+    if (!labelish && (NOISE.test(line) || NOISE.test(shown) || (/^[A-Za-z\s.,'-]+$/.test(line) && !foodIn(line)) || (line.length > 70 && !foodIn(line)))) {
       ignored.push(shown);
       continue;
     }
@@ -356,16 +511,21 @@ export function parseDiet(text: string, now = Date.now()): DietMenu {
       else ignored.push(shown);
       continue;
     }
-    // A time, maybe with the meal's name on the same line
+    // A time, maybe with the meal's name on the same line; one time alone ("(19:00)") is a start
     const tm = line.match(TIME);
     let rest = line;
+    const one = !tm && line.match(ONE_TIME);
+    if (one && MEAL_LABEL.test(heLabel(line.replace(ONE_TIME, '')).split(':')[0].trim())) {
+      pendingTime = { from: toMin(one[1], one[2]), to: toMin(one[1], one[2]) + 90 };
+      rest = line.replace(ONE_TIME, ' ').trim();
+    }
     if (tm) {
       pendingTime = { from: toMin(tm[1], tm[2]), to: toMin(tm[3], tm[4]) };
       rest = line.replace(TIME, '').trim();
-      if (!/[א-ת]/.test(rest)) {
+      if (!/[א-תa-zA-Z]/.test(rest)) {
         // A time alone: the label may come on the next line; if not, the time is the label
         const next = normalize(raw[i + 1] ?? '');
-        if (!MEAL_LABEL.test(next.replace(/[:.]$/, ''))) {
+        if (!MEAL_LABEL.test(heLabel(next).replace(/[:.]$/, ''))) {
           seq.push({ label: { kind: 'meal', name: '', ...pendingTime } });
           pendingTime = null;
         }
@@ -374,7 +534,7 @@ export function parseDiet(text: string, now = Date.now()): DietMenu {
     }
     // A label: the meal's name, maybe "name: foods"
     const colon = rest.indexOf(':');
-    const head = (colon >= 0 ? rest.slice(0, colon) : rest).trim().replace(/[.]$/, '');
+    const head = heLabel((colon >= 0 ? rest.slice(0, colon) : rest).trim().replace(/[.]$/, ''));
     const after = colon >= 0 ? rest.slice(colon + 1).trim() : '';
     if (MEAL_LABEL.test(head) || (HEADER.test(head) && /ארוח/.test(head) && head.length <= 20)) {
       seq.push({ label: { kind: 'meal', name: head, ...(pendingTime ?? {}) } });
@@ -405,6 +565,13 @@ export function parseDiet(text: string, now = Date.now()): DietMenu {
     }
     // Food. A new block at "1:", a named option ("דגים :"), a list after foods, foods after a list,
     // or a line that the next line's "2:" shows is the first option of a new meal.
+    // Options written other ways: "א.", "ב.", "אפשרות 2:", "Option 2:" are "1:", "2:"
+    const asNum = (x: string) =>
+      x
+        .replace(/^(?:אפשרות|אופציה|option)\s*(\d)\s*[:.)-]\s*/i, '$1: ')
+        .replace(/^([א-ו])\s*[.)'׳]\s+/, (_m, l: string) => `${'אבגדהו'.indexOf(l) + 1}: `);
+    line = asNum(line);
+    const shownN = asNum(shown);
     // "1:", "2:"; Lens sometimes swaps a marker and the amount after it in a right-to-left line:
     // "2 : 3 ביצים" comes out "3:2 ביצים". The option is the number this meal expects next.
     let opt = line.match(/^(\d)\s*:\s*(.*)$/);
@@ -416,10 +583,11 @@ export function parseDiet(text: string, now = Date.now()): DietMenu {
       const qty = option === a ? b2 : a;
       opt = [line, option, `${qty} ${pair[3]}`] as unknown as RegExpMatchArray;
     }
-    const named = !opt && colon > 0 && colon <= 12 && /[א-ת]/.test(head) && !!foodIn(after) && !/^(אפשרויות|תוספת|תוספות)$/.test(head) ? head : null;
+    // A named option is one word ("דגים :"); "מנת חלבון: ..." is a line of food
+    const named = !opt && colon > 0 && colon <= 12 && /^[א-ת]+$/.test(head) && !/^מנ/.test(head) && !!foodIn(after) && !/^(אפשרויות|תוספת|תוספות)$/.test(head) ? head : null;
     const list = isList(line);
     const nextIsTwo = /^2\s*:|^\d\s*:\s*2\s/.test(normalize(raw[i + 1] ?? ''));
-    const continues = block != null && (/^[+\\/|,]/.test(line) || /[+\\/|,]$/.test(normalize(raw[i - 1] ?? '')) || (line.split(' ').length <= 2 && !amountOf(line) && !opt && !named));
+    const continues = block != null && (/^[+\\/|,]/.test(line) || /[+\\/|,]$/.test(normalize(raw[i - 1] ?? '')) || (line.split(' ').length <= 2 && !amountOf(line) && !opt && !named && !foodIn(line)));
     let b = block as Block | null;
     // "או ..." opening a line: another way to eat the whole meal
     const orLine = line.match(/^או\s+(.+)$/);
@@ -429,7 +597,7 @@ export function parseDiet(text: string, now = Date.now()): DietMenu {
     }
     if (opt) {
       if (opt[1] === '1' || !b || b.list) b = newBlock();
-      addLine(b, opt[2], pair ? opt[2] : shown.replace(/^\s*\d\s*:\s*/, ''), opt[1]);
+      addLine(b, opt[2], pair ? opt[2] : shownN.replace(/^\s*\d\s*:\s*/, ''), opt[1]);
       continue;
     }
     // A list goes on over its wrapped lines (slashes, no "+")

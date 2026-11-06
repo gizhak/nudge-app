@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { openLens } from '../apps/lens';
-import { DietMenu, MenuItem, MenuMeal, menuTotals, optionKcal, optionProtein, parseDiet, parseItem, slotTitle } from '../diet/parse';
+import { AI_PROMPT, DietMenu, MenuItem, MenuMeal, menuTotals, optionKcal, optionProtein, parseDiet, parseItem, slotTitle } from '../diet/parse';
 import { clearMenu, loadMenu, saveMenu } from '../diet/store';
 import type { SlotId } from '../nutrition/meals';
 import { C, FONT, fmt, T } from '../ui/theme';
@@ -56,7 +56,8 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
     const sub = AppState.addEventListener('change', async (st) => {
       if (st !== 'active' || !lensAt.current || Date.now() - lensAt.current > 10 * 60000) return;
       const clip = await Clipboard.getStringAsync().catch(() => '');
-      if (clip && clip.trim().length > 20) {
+      // The AI instruction itself is still on the clipboard until he copies the answer
+      if (clip && clip.trim().length > 20 && clip.trim() !== AI_PROMPT.trim()) {
         lensAt.current = 0;
         read(clip);
       }
@@ -68,6 +69,15 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
     lensAt.current = Date.now();
     const ok = await openLens();
     if (!ok) setNote(tr('לא הצלחתי לפתוח את Google Lens. צלם את התפריט ב Lens, העתק את הטקסט, והדבק כאן.', 'Could not open Google Lens. Photograph the menu in Lens, copy the text, and paste it here.'));
+  };
+  // Google's AI reads the photo into a fixed format: the instruction is copied, Lens opens
+  const [aiHelp, setAiHelp] = useState(false);
+  const aiLens = async () => {
+    await Clipboard.setStringAsync(AI_PROMPT).catch(() => undefined);
+    setAiHelp(true);
+    lensAt.current = Date.now();
+    const ok = await openLens();
+    if (!ok) setNote(tr('לא הצלחתי לפתוח את Google Lens. אפשר גם להשתמש ב Gemini: להעלות את התמונה ולהדביק את ההוראה.', 'Could not open Google Lens. Gemini works too: upload the photo and paste the instruction.'));
   };
   const fromClipboard = async () => {
     const clip = await Clipboard.getStringAsync().catch(() => '');
@@ -86,7 +96,7 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
     patchMeal(mi, (m) => {
       const oi = optOf(m);
       const options = m.options
-        .map((o, k) => (k !== oi ? o : { ...o, items: patch === null ? o.items.filter((_, j) => j !== ii) : o.items.map((x, j) => (j === ii ? { ...x, ...patch, known: true } : x)) }))
+        .map((o, k) => (k !== oi ? o : { ...o, items: patch === null ? o.items.filter((_, j) => j !== ii) : o.items.map((x, j) => (j === ii ? { ...x, ...patch, known: patch.known ?? true } : x)) }))
         .filter((o) => o.items.length);
       return { ...m, options, pick: Math.min(m.pick, Math.max(0, options.length - 1)) };
     });
@@ -153,6 +163,17 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
               <Pressable onPress={fromClipboard} style={({ pressed }) => [s.light, pressed && { opacity: 0.85 }]}>
                 <Text style={[T.bold, { fontSize: 15 }]}>{tr('כבר העתקתי, להדביק', 'I already copied it, paste')}</Text>
               </Pressable>
+              <View style={s.aiBox}>
+                <Text style={[T.bold, { fontSize: 15 }]}>{tr('התפריט לא נקרא טוב? עזרה מ Google AI', 'The menu did not read well? Help from Google AI')}</Text>
+                <Text style={[T.muted, { fontSize: 13, lineHeight: 20 }]}>
+                  {aiHelp
+                    ? tr('ההוראה הועתקה. ב Lens: צלם את התפריט, בחר "מצב AI" או "שאל על התמונה", הדבק את ההוראה ושלח. אחר כך העתק את כל התשובה וחזור לכאן. מה שה AI לא הצליח לקרוא יסומן, ותכתוב אותו ידנית.', 'The instruction is copied. In Lens: photograph the menu, choose "AI mode" or "Ask about this image", paste the instruction and send. Then copy the whole answer and come back here. What the AI could not read will be marked, for you to write in.')
+                    : tr('ה AI של גוגל קורא כל צורה של תפריט, גם כתב יד, ומחזיר אותו בפורמט שאני קורא בלי טעויות. התמונה עוברת לגוגל, כמו בכל שימוש ב Lens.', 'Google\'s AI reads any menu layout, handwriting too, and returns it in a format I read without mistakes. The photo goes to Google, as with any use of Lens.')}
+                </Text>
+                <Pressable onPress={aiLens} style={({ pressed }) => [s.light, { backgroundColor: C.bg }, pressed && { opacity: 0.85 }]}>
+                  <Text style={[T.bold, { fontSize: 15 }]}>{aiHelp ? tr('להעתיק שוב ולפתוח את Lens', 'Copy again and open Lens') : tr('להעתיק הוראה ולפתוח את Lens', 'Copy the instruction and open Lens')}</Text>
+                </Pressable>
+              </View>
               <TextInput value={paste} onChangeText={setPaste} placeholder={tr("או להקליד או להדביק כאן את התפריט", 'Or type or paste the menu here')} placeholderTextColor={C.muted} multiline style={s.area} />
               {paste.trim().length > 10 && (
                 <Pressable onPress={() => read(paste)} style={({ pressed }) => [s.light, pressed && { opacity: 0.85 }]}>
@@ -322,7 +343,7 @@ function MealCard({ meal: m, idPrefix, edit, onTab, onEdit, onItem, footer, read
               <View style={s.mealHead}>
                 <Text style={[T.base, { fontSize: 15, lineHeight: 21, flex: 1 }]}>{x.alts?.length ? tr(`${pretty(x.text)}, או`, `${pretty(x.text)}, or`) : pretty(x.text)}</Text>
                 <Text style={[T.bold, { fontSize: 12, color: x.known ? C.muted : C.signal }]}>
-                  {x.known ? tr(`${fmt(x.kcal)} קל' · ${x.protein} ג'${x.free ? ' · חופשי' : ''}`, `${fmt(x.kcal)} kcal · ${x.protein} g${x.free ? ' · free' : ''}`) : tr('לא זיהיתי', 'Not read')}
+                  {x.known ? tr(`${fmt(x.kcal)} קל' · ${x.protein} ג'${x.free ? ' · חופשי' : ''}`, `${fmt(x.kcal)} kcal · ${x.protein} g${x.free ? ' · free' : ''}`) : tr('לא זיהיתי, לחץ כדי לכתוב', 'Not read, tap to write it')}
                 </Text>
               </View>
               {!!x.alts?.length && (
@@ -335,6 +356,9 @@ function MealCard({ meal: m, idPrefix, edit, onTab, onEdit, onItem, footer, read
                 </View>
               )}
             </Pressable>
+            {!readOnly && edit === id && onItem && !x.known && (
+              <Rewrite onDone={(text) => onItem(ii, parseItem(text))} />
+            )}
             {!readOnly && edit === id && onItem && (
               <View style={s.editRow}>
                 <Num label={tr("קלוריות", 'Calories')} value={x.kcal} onChange={(v) => onItem(ii, { kcal: v })} />
@@ -390,6 +414,20 @@ function Extras({ menu }: { menu: DietMenu }) {
   );
 }
 
+/** An unread line written by him: read like any other line */
+function Rewrite({ onDone }: { onDone: (text: string) => void }) {
+  const [v, setV] = useState('');
+  const done = () => v.trim() && onDone(v.trim());
+  return (
+    <View style={s.addRow}>
+      <TextInput value={v} onChangeText={setV} placeholder={tr('מה כתוב? למשל פרי + כף חמאת שקדים', 'What does it say? e.g. fruit + a tbsp almond butter')} placeholderTextColor={C.muted} style={s.addInput} onSubmitEditing={done} autoFocus />
+      <Pressable onPress={done} hitSlop={6} accessibilityLabel={tr('לשמור', 'Save')}>
+        <Ionicons name="checkmark-circle" size={28} color={C.ink} />
+      </Pressable>
+    </View>
+  );
+}
+
 function Num({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   const [t, setT] = useState(String(value || ''));
   return (
@@ -430,6 +468,7 @@ const s = StyleSheet.create({
   addInput: { flex: 1, fontSize: 14, textAlign: START, fontFamily: T.base.fontFamily, color: C.ink, paddingVertical: 4 },
   total: { backgroundColor: '#fff', borderRadius: 20, padding: 14, gap: 4 },
   found: { backgroundColor: C.ink, borderRadius: 20, padding: 16, gap: 4 },
+  aiBox: { backgroundColor: '#fff', borderRadius: 16, padding: 14, gap: 8 },
   seg: { flexDirection: ROW, backgroundColor: C.bg, borderRadius: 12, padding: 3, gap: 3 },
   segBtn: { flex: 1, alignItems: 'center', paddingVertical: 7, borderRadius: 10, paddingHorizontal: 4 },
   segOn: { backgroundColor: C.ink },
