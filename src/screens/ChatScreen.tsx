@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { runCoach } from '../coach/engine';
 import { ackTopic, didIt, doneSince, loadActed } from '../coach/followupStore';
@@ -26,12 +26,19 @@ import { noteChange } from '../coach/replies';
 import SleepEntry, { hoursText } from './SleepEntry';
 import WorkoutFeel from '../train/WorkoutFeel';
 import { SLEEP_MISSING, SLEEP_MISSING2 } from '../sleep/ask';
+import { checkFood, CheckResult } from '../diet/check';
+import { loadMenu, todayPicks } from '../diet/store';
+import { hideMeal, setPortion } from '../health/hiddenMeals';
 
 import { ROW, SIDE_END, SIDE_START, START, LOCALE, t as tr } from '../i18n';
 const WATCH_CHANGED =
   tr('ככה מחברים שעון חדש:\n1. באפליקציה של השעון החדש (ל Bip Max זו Zepp) מפעילים סנכרון ל Health Connect.\n2. ב Health Connect, בהרשאות של אותה אפליקציה, מאשרים לה לכתוב שינה, צעדים, דופק ואימונים.\n3. ב Nudge, בהגדרות, מעדכנים את סוג השעון.\nמהלילה הבא הנתונים אמורים להגיע.', 'This is how to connect a new watch:\n1. In the new watch\'s app (for the Bip Max it is Zepp), turn on sync to Health Connect.\n2. In Health Connect, in that app\'s permissions, allow it to write sleep, steps, heart rate and workouts.\n3. In Nudge, in settings, update the watch type.\nFrom tonight the data should arrive.');
 const NOTHING_CHANGED =
   tr('אז כנראה הסנכרון נתקע.\n1. פתח את אפליקציית השעון ותן לה דקה לסנכרן מהשעון.\n2. ב Health Connect, בדוק שהיא עדיין מורשית לכתוב שינה.\nאם מחר בבוקר עדיין אין נתון, תגיד לי.', 'Then the sync is probably stuck.\n1. Open the watch app and give it a minute to sync from the watch.\n2. In Health Connect, check it is still allowed to write sleep.\nIf there is still no data tomorrow morning, tell me.');
+
+/** "What I'm going to eat" and the coach's answer; kept for the day */
+type Check = { at: number; text: string; src: 'text' | 'zepp'; result: CheckResult; mealId?: string; mealKey?: string; mealName?: string; ate?: 'all' | 'half' | 'none'; reply?: string };
+const CHECKS = 'chat.checks.v1';
 
 type Mine = { at: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; text: string; sub?: string; water?: boolean; reply?: string };
 
@@ -108,6 +115,66 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
   const scroll = useRef<ScrollView>(null);
   // What was new when the chat opened: outlined once, then it counts as seen
   const [newSince, setNewSince] = useState<number | null>(null);
+  const [checks, setChecks] = useState<Check[]>([]);
+  const [draft, setDraft] = useState('');
+  const [checking, setChecking] = useState(false);
+  const saveChecks = async (next: Check[]) => {
+    setChecks(next);
+    await AsyncStorage.setItem(CHECKS, JSON.stringify({ day: dayKey(), checks: next })).catch(() => undefined);
+  };
+  /** A food check: typed words, or the last meal Zepp read from a photo */
+  const runCheck = async (src: 'text' | 'zepp') => {
+    if (checking) return;
+    const text = draft.trim();
+    if (src === 'text' && !text) return;
+    setChecking(true);
+    try {
+      const [menu, picks, meals] = await Promise.all([loadMenu().catch(() => null), todayPicks().catch(() => ({})), readMeals().catch(() => [] as Meal[])]);
+      const now = new Date();
+      let item: Check;
+      if (src === 'zepp') {
+        const last = [...meals].reverse().find((m) => now.getTime() - m.time.getTime() < 90 * 60000);
+        if (!last) {
+          setNote({ text: tr('לא מצאתי ארוחה מ Zepp בשעה וחצי האחרונות. פתח את Zepp לכמה שניות כדי שיסנכרן, ונסה שוב.', 'No meal from Zepp in the last hour and a half. Open Zepp for a few seconds so it syncs, and try again.'), bad: true });
+          setTimeout(() => setNote(null), 5000);
+          return;
+        }
+        const others = meals.filter((m) => m.id !== last.id);
+        const result = checkFood(last.name, { menu, picks, now, eatenKcal: others.reduce((a, m) => a + m.kcal, 0), eatenProtein: others.reduce((a, m) => a + m.protein, 0), logged: { kcal: last.kcal, protein: last.protein } });
+        item = { at: now.getTime(), text: tr('צילמתי ב Zepp, תבדוק', 'I snapped it in Zepp, check it'), src, result, mealId: last.id, mealKey: last.key, mealName: `${last.name} · ${Math.round(last.kcal)} ${tr("קל'", 'kcal')}` };
+      } else {
+        const result = checkFood(text, { menu, picks, now, eatenKcal: meals.reduce((a, m) => a + m.kcal, 0), eatenProtein: meals.reduce((a, m) => a + m.protein, 0) });
+        item = { at: now.getTime(), text, src, result };
+        setDraft('');
+      }
+      await saveChecks([...checks, item]);
+      setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 200);
+    } finally {
+      setChecking(false);
+    }
+  };
+  /** After a Zepp check: all of it, half, or none (left out here; Zepp keeps its record) */
+  const ate = async (c: Check, how: 'all' | 'half' | 'none') => {
+    if (c.mealId) {
+      if (how === 'none') await hideMeal(c.mealId, Date.now(), c.mealKey).catch(() => undefined);
+      else await setPortion(c.mealId, how === 'half' ? 0.5 : 1, c.mealKey).catch(() => undefined);
+    }
+    const reply =
+      how === 'all'
+        ? tr('נספר כמו שנרשם.', 'Counted as logged.')
+        : how === 'half'
+          ? tr('נספר אצלי חצי. ב Zepp רשומה המנה המלאה, אם תרצה שיתאים גם שם, תתקן שם.', 'I count half. Zepp has the full meal; to match there too, fix it in Zepp.')
+          : tr('הסרתי את זה מהחשבון אצלי. ב Zepp זה עדיין רשום כמנה שנאכלה, כדאי למחוק שם.', 'I took it off the count here. Zepp still has it as eaten, worth deleting it there.');
+    await saveChecks(checks.map((x) => (x.at === c.at ? { ...x, ate: how, reply } : x)));
+  };
+  useEffect(() => {
+    AsyncStorage.getItem(CHECKS)
+      .then((raw) => {
+        const d = JSON.parse(raw ?? 'null');
+        if (d && d.day === dayKey()) setChecks(d.checks ?? []);
+      })
+      .catch(() => undefined);
+  }, [tick]);
   useEffect(() => {
     markSeen().then((before) => setNewSince(before || null));
   }, []);
@@ -243,13 +310,62 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
           ];
           // Workout messages sent before his last change to the plan are moot now
           const lastChange = Math.max(0, ...replies.filter((r) => r.kind === 'plan').map((r) => r.at));
-          type Item = { at: number; coach?: SentMessage; me?: Mine };
-          const items: Item[] = [...log.map((m) => ({ at: m.at, coach: m })), ...mineItems.map((x) => ({ at: x.at, me: x }))].sort((a, b) => a.at - b.at);
+          type Item = { at: number; coach?: SentMessage; me?: Mine; check?: Check };
+          const items: Item[] = [...log.map((m) => ({ at: m.at, coach: m })), ...mineItems.map((x) => ({ at: x.at, me: x })), ...checks.map((c) => ({ at: c.at, check: c }))].sort((a, b) => a.at - b.at);
           let lastStamp = 0;
           return items.map((it, i) => {
             const stamp = it.at - lastStamp > 15 * 60000;
             if (stamp) lastStamp = it.at;
             const stampEl = stamp ? <Text style={s.stamp}>{time(it.at)}</Text> : null;
+            if (it.check) {
+              const c = it.check;
+              const r = c.result;
+              const good = r.verdict === 'on' || r.verdict === 'fits';
+              return (
+                <View key={'check' + c.at} style={{ gap: 8 }}>
+                  {stampEl}
+                  <View style={s.me}>
+                    <Ionicons name={c.src === 'zepp' ? 'camera' : 'restaurant'} size={15} color="#E9B872" />
+                    <Text style={[T.bold, { fontSize: 15, color: '#fff', flexShrink: 1 }]}>{c.text}</Text>
+                  </View>
+                  <View style={s.coach}>
+                    {c.mealName && <Text style={[T.muted, { fontSize: 12.5 }]}>{tr(`Zepp זיהה: ${c.mealName}`, `Zepp read: ${c.mealName}`)}</Text>}
+                    <View style={{ flexDirection: ROW, gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={[s.pill, { backgroundColor: good ? '#E6F0E9' : '#FDF1EC', color: good ? '#3E7A55' : '#B4532A' }]}>{r.pill}</Text>
+                      {r.where && <Text style={[s.pill, { backgroundColor: C.bg, color: C.muted }]}>{r.where}</Text>}
+                    </View>
+                    <Text style={[T.bold, { fontSize: 16, lineHeight: 22 }]}>{r.headline}</Text>
+                    {r.rows.map((row, k) => (
+                      <View key={k} style={{ flexDirection: ROW, gap: 8, alignItems: 'baseline' }}>
+                        <Text style={[T.bold, { fontSize: 14, minWidth: 16, textAlign: 'center', color: row.mark === '✓' ? '#3E7A55' : row.mark === '+' ? '#B4532A' : C.muted }]}>{row.mark}</Text>
+                        <Text style={[T.base, { fontSize: 14, flex: 1, lineHeight: 20 }]}>{row.text}</Text>
+                        {row.kcal != null && <Text style={[T.muted, { fontSize: 12.5 }]}>{tr(`${Math.round(row.kcal)} קל'`, `${Math.round(row.kcal)} kcal`)}</Text>}
+                      </View>
+                    ))}
+                    {r.total && <Text style={[T.muted, { fontSize: 13 }]}>{r.total}</Text>}
+                    {r.note && <Text style={[T.base, { fontSize: 14, lineHeight: 20 }]}>{r.note}</Text>}
+                    {c.src === 'zepp' && !c.ate && (
+                      <View style={s.btns}>
+                        <Pressable onPress={() => ate(c, 'all')} style={({ pressed }) => [s.btnDark, pressed && { opacity: 0.8 }]}>
+                          <Text style={[T.bold, { fontSize: 14, color: '#fff' }]}>{tr('אכלתי הכל', 'Ate all of it')}</Text>
+                        </Pressable>
+                        <Pressable onPress={() => ate(c, 'half')} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('אכלתי חצי', 'Ate half')}</Text>
+                        </Pressable>
+                        <Pressable onPress={() => ate(c, 'none')} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('לא אכלתי את זה', 'Did not eat it')}</Text>
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                  {c.reply && (
+                    <View style={s.coachShort}>
+                      <Text style={[T.base, { fontSize: 15, lineHeight: 21 }]}>{c.reply}</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            }
             if (it.me) {
               const x = it.me;
               return (
@@ -357,7 +473,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
             );
           });
         })()}
-        {!log.length && <Text style={[T.muted, { fontSize: 14, textAlign: 'center', marginTop: 40 }]}>{tr('כשהמאמן יגיד משהו, זה יופיע כאן.', 'When the coach says something, it will show up here.')}</Text>}
+        {!log.length && !checks.length && <Text style={[T.muted, { fontSize: 14, textAlign: 'center', marginTop: 40 }]}>{tr('כשהמאמן יגיד משהו, זה יופיע כאן.', 'When the coach says something, it will show up here.')}</Text>}
       </ScrollView>
 
       {note && (
@@ -365,6 +481,23 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
           <Text style={[T.bold, { fontSize: 14, color: '#fff', textAlign: START }]}>{note.text}</Text>
         </View>
       )}
+      <View style={s.ask}>
+        <Pressable onPress={() => runCheck('zepp')} hitSlop={6} style={s.askIcon} accessibilityLabel={tr('צילמתי ב Zepp, תבדוק', 'I snapped it in Zepp, check it')}>
+          <Ionicons name="camera-outline" size={20} color={C.ink} />
+        </Pressable>
+        <TextInput
+          value={draft}
+          onChangeText={setDraft}
+          placeholder={tr('מה אתה הולך לאכול?', 'What are you going to eat?')}
+          placeholderTextColor={C.muted}
+          style={s.askInput}
+          returnKeyType="send"
+          onSubmitEditing={() => runCheck('text')}
+        />
+        <Pressable onPress={() => runCheck('text')} disabled={!draft.trim() || checking} style={[s.send, (!draft.trim() || checking) && { opacity: 0.35 }]} accessibilityLabel={tr('לבדוק', 'Check')}>
+          {checking ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
+        </Pressable>
+      </View>
       <View style={s.bottom}>
         <Pressable onPress={() => onRoute({ tab: 'food', focus: 'craving' })} style={({ pressed }) => [s.quick, { backgroundColor: C.signal }, pressed && { opacity: 0.85 }]}>
           <Text style={[T.bold, { fontSize: 15, color: '#fff', textAlign: 'center' }]}>{tr('בא לי משהו', 'I feel like something')}</Text>
@@ -404,5 +537,10 @@ const s = StyleSheet.create({
   me: { alignSelf: SIDE_END, flexDirection: ROW, alignItems: 'center', gap: 6, backgroundColor: C.ink, borderRadius: 22, borderBottomLeftRadius: 8, paddingVertical: 10, paddingHorizontal: 16 },
   note: { marginHorizontal: 16, marginBottom: 6, backgroundColor: C.water, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14 },
   bottom: { flexDirection: ROW, gap: 8, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 6 },
+  ask: { flexDirection: ROW, alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 4, backgroundColor: C.card, borderRadius: 18, paddingVertical: 5, paddingHorizontal: 6 },
+  askIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
+  askInput: { flex: 1, fontSize: 15, textAlign: START, fontFamily: T.base.fontFamily, color: C.ink, paddingVertical: 6 },
+  send: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
+  pill: { fontSize: 12, fontFamily: T.bold.fontFamily, paddingVertical: 2, paddingHorizontal: 9, borderRadius: 999, overflow: 'hidden' },
   quick: { flex: 1, height: 50, borderRadius: 18, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
 });

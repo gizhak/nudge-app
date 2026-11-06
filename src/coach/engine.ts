@@ -1,3 +1,4 @@
+import { adoptEatenOptions, loadMenu, menuDayLine, todayPicks } from '../diet/store';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { applyReminders } from '../notifications/schedule';
@@ -142,8 +143,17 @@ async function runOnce(
   yesterday.setDate(yesterday.getDate() - 1);
   const lastMealAt = mealList.length ? mealList[mealList.length - 1].time : null;
 
+  // A dietitian's menu: today's option per meal, following what he actually ate
+  const menu = await loadMenu().catch(() => null);
+  let menuPicks = menu ? await todayPicks(now).catch(() => ({})) : {};
+  if (menu) {
+    menuPicks = await adoptEatenOptions(menu, menuPicks, mealList, now).catch(() => menuPicks);
+  }
+
   const candidates = evaluate({
     now,
+    menu,
+    menuPicks,
     place: state.place,
     event,
     // At the gym now, or stayed there long enough today: an arrival alone is not a workout
@@ -267,7 +277,9 @@ async function runOnce(
       }
       if (m >= bed - 75 && m < bed - 15) {
         const sum = summarizeDay(facts);
-        candidates.push({ id: 'day_summary', priority: 1, title: sum.title, body: sum.body });
+        // With a menu: how many of today's meals were by it
+        const byMenu = menu ? menuDayLine(menu, menuPicks, mealList) : '';
+        candidates.push({ id: 'day_summary', priority: 1, title: sum.title, body: byMenu ? `${byMenu} ${sum.body}` : sum.body });
       }
     }
   } catch {

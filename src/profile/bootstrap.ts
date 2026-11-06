@@ -2,6 +2,7 @@ import { loadPrefs, loadWeekOverrides, savePrefs } from '../coach/store';
 import { setWeekOverrides } from '../config/goals';
 import { defaultSlots } from '../nutrition/meals';
 import { applyDerived, derive, Derived } from './derive';
+import { applyMenuDay } from '../diet/store';
 import { loadProfile, Profile, saveProfile } from './profile';
 
 /** Loads the saved profile and makes its plan active. Safe to call from background tasks. */
@@ -10,6 +11,8 @@ export async function loadAndApply(): Promise<{ profile: Profile; derived: Deriv
   const derived = derive(profile);
   applyDerived(derived);
   setWeekOverrides(await loadWeekOverrides());
+  // The meal options picked for today move today's targets
+  await applyMenuDay().catch(() => undefined);
   return { profile, derived };
 }
 

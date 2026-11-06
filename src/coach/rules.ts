@@ -1,3 +1,6 @@
+import type { DietMenu, MenuMeal } from '../diet/parse';
+import { optionKcal } from '../diet/parse';
+import { matchOption } from '../diet/match';
 import { daysBack, LIGHT_IDS, onVacation } from './vacation';
 // Pure decision logic: given the situation, which messages should the coach send?
 // No I/O here, so every rule can be tested with plain inputs.
@@ -62,6 +65,9 @@ export interface CoachContext {
   prefs: CoachPrefs;
   /** Today's meals, oldest first */
   mealList?: MealLike[];
+  /** A dietitian's menu and today's option for each of its meals */
+  menu?: DietMenu | null;
+  menuPicks?: Partial<Record<string, number>>;
   /** Meal slots he marked "ate, did not log" today */
   unloggedSlots?: string[];
   /** Four weeks since the last progress checkpoint */
@@ -392,6 +398,23 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       if (meals.some((x) => slotOf(x.time) === id)) continue;
       if (c.unloggedSlots?.includes(id)) continue;
       const atOffice = c.place === 'office' && id === 'lunch';
+      // With a menu: what it says for this meal today, and the water before it
+      const mm = c.menu?.meals.find((x) => x.slot === id);
+      if (mm && mm.options.length) {
+        const o = mm.options[Math.min(mm.options.length - 1, c.menuPicks?.[id] ?? mm.pick)];
+        const what = o.items.map((x) => x.text.replace(/\s*[\\|/]\s*/g, ' / ')).join(', ');
+        const cups = c.menu?.rules.useCups && c.menu.rules.cupsBefore ? c.menu.rules.cupsBefore : 0;
+        out.push({
+          id: `meal_reminder_${id}`,
+          priority: 2,
+          title: t(`${mm.title} לפי התפריט`, `${mm.title} by the menu`),
+          body: t(
+            `${mm.options.length > 1 ? `${o.label}: ` : ''}${what}.${cups ? ` ${cups === 1 ? 'כוס מים' : `${cups} כוסות מים`} לפני.` : ''} ${c.foodAppName === 'Zepp' ? 'צלם ב Zepp' : 'רשום'} כשאתה אוכל.`,
+            `${mm.options.length > 1 ? `${o.label}: ` : ''}${what}.${cups ? ` ${cups === 1 ? 'A cup' : `${cups} cups`} of water before.` : ''} ${c.foodAppName === 'Zepp' ? 'Snap it in Zepp' : 'Log it'} when you eat.`,
+          ),
+        });
+        continue;
+      }
       out.push({
         id: `meal_reminder_${id}`,
         priority: 2,
@@ -424,6 +447,11 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       const meal = plateMeal(plate);
       const age = c.now.getTime() - meal.time.getTime();
       if (age < 0 || age > 3 * 3600 * 1000) continue;
+      const menuMsg = c.menu ? menuFeedback(c, plate, meal) : null;
+      if (menuMsg) {
+        out.push(menuMsg);
+        continue;
+      }
       const v = judgeMeal(meal, budgets[slotOf(meal.time)]);
       out.push({
         id: `meal_${meal.time.getTime()}`,
@@ -724,6 +752,62 @@ const isFeedback = (id: string) => /^(meal|status)_\d+$/.test(id) || /^(place_|g
  * Several food items logged together (a plate of peas, sweet potato and an egg)
  * become one message instead of one notification per item.
  */
+/**
+ * A meal against the menu: which option it is ("with salmon instead of chicken"), or that it is not
+ * on the menu, with the lighter option of a later meal that keeps the day on target.
+ */
+function menuFeedback(c: CoachContext, plate: MealLike[], meal: MealLike): CoachMessage | null {
+  const menu = c.menu!;
+  const slot = slotOf(meal.time);
+  const mm = menu.meals.find((x) => x.slot === slot);
+  const base = { id: `meal_${meal.time.getTime()}`, meal: { name: meal.name, kcal: meal.kcal, protein: meal.protein, good: true } };
+  const names = plate.map((x) => x.name);
+  const match = mm ? matchOption(mm, names) : null;
+  const pickOf = (m: MenuMeal) => Math.min(m.options.length - 1, c.menuPicks?.[m.slot] ?? m.pick);
+  if (mm && match && match.score >= 0.5) {
+    const o = mm.options[match.option];
+    const kcal = optionKcal(o);
+    const over = meal.kcal - kcal;
+    const swaps = match.swaps.length ? t(`, עם ${match.swaps.join(' ו')}`, `, with ${match.swaps.join(' and ')}`) : '';
+    const missing = o.items.filter((x, i) => !match.hit[i] && !x.free && x.kcal >= 80).map((x) => x.text.replace(/\s*[\\|/]\s*/g, ' / '));
+    const tail =
+      over > Math.max(120, kcal * 0.25)
+        ? t(` ${Math.round(over)} קלוריות מעל מה שבתפריט, כנראה הכמות.`, ` ${Math.round(over)} calories over the menu, probably the amount.`)
+        : missing.length
+          ? t(` חסר: ${missing.join(', ')}.`, ` Missing: ${missing.join(', ')}.`)
+          : '';
+    return {
+      ...base,
+      priority: 2,
+      title: t(`${mm.title} לפי התפריט`, `${mm.title} by the menu`),
+      body: t(`${mm.options.length > 1 ? o.label : 'כמו בתפריט'}${swaps}. ${Math.round(meal.kcal)} קל', ${Math.round(meal.protein)} ג' חלבון.${tail}`, `${mm.options.length > 1 ? o.label : 'As on the menu'}${swaps}. ${Math.round(meal.kcal)} kcal, ${Math.round(meal.protein)} g protein.${tail}`),
+    };
+  }
+  // Not on the menu: a lighter option later today keeps the day on target, if there is one
+  const later = menu.meals.filter((m) => ORDER_OF[m.slot] > ORDER_OF[slot] && m.options.length > 1);
+  let fix: { title: string; label: string; kcal: number } | null = null;
+  for (const m of later) {
+    const cur = optionKcal(m.options[pickOf(m)]);
+    const lightest = m.options.map((o, k) => ({ k, kcal: optionKcal(o) })).sort((a, b) => a.kcal - b.kcal)[0];
+    if (lightest.k !== pickOf(m) && cur - lightest.kcal >= 60) {
+      fix = { title: m.title, label: m.options[lightest.k].label, kcal: lightest.kcal };
+      break;
+    }
+  }
+  const over = c.kcal - caloriesFor(c.now);
+  return {
+    ...base,
+    meal: { ...base.meal, good: false },
+    priority: 1,
+    title: t('משהו שלא בתפריט', 'Something off the menu'),
+    body: t(
+      `${meal.name}, ${Math.round(meal.kcal)} קל'.${fix && over > -400 ? ` כדי להישאר ביעד, ב${fix.title}: ${fix.label} (${Math.round(fix.kcal)} קל').` : ' זה בסדר, ממשיכים לפי התפריט.'}`,
+      `${meal.name}, ${Math.round(meal.kcal)} kcal.${fix && over > -400 ? ` To stay on target, ${fix.title.toLowerCase()}: ${fix.label} (${Math.round(fix.kcal)} kcal).` : ' That is fine, back to the menu.'}`,
+    ),
+  };
+}
+const ORDER_OF: Record<string, number> = { breakfast: 0, snack_am: 1, lunch: 2, snack_pm: 3, dinner: 4, night: 5 };
+
 export function combineMeals(candidates: CoachMessage[], sentIds: string[]): CoachMessage[] {
   const fresh = candidates.filter((c) => c.meal && !sentIds.includes(c.id));
   const rest = candidates.filter((c) => !c.meal || sentIds.includes(c.id));

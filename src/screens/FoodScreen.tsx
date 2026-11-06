@@ -17,8 +17,8 @@ import { DoubleRing } from '../ui/tiles';
 import { C, FONT, fmt, T } from '../ui/theme';
 import MenuAdvisor from './MenuAdvisor';
 import DietMenuScreen from './DietMenu';
-import { DietMenu, looksLikeDiet } from '../diet/parse';
-import { checkMeal, loadMenu, menuMealOf } from '../diet/store';
+import { DietMenu, looksLikeDiet, menuTotals, optionKcal, optionProtein } from '../diet/parse';
+import { adoptEatenOptions, checkMeal, lighterOption, loadMenu, menuMealOf, setPick, todayPicks } from '../diet/store';
 import Craving from './Craving';
 import { Sheet } from '../ui/Sheet';
 
@@ -56,6 +56,11 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
   const [menuOpen, setMenuOpen] = useState(!!sharedMenu && !sharedDiet);
   const [dietOpen, setDietOpen] = useState(sharedDiet);
   const [diet, setDiet] = useState<DietMenu | null>(null);
+  // Today's option for each meal of the menu, and the meal whose options are open
+  const [picks, setPicks] = useState<Partial<Record<SlotId, number>>>({});
+  const [swap, setSwap] = useState<SlotId | null>(null);
+  const [swapTo, setSwapTo] = useState(0);
+  const [swapAlways, setSwapAlways] = useState(false);
   useEffect(() => {
     if (!sharedMenu) return;
     if (looksLikeDiet(sharedMenu)) setDietOpen(true);
@@ -68,8 +73,12 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
     try {
       const setup = await setupHealthConnect();
       if (!setup.ok) return;
-      loadMenu().then(setDiet).catch(() => undefined);
       const [m, w, prefs] = await Promise.all([readMeals(), readProteinByDay(7), loadPrefs()]);
+      // The menu, with today's picks following what was eaten
+      const menu = await loadMenu().catch(() => null);
+      setDiet(menu);
+      const pk = await todayPicks().catch(() => ({}));
+      setPicks(menu ? await adoptEatenOptions(menu, pk, m).catch(() => pk) : pk);
       setSlots(prefs.mealSlots);
       setBedTime(prefs.bedTime);
       const profile = await loadProfile();
@@ -253,7 +262,8 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
           // With a dietitian's menu: what it says for this meal, and how the meal compares
           const mm = menuMealOf(diet, slot.id);
           const started = slot.from < slot.to ? nowMin >= slot.from : nowMin >= slot.from || nowMin < slot.to;
-          const check = mm ? checkMeal(mm, { kcal: slotKcal, protein: inSlot.reduce((a, m) => a + m.protein, 0), count: inSlot.length }, passed ? 'past' : started ? 'now' : 'future') : null;
+          const check = mm ? checkMeal(mm, { kcal: slotKcal, protein: inSlot.reduce((a, m) => a + m.protein, 0), count: inSlot.length, names: inSlot.map((m) => m.name) }, passed ? 'past' : started ? 'now' : 'future', picks[slot.id]) : null;
+          const canSwap = !!mm && mm.options.length > 1 && !inSlot.length;
           return (
             <OpenRow
               key={slot.id}
@@ -264,7 +274,21 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
               note={check ? tr(`בתפריט: ${check.plan}`, `Menu: ${check.plan}`) : undefined}
               right={
                 check ? (
-                  <Text style={[T.bold, { fontSize: 12, color: check.tone === 'good' ? C.good : check.tone === 'off' ? C.warn : C.muted }]}>{check.chip}</Text>
+                  <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                    <Text style={[T.bold, { fontSize: 12, color: check.tone === 'good' ? C.good : check.tone === 'off' ? C.warn : C.muted }]}>{check.chip}</Text>
+                    {canSwap && (
+                      <Pressable
+                        hitSlop={8}
+                        onPress={() => {
+                          setSwap(slot.id);
+                          setSwapTo(Math.min(mm!.options.length - 1, picks[slot.id] ?? mm!.pick));
+                          setSwapAlways(false);
+                        }}
+                      >
+                        <Text style={[T.bold, { fontSize: 12.5, color: C.ink, textDecorationLine: 'underline' }]}>{tr('להחליף', 'Swap')}</Text>
+                      </Pressable>
+                    )}
+                  </View>
                 ) : undefined
               }
               onPress={() => (inSlot.length === 1 ? setOpen(inSlot[0].id) : inSlot.length ? setSlotOpen(slot.id) : logInZepp())}
@@ -272,6 +296,53 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
           );
         })}
       </RowsCard>
+      {diet && (
+        <Text style={[T.muted, { fontSize: 13, paddingHorizontal: 6 }]}>
+          {tr(`היעד היום לפי התפריט: ${fmt(menuTotals(diet, picks).kcal)} קל' · ${menuTotals(diet, picks).protein} ג' חלבון`, `Today's goal by the menu: ${fmt(menuTotals(diet, picks).kcal)} kcal · ${menuTotals(diet, picks).protein} g protein`)}
+        </Text>
+      )}
+
+      <Sheet open={!!swap} onClose={() => setSwap(null)} title={swap ? tr(`${menuMealOf(diet, swap)?.title ?? ''}, מה היום?`, `${menuMealOf(diet, swap)?.title ?? ''}, what today?`) : ''}>
+        {swap && diet && (() => {
+          const mm = menuMealOf(diet, swap)!;
+          // Eaten past the plan already today: the lighter option is the one to suggest
+          const plannedSoFar = diet.meals.filter((m) => meals.some((x) => slotOf(x.time) === m.slot)).reduce((a, m) => a + optionKcal(m.options[Math.min(m.options.length - 1, picks[m.slot] ?? m.pick)]), 0);
+          const eatenSoFar = meals.reduce((a, m) => a + m.kcal, 0);
+          const light = eatenSoFar - plannedSoFar > 150 ? lighterOption(mm, picks[swap]) : null;
+          return (
+            <View style={{ gap: 8 }}>
+              {mm.options.map((o, k) => (
+                <Pressable key={k} onPress={() => setSwapTo(k)} style={[s.choice, swapTo === k && { borderColor: C.ink }]}>
+                  <View style={{ flexDirection: ROW, justifyContent: 'space-between', gap: 8 }}>
+                    <Text style={[T.bold, { fontSize: 15 }]}>{o.label}</Text>
+                    <Text style={[T.muted, { fontSize: 13 }]}>{tr(`${fmt(optionKcal(o))} קל' · ${Math.round(optionProtein(o))} ג'`, `${fmt(optionKcal(o))} kcal · ${Math.round(optionProtein(o))} g`)}</Text>
+                  </View>
+                  <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]} numberOfLines={2}>{o.items.map((x) => x.text.replace(/\s*[\\|/]\s*/g, ' / ')).join(', ')}</Text>
+                  {light?.option === k && <Text style={[T.bold, { fontSize: 12, color: C.good }]}>{tr('מתאים היום: אכלת היום יותר מהתכנון', 'Fits today: you ate more than planned today')}</Text>}
+                </Pressable>
+              ))}
+              <View style={s.seg}>
+                {[false, true].map((al) => (
+                  <Pressable key={String(al)} onPress={() => setSwapAlways(al)} style={[s.segBtn, swapAlways === al && { backgroundColor: C.ink }]}>
+                    <Text style={[T.bold, { fontSize: 13, color: swapAlways === al ? '#fff' : C.ink }]}>{al ? tr('מעכשיו תמיד', 'From now on') : tr('רק היום', 'Today only')}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Pressable
+                onPress={async () => {
+                  await setPick(swap, swapTo, swapAlways).catch(() => undefined);
+                  setPicks(await todayPicks());
+                  setDiet(await loadMenu());
+                  setSwap(null);
+                }}
+                style={({ pressed }) => [s.swapBtn, pressed && { opacity: 0.85 }]}
+              >
+                <Text style={[T.bold, { color: '#fff', fontSize: 15, textAlign: 'center' }]}>{tr(`לבחור ${mm.options[swapTo]?.label ?? ''}`, `Choose ${mm.options[swapTo]?.label ?? ''}`)}</Text>
+              </Pressable>
+            </View>
+          );
+        })()}
+      </Sheet>
 
       <RowsCard>
         <OpenRow first title={tr("חלבון ב 7 ימים", 'Protein over 7 days')} sub={tr(`${daysOnTarget} ימים ביעד`, `${daysOnTarget} days on target`)} onPress={() => setWeekOpen(true)} />
@@ -380,6 +451,10 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
 }
 
 const s = StyleSheet.create({
+  choice: { borderWidth: 1.5, borderColor: '#ECE6DD', borderRadius: 14, padding: 12, gap: 3 },
+  seg: { flexDirection: ROW, backgroundColor: C.bg, borderRadius: 12, padding: 3, gap: 3 },
+  segBtn: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 10 },
+  swapBtn: { backgroundColor: C.ink, borderRadius: 14, paddingVertical: 13 },
   actions: { flexDirection: ROW, gap: 10 },
   actTile: { flex: 1, height: 92, borderRadius: 24, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', gap: 6 },
   primary: { flex: 1.7, backgroundColor: C.ink, borderRadius: 18, paddingVertical: 15 },

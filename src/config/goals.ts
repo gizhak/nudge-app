@@ -7,7 +7,16 @@ export const GOALS = {
   steps: 8000,
   sleepHours: 7,
   workoutsPerWeek: 3,
+  /** A fixed water target from a dietitian's menu, in ml; 0 when the app works it out by weight */
+  waterMl: 0,
 };
+
+/**
+ * Today's menu picks, when he chose another option for a meal: the day's calories and protein
+ * by what he will eat today. Applied over the profile's targets for that date only.
+ */
+export const MENU_DAY = { date: '', kcal: 0, protein: 0 };
+export const todayKey = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 
 export interface Exercise {
   name: string;

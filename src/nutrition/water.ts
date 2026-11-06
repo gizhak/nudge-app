@@ -1,10 +1,13 @@
 // Pure water math, no I/O.
 
 import { t } from '../i18n';
+import { GOALS } from '../config/goals';
 export const CUP_ML = 250;
 
 /** Daily target: about 35 ml per kg, rounded to whole cups, plus two cups on a training day. */
 export function waterTarget(weightKg: number, trainingDay: boolean): number {
+  // A dietitian's menu that says how much: that, plus the same two cups on a training day
+  if (GOALS.waterMl > 0) return GOALS.waterMl + (trainingDay ? 2 * CUP_ML : 0);
   const base = Math.round((weightKg * 35) / CUP_ML) * CUP_ML;
   return Math.max(1500, base) + (trainingDay ? 2 * CUP_ML : 0);
 }

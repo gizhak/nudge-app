@@ -1,58 +1,182 @@
-// The saved menu, the targets it sets, and how each meal of the day compares to it.
+// The saved menu, the option picked for each meal today, the targets that follow, and how a logged
+// meal compares to the menu.
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GOALS, MENU_DAY, todayKey } from '../config/goals';
 import { applyDerived, derive } from '../profile/derive';
 import { loadProfile, saveProfile } from '../profile/profile';
-import type { SlotId } from '../nutrition/meals';
-import { DietMenu, mealKcal, mealProtein, MenuMeal, menuTotals } from './parse';
+import { SlotId, slotOf } from '../nutrition/meals';
+import { DietMenu, mealKcal, mealProtein, MenuChoice, MenuMeal, MenuOption, menuTotals, optionKcal, optionProtein, pickedOption, upgradeMenu } from './parse';
 
 import { t as tr } from '../i18n';
 const KEY = 'diet.menu.v1';
+const DAY_KEY = 'diet.day.v1';
 
 export async function loadMenu(): Promise<DietMenu | null> {
   try {
-    return JSON.parse((await AsyncStorage.getItem(KEY)) ?? 'null');
+    return upgradeMenu(JSON.parse((await AsyncStorage.getItem(KEY)) ?? 'null'));
   } catch {
     return null;
   }
 }
 
-/** Saves the menu and makes its totals the day's calories and protein */
+/** Saves the menu and makes its default day the calories and protein, and its water rule the water */
 export async function saveMenu(menu: DietMenu) {
   await AsyncStorage.setItem(KEY, JSON.stringify(menu));
   const t = menuTotals(menu);
   const profile = await loadProfile();
-  const next = { ...profile, menuTargets: { kcal: t.kcal, protein: t.protein } };
+  const waterMl = menu.rules.useWater && menu.rules.waterL ? Math.round(menu.rules.waterL * 1000) : undefined;
+  const next = { ...profile, menuTargets: { kcal: t.kcal, protein: t.protein, waterMl } };
   await saveProfile(next);
+  MENU_DAY.date = '';
   applyDerived(derive(next));
+  await applyMenuDay();
 }
 
 /** Back to the app's own targets */
 export async function clearMenu() {
   await AsyncStorage.removeItem(KEY);
+  await AsyncStorage.removeItem(DAY_KEY);
+  MENU_DAY.date = '';
   const profile = await loadProfile();
   const { menuTargets: _drop, ...rest } = profile;
   await saveProfile(rest);
   applyDerived(derive(rest));
 }
 
+// ---- The day: which option of each meal ------------------------------------------------------
+
+type Picks = Partial<Record<SlotId, number>>;
+
+/** Today's picks; another day's picks are forgotten, so a new day starts from the menu's defaults */
+export async function todayPicks(now = new Date()): Promise<Picks> {
+  try {
+    const d = JSON.parse((await AsyncStorage.getItem(DAY_KEY)) ?? 'null');
+    return d && d.date === todayKey(now) ? d.picks ?? {} : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Puts today's picks into today's targets (or clears them when they are the defaults) */
+export async function applyMenuDay(now = new Date()) {
+  const menu = await loadMenu();
+  if (!menu) return;
+  const picks = await todayPicks(now);
+  const def = menuTotals(menu);
+  const day = menuTotals(menu, picks);
+  if (day.kcal === def.kcal && day.protein === def.protein) {
+    if (MENU_DAY.date) {
+      MENU_DAY.date = '';
+      applyDerived(derive(await loadProfile()));
+    }
+    return;
+  }
+  Object.assign(MENU_DAY, { date: todayKey(now), kcal: day.kcal, protein: day.protein });
+  GOALS.calories = Math.round(day.kcal / 25) * 25;
+  GOALS.proteinG = Math.round(day.protein / 5) * 5;
+}
+
+/** Another option for a meal: today only, or from now on (the menu's default changes) */
+export async function setPick(slot: SlotId, option: number, always: boolean, now = new Date()) {
+  const menu = await loadMenu();
+  if (!menu) return;
+  if (always) {
+    const m = menu.meals.find((x) => x.slot === slot);
+    if (m) m.pick = option;
+    await saveMenu(menu);
+  }
+  const picks = await todayPicks(now);
+  if (always) delete picks[slot];
+  else picks[slot] = option;
+  await AsyncStorage.setItem(DAY_KEY, JSON.stringify({ date: todayKey(now), picks }));
+  await applyMenuDay(now);
+}
+
 export const menuMealOf = (menu: DietMenu | null, slot: SlotId): MenuMeal | undefined => menu?.meals.find((m) => m.slot === slot);
+
+// ---- A logged meal against the menu --------------------------------------------------------------
+
+export { matchOption } from './match';
+export type { OptionMatch } from './match';
+import { matchOption } from './match';
 
 export interface MealCheck {
   chip: string;
   tone: 'good' | 'off' | 'later' | 'none';
-  /** What the menu says, short */
+  /** What the menu says for this meal today, short */
   plan: string;
+  /** The option the logged meal fits, when it is not the one picked */
+  fits?: number;
 }
 
-/** A meal against its menu meal: on plan, off by how much, skipped, or still to come */
-export function checkMeal(m: MenuMeal, eaten: { kcal: number; protein: number; count: number }, state: 'past' | 'now' | 'future'): MealCheck {
-  const plan = m.items.map((x) => x.text.split(/\s+או\s+/)[0]).join(', ');
-  const kcal = mealKcal(m);
-  const protein = mealProtein(m);
+const planText = (o: MenuOption) => o.items.map((x) => x.text).join(', ');
+
+/**
+ * A meal against its menu meal: on plan (any option, any alternative), off by how much, skipped,
+ * or still to come. `names` are the logged foods' names.
+ */
+export function checkMeal(m: MenuMeal, eaten: { kcal: number; protein: number; count: number; names?: string[] }, state: 'past' | 'now' | 'future', pick?: number): MealCheck {
+  const opt = pickedOption(m, pick);
+  const plan = `${m.options.length > 1 ? `${opt.label}: ` : ''}${planText(opt)}`;
   if (!eaten.count) return state === 'past' ? { chip: tr('לא נרשמה', 'Not logged'), tone: 'off', plan } : { chip: tr('בהמשך', 'Later'), tone: 'later', plan };
+  const match = eaten.names?.length ? matchOption(m, eaten.names) : null;
+  const target = match && match.score >= 0.5 ? m.options[match.option] : opt;
+  const kcal = optionKcal(target);
+  const protein = optionProtein(target);
+  const fits = match && match.score >= 0.5 && match.option !== (pick ?? m.pick) ? match.option : undefined;
   const over = eaten.kcal - kcal;
-  if (over > Math.max(120, kcal * 0.25)) return { chip: tr(`${Math.round(over)} מעל`, `${Math.round(over)} over`), tone: 'off', plan };
-  if (protein >= 10 && eaten.protein < protein * 0.75) return { chip: tr(`חסרים ${Math.round(protein - eaten.protein)} ג' חלבון`, `${Math.round(protein - eaten.protein)} g protein missing`), tone: 'off', plan };
-  if (state === 'past' && eaten.kcal < kcal * 0.5) return { chip: tr('פחות מהתפריט', 'Less than the menu'), tone: 'off', plan };
-  return { chip: tr('לפי התפריט', 'By the menu'), tone: 'good', plan };
+  if (over > Math.max(120, kcal * 0.25)) return { chip: tr(`${Math.round(over)} מעל`, `${Math.round(over)} over`), tone: 'off', plan, fits };
+  if (protein >= 10 && eaten.protein < protein * 0.75) return { chip: tr(`חסרים ${Math.round(protein - eaten.protein)} ג' חלבון`, `${Math.round(protein - eaten.protein)} g protein missing`), tone: 'off', plan, fits };
+  if (state === 'past' && eaten.kcal < kcal * 0.5) return { chip: tr('פחות מהתפריט', 'Less than the menu'), tone: 'off', plan, fits };
+  if (match && match.score < 0.34 && eaten.names?.length) return { chip: tr('לא בתפריט', 'Not on the menu'), tone: 'off', plan };
+  return { chip: tr('לפי התפריט', 'By the menu'), tone: 'good', plan, fits };
+}
+
+/** The lightest option of a later meal, when something off the menu took its room */
+export function lighterOption(m: MenuMeal, pick?: number): { option: number; kcal: number } | null {
+  const cur = mealKcal(m, pick);
+  let best: { option: number; kcal: number } | null = null;
+  m.options.forEach((o, k) => {
+    const kc = optionKcal(o);
+    if (kc < cur - 60 && (!best || kc < best.kcal)) best = { option: k, kcal: kc };
+  });
+  return best;
+}
+
+export { mealKcal, mealProtein };
+
+/**
+ * A logged meal that fits another option than the one picked becomes today's pick, without asking:
+ * he ate the fish instead of the chicken, so the day's targets follow the fish.
+ */
+export async function adoptEatenOptions(menu: DietMenu, picks: Picks, meals: { name: string; time: Date }[], now = new Date()): Promise<Picks> {
+  let changed = false;
+  const next = { ...picks };
+  for (const m of menu.meals) {
+    const names = meals.filter((x) => slotOf(x.time) === m.slot).map((x) => x.name);
+    if (!names.length || m.options.length < 2) continue;
+    const match = matchOption(m, names);
+    const cur = next[m.slot] ?? m.pick;
+    if (match && match.score >= 0.5 && match.option !== cur) {
+      next[m.slot] = match.option;
+      changed = true;
+    }
+  }
+  if (changed) {
+    await AsyncStorage.setItem(DAY_KEY, JSON.stringify({ date: todayKey(now), picks: next }));
+    await applyMenuDay(now);
+  }
+  return next;
+}
+
+/** "By the menu today: 4 of 5 meals." for the day's summary */
+export function menuDayLine(menu: DietMenu, picks: Picks, meals: { name: string; time: Date; kcal: number; protein: number }[]): string {
+  let on = 0;
+  for (const m of menu.meals) {
+    const inSlot = meals.filter((x) => slotOf(x.time) === m.slot);
+    if (!inSlot.length) continue;
+    const c = checkMeal(m, { kcal: inSlot.reduce((a, x) => a + x.kcal, 0), protein: inSlot.reduce((a, x) => a + x.protein, 0), count: inSlot.length, names: inSlot.map((x) => x.name) }, 'past', picks[m.slot]);
+    if (c.tone === 'good') on++;
+  }
+  return tr(`היום לפי התפריט: ${on} מתוך ${menu.meals.length} ארוחות.`, `By the menu today: ${on} of ${menu.meals.length} meals.`);
 }

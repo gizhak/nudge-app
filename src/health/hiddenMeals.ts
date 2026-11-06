@@ -37,8 +37,47 @@ export async function unhideMeal(id: string, key?: string) {
   await save(h);
 }
 
+// Meals he ate only part of ("half"): every amount in the record scaled, here only
+const PORTIONS = 'mealPortions.v1';
+type Portions = Record<string, { f: number; at: number }>;
+async function loadPortions(): Promise<Portions> {
+  try {
+    return JSON.parse((await AsyncStorage.getItem(PORTIONS)) ?? '{}');
+  } catch {
+    return {};
+  }
+}
+
+/** He ate only `factor` of a meal (0.5 for half); 1 undoes it */
+export async function setPortion(id: string, factor: number, key?: string, now = Date.now()) {
+  const p = await loadPortions();
+  for (const k of [id, key].filter(Boolean) as string[]) {
+    if (factor === 1) delete p[k];
+    else p[k] = { f: factor, at: now };
+  }
+  for (const [k, v] of Object.entries(p)) if (now - v.at > KEEP_MS) delete p[k];
+  await AsyncStorage.setItem(PORTIONS, JSON.stringify(p)).catch(() => {});
+}
+
+/** Every number of a Health Connect record ("inGrams", "inKilocalories"...) times a factor */
+function scaled<R>(r: R, f: number): R {
+  const walk = (x: any): any => {
+    if (Array.isArray(x)) return x.map(walk);
+    if (!x || typeof x !== 'object') return x;
+    const out: any = {};
+    for (const [k, v] of Object.entries(x)) out[k] = typeof v === 'number' && /^in[A-Z]/.test(k) ? v * f : k === 'metadata' || k === 'startTime' || k === 'endTime' ? v : walk(v);
+    return out;
+  };
+  return walk(r);
+}
+
 export async function withoutHidden<R>(records: R[]): Promise<R[]> {
   const h = await load();
-  if (!Object.keys(h).length) return records;
-  return records.filter((r) => !h[mealId(r)] && !h[mealKey(r)]);
+  const kept = Object.keys(h).length ? records.filter((r) => !h[mealId(r)] && !h[mealKey(r)]) : records;
+  const p = await loadPortions();
+  if (!Object.keys(p).length) return kept;
+  return kept.map((r) => {
+    const v = p[mealId(r)] ?? p[mealKey(r)];
+    return v ? scaled(r, v.f) : r;
+  });
 }

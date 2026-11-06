@@ -2,7 +2,7 @@ import { blockText, deficitBlock, safeGoal } from './safety';
 // Turns the questionnaire answers into targets, a weekly plan and coach settings.
 // Pure functions: no storage, no React, so the math is easy to test.
 import type { Exercise, PlannedWorkout, Session } from '../config/goals';
-import { defaultWeekend, GOALS, MINIMUM_WORKOUT, SESSIONS, setWeekend, WEEKEND_MODE, WEEKLY_PLAN } from '../config/goals';
+import { defaultWeekend, GOALS, MENU_DAY, MINIMUM_WORKOUT, SESSIONS, setWeekend, todayKey, WEEKEND_MODE, WEEKLY_PLAN } from '../config/goals';
 import { Pain, Profile, SplitKind } from './profile';
 import { checklistOf, exercisesOf, gearFor, pickKey } from '../train/library';
 
@@ -297,7 +297,7 @@ export function derive(input: Profile): Derived {
   return {
     bmr: Math.round(bmr),
     maintenance: round(maintenance, 25),
-    goals: { calories, proteinG, steps: p.workLoad === 'physical' ? 10000 : 8000, sleepHours: 7, workoutsPerWeek: workouts },
+    goals: { calories, proteinG, steps: p.workLoad === 'physical' ? 10000 : 8000, sleepHours: 7, workoutsPerWeek: workouts, waterMl: p.menuTargets?.waterMl ?? 0 },
     plan: buildPlan(p),
     sessions: buildSessions(p),
     minimum: [ex('סקוואטים', 3, '15'), ex('שכיבות סמיכה', 3, '10'), ex('לאנג׳ים', 2, '10 לכל רגל'), ex('פלאנק', 2, '30 שניות')].map((e) =>
@@ -315,6 +315,11 @@ export function derive(input: Profile): Derived {
 /** Makes the derived plan the one the whole app uses (screens, coach, reminders). */
 export function applyDerived(d: Derived) {
   Object.assign(GOALS, d.goals);
+  // Another menu option picked for today moves today's targets
+  if (MENU_DAY.date === todayKey() && MENU_DAY.kcal > 0) {
+    GOALS.calories = Math.round(MENU_DAY.kcal / 25) * 25;
+    GOALS.proteinG = Math.round(MENU_DAY.protein / 5) * 5;
+  }
   setWeekend(d.weekend);
   WEEKEND_MODE.style = d.weekendStyle;
   WEEKLY_PLAN.splice(0, WEEKLY_PLAN.length, ...d.plan);

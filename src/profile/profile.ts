@@ -67,7 +67,7 @@ export interface Profile {
   /** Calories added to (or taken from) the daily target by plan changes he approved */
   calorieAdjust?: number;
   /** A dietitian's menu sets the day's calories and protein; the coach does not change it */
-  menuTargets?: { kcal: number; protein: number };
+  menuTargets?: { kcal: number; protein: number; waterMl?: number };
   /** Moves the user picked, per split, place and session (see train/library pickKey). None: the recommendation */
   picks?: Record<string, string[]>;
   schema?: number;
