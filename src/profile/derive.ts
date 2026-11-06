@@ -306,7 +306,8 @@ export function derive(input: Profile): Derived {
     weeklyRateKg,
     // 'Like any day': no weekend at all
     weekend: p.weekendStyle === 'same' ? [] : p.weekendDays?.length ? p.weekendDays : defaultWeekend(),
-    weekendStyle: p.weekendStyle ?? 'normal',
+    // A coach's menu is the same every day: no moving calories to the weekend while it is on
+    weekendStyle: p.menuTargets && p.weekendStyle === 'flex' ? 'normal' : p.weekendStyle ?? 'normal',
     weeksToTarget,
     notes,
   };

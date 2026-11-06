@@ -281,7 +281,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
 
 
       <RowsCard>
-        {SLOTS.filter((slot) => (diet ? !!menuMealOf(diet, slot.id) : slots.includes(slot.id)) || meals.some((m) => slotOf(m.time) === slot.id)).map((slot, idx) => {
+        {SLOTS.filter((slot) => (slots.includes(slot.id) || (diet ? !!menuMealOf(diet, slot.id) : false)) || meals.some((m) => slotOf(m.time) === slot.id)).map((slot, idx) => {
           const inSlot = meals.filter((m) => slotOf(m.time) === slot.id);
           const slotKcal = inSlot.reduce((a, m) => a + m.kcal, 0);
           const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
