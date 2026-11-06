@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { openLens } from '../apps/lens';
-import { AI_PROMPT, DietMenu, MenuItem, MenuMeal, menuTotals, optionKcal, optionProtein, parseDiet, parseItem, slotTitle } from '../diet/parse';
-import { clearMenu, loadMenu, saveMenu } from '../diet/store';
+import { AI_PROMPT, DietMenu, MenuItem, MenuMeal, menuTotals, optionKcal, optionProtein, parseDiet, parseItem, slotTitle, SwapRule } from '../diet/parse';
+import { clearMenu, loadMenu, saveMenu, setSwap } from '../diet/store';
 import type { SlotId } from '../nutrition/meals';
 import { C, FONT, fmt, T } from '../ui/theme';
 
@@ -226,6 +226,7 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
                 />
               ))}
               <Extras menu={draft} />
+              <SwapPick value={draft.swap} onChange={(v) => setDraft({ ...draft, swap: v })} />
               {(draft.rules.waterL || draft.rules.cupsBefore) && (
                 <View style={s.meal}>
                   <Text style={[T.bold, { fontSize: 17 }]}>{tr('כללים מהתפריט', 'Rules from the menu')}</Text>
@@ -273,6 +274,13 @@ export default function DietMenuScreen({ open, onClose, initialText, onSaved }: 
                 <MealCard key={m.slot + mi} meal={m} idPrefix={`s${mi}`} onTab={(oi) => setSaved({ ...saved, meals: saved.meals.map((x, k) => (k === mi ? { ...x, pick: oi } : x)) })} readOnly />
               ))}
               <Extras menu={saved} />
+              <SwapPick
+                value={saved.swap}
+                onChange={(v) => {
+                  setSaved({ ...saved, swap: v });
+                  setSwap(v);
+                }}
+              />
               <View style={s.total}>
                 <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>{tr('היעד היומי לפי התפריט', 'Daily goal by the menu')}</Text>
                 <Text style={[T.bold, { fontSize: 22, fontFamily: FONT.black }]}>
@@ -312,6 +320,30 @@ function Found({ menu }: { menu: DietMenu }) {
       <Text style={{ fontFamily: FONT.black, fontSize: 26, color: '#fff' }}>{tr(`${fmt(t.kcal)} קל' ליום`, `${fmt(t.kcal)} kcal a day`)}</Text>
       {t.hi > t.lo && <Text style={{ fontFamily: FONT.regular, fontSize: 13, color: '#BDB4AA' }}>{tr(`לפי האפשרות הראשונה של כל ארוחה. כל האפשרויות: בין ${fmt(t.lo)} ל ${fmt(t.hi)}.`, `By each meal's first option. Across all options: ${fmt(t.lo)} to ${fmt(t.hi)}.`)}</Text>}
       <Text style={{ fontFamily: FONT.regular, fontSize: 13, color: '#BDB4AA' }}>{bits.join(' · ')}</Text>
+    </View>
+  );
+}
+
+/** May meals trade places: asked with the menu, so the coach knows before the first time */
+function SwapPick({ value, onChange }: { value?: SwapRule; onChange: (v: SwapRule) => void }) {
+  const opts: { v: SwapRule; label: string }[] = [
+    { v: 'none', label: tr('לא', 'No') },
+    { v: 'lunchDinner', label: tr('צהריים וערב', 'Lunch and dinner') },
+    { v: 'main', label: tr('כל הארוחות', 'All meals') },
+  ];
+  return (
+    <View style={s.meal}>
+      <Text style={[T.bold, { fontSize: 17 }]}>{tr('החלפה בין ארוחות', 'Swapping meals')}</Text>
+      <Text style={[T.muted, { fontSize: 13.5, lineHeight: 19 }]}>
+        {tr('המאמן מרשה לאכול ארוחה בזמן של ארוחה אחרת? למשל את הצהריים בערב. אם לא תבחר, אשאל בפעם הראשונה שזה יקרה.', 'Does your coach let you eat one meal at another meal\'s time? Lunch in the evening, say. If you leave it, I will ask the first time it happens.')}
+      </Text>
+      <View style={s.seg}>
+        {opts.map((o) => (
+          <Pressable key={o.v} onPress={() => onChange(o.v)} style={[s.segBtn, value === o.v && s.segOn]}>
+            <Text style={[T.bold, { fontSize: 13, color: value === o.v ? '#fff' : C.ink }]} numberOfLines={1}>{o.label}</Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }

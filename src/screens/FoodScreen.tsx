@@ -18,7 +18,7 @@ import { C, FONT, fmt, T } from '../ui/theme';
 import MenuAdvisor from './MenuAdvisor';
 import DietMenuScreen from './DietMenu';
 import { DietMenu, looksLikeDiet, MenuMeal, menuTotals, optionKcal, optionProtein } from '../diet/parse';
-import { adoptEatenOptions, checkMeal, lighterOption, loadMenu, menuMealOf, setPick, todayPicks } from '../diet/store';
+import { adoptEatenOptions, checkMeal, lighterOption, loadMenu, menuMealOf, setPick, todayPicks, swapMeals } from '../diet/store';
 import Craving from './Craving';
 import { Sheet } from '../ui/Sheet';
 
@@ -292,7 +292,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
           const to = mm?.to ?? slot.to;
           const passed = from < to ? nowMin >= to : false;
           const started = from < to ? nowMin >= from : nowMin >= from || nowMin < to;
-          const check = mm ? checkMeal(mm, { kcal: slotKcal, protein: inSlot.reduce((a, m) => a + m.protein, 0), count: inSlot.length, names: inSlot.map((m) => m.name) }, passed ? 'past' : started ? 'now' : 'future', picks[slot.id]) : null;
+          const check = mm ? checkMeal(mm, { kcal: slotKcal, protein: inSlot.reduce((a, m) => a + m.protein, 0), count: inSlot.length, names: inSlot.map((m) => m.name) }, passed ? 'past' : started ? 'now' : 'future', picks[slot.id], swapMeals(diet, slot.id)) : null;
           const canSwap = !!mm && mm.options.length > 1 && !inSlot.length && !skipped.includes(slot.id);
           const isSkipped = skipped.includes(slot.id) && !inSlot.length;
           // Its time came and nothing was logged: he can say he skipped it

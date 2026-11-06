@@ -5,7 +5,7 @@ import { GOALS, MENU_DAY, todayKey } from '../config/goals';
 import { applyDerived, derive } from '../profile/derive';
 import { loadProfile, saveProfile } from '../profile/profile';
 import { SlotId, slotOf } from '../nutrition/meals';
-import { DietMenu, mealKcal, mealProtein, MenuChoice, MenuMeal, MenuOption, menuTotals, optionKcal, optionProtein, pickedOption, upgradeMenu } from './parse';
+import { DietMenu, SwapRule, mealKcal, mealProtein, MenuChoice, MenuMeal, MenuOption, menuTotals, optionKcal, optionProtein, pickedOption, upgradeMenu } from './parse';
 
 import { t as tr } from '../i18n';
 const KEY = 'diet.menu.v1';
@@ -92,13 +92,21 @@ export async function setPick(slot: SlotId, option: number, always: boolean, now
   await applyMenuDay(now);
 }
 
+/** Sets the swap rule (from the menu screen or the coach's question) */
+export async function setSwap(rule: SwapRule) {
+  const menu = await loadMenu();
+  if (!menu) return;
+  await AsyncStorage.setItem(KEY, JSON.stringify({ ...menu, swap: rule }));
+}
+
 export const menuMealOf = (menu: DietMenu | null, slot: SlotId): MenuMeal | undefined => menu?.meals.find((m) => m.slot === slot);
 
 // ---- A logged meal against the menu --------------------------------------------------------------
 
 export { matchOption } from './match';
 export type { OptionMatch } from './match';
-import { matchOption } from './match';
+import { fits, matchOption, swapMeals } from './match';
+export { swapMeals };
 
 export interface MealCheck {
   chip: string;
@@ -115,26 +123,39 @@ const planText = (o: MenuOption) => o.items.map((x) => x.text).join(', ');
  * A meal against its menu meal: on plan (any option, any alternative), off by how much, skipped,
  * or still to come. `names` are the logged foods' names.
  */
-export function checkMeal(m: MenuMeal, eaten: { kcal: number; protein: number; count: number; names?: string[] }, state: 'past' | 'now' | 'future', pick?: number): MealCheck {
+export function checkMeal(m: MenuMeal, eaten: { kcal: number; protein: number; count: number; names?: string[] }, state: 'past' | 'now' | 'future', pick?: number, others: MenuMeal[] = []): MealCheck {
   const opt = pickedOption(m, pick);
   const plan = `${m.options.length > 1 ? `${opt.label}: ` : ''}${planText(opt)}`;
   if (!eaten.count) return state === 'past' ? { chip: tr('לא נרשמה', 'Not logged'), tone: 'off', plan } : { chip: tr('בהמשך', 'Later'), tone: 'later', plan };
-  const match = eaten.names?.length ? matchOption(m, eaten.names) : null;
-  const target = match && match.score >= 0.5 ? m.options[match.option] : opt;
+  let match = eaten.names?.length ? matchOption(m, eaten.names) : null;
+  // Another meal's food, where the menu lets meals trade places: measured against that meal
+  if (!fits(match) && eaten.names?.length) {
+    for (const o of others) {
+      const x = matchOption(o, eaten.names);
+      if (fits(x)) {
+        const t = o.options[x.option];
+        const over = eaten.kcal - optionKcal(t);
+        const from = o.title.replace(/^ארוחת\s+/, '');
+        if (over > Math.max(120, optionKcal(t) * 0.25)) return { chip: tr(`${Math.round(over)} מעל`, `${Math.round(over)} over`), tone: 'off', plan };
+        return { chip: tr(`לפי התפריט, מה${from}`, `By the menu, from ${o.title.toLowerCase()}`), tone: 'good', plan };
+      }
+    }
+  }
+  const target = fits(match) ? m.options[match.option] : opt;
   const kcal = optionKcal(target);
   const protein = optionProtein(target);
-  const fits = match && match.score >= 0.5 && match.option !== (pick ?? m.pick) ? match.option : undefined;
+  const fitsOpt = fits(match) && match.option !== (pick ?? m.pick) ? match.option : undefined;
   // A coffee in the meal's hours is not the meal yet, while its window is still open
   if (state !== 'past' && eaten.kcal < kcal * 0.35) {
     const what = (eaten.names?.[0] ?? '').split(/[,،]/)[0].trim().split(/\s+/).slice(0, 2).join(' ');
     return { chip: what && what.length <= 18 ? tr(`בינתיים ${what}`, `So far ${what}`) : tr('בינתיים משהו קטן', 'So far something small'), tone: 'later', plan };
   }
   const over = eaten.kcal - kcal;
-  if (over > Math.max(120, kcal * 0.25)) return { chip: tr(`${Math.round(over)} מעל`, `${Math.round(over)} over`), tone: 'off', plan, fits };
-  if (protein >= 10 && eaten.protein < protein * 0.75) return { chip: tr(`חסרים ${Math.round(protein - eaten.protein)} ג' חלבון`, `${Math.round(protein - eaten.protein)} g protein missing`), tone: 'off', plan, fits };
-  if (state === 'past' && eaten.kcal < kcal * 0.5) return { chip: tr('פחות מהתפריט', 'Less than the menu'), tone: 'off', plan, fits };
-  if (match && match.score < 0.34 && eaten.names?.length) return { chip: tr('לא בתפריט', 'Not on the menu'), tone: 'off', plan };
-  return { chip: tr('לפי התפריט', 'By the menu'), tone: 'good', plan, fits };
+  if (over > Math.max(120, kcal * 0.25)) return { chip: tr(`${Math.round(over)} מעל`, `${Math.round(over)} over`), tone: 'off', plan, fits: fitsOpt };
+  if (protein >= 10 && eaten.protein < protein * 0.75) return { chip: tr(`חסרים ${Math.round(protein - eaten.protein)} ג' חלבון`, `${Math.round(protein - eaten.protein)} g protein missing`), tone: 'off', plan, fits: fitsOpt };
+  if (state === 'past' && eaten.kcal < kcal * 0.5) return { chip: tr('פחות מהתפריט', 'Less than the menu'), tone: 'off', plan, fits: fitsOpt };
+  if (match && match.score < 0.34 && !match.allIn && eaten.names?.length) return { chip: tr('לא בתפריט', 'Not on the menu'), tone: 'off', plan };
+  return { chip: tr('לפי התפריט', 'By the menu'), tone: 'good', plan, fits: fitsOpt };
 }
 
 /** The lightest option of a later meal, when something off the menu took its room */
@@ -180,7 +201,7 @@ export function menuDayLine(menu: DietMenu, picks: Picks, meals: { name: string;
   for (const m of menu.meals) {
     const inSlot = meals.filter((x) => slotOf(x.time) === m.slot);
     if (!inSlot.length) continue;
-    const c = checkMeal(m, { kcal: inSlot.reduce((a, x) => a + x.kcal, 0), protein: inSlot.reduce((a, x) => a + x.protein, 0), count: inSlot.length, names: inSlot.map((x) => x.name) }, 'past', picks[m.slot]);
+    const c = checkMeal(m, { kcal: inSlot.reduce((a, x) => a + x.kcal, 0), protein: inSlot.reduce((a, x) => a + x.protein, 0), count: inSlot.length, names: inSlot.map((x) => x.name) }, 'past', picks[m.slot], swapMeals(menu, m.slot));
     if (c.tone === 'good') on++;
   }
   return tr(`היום לפי התפריט: ${on} מתוך ${menu.meals.length} ארוחות.`, `By the menu today: ${on} of ${menu.meals.length} meals.`);

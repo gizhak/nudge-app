@@ -1,6 +1,7 @@
 // A meal's foods against a menu meal's options: which option it fits, item by item, any
 // alternative counting. Pure, so the coach's rules can use it.
-import { MenuChoice, MenuMeal, parseItem } from './parse';
+import { DietMenu, MenuChoice, MenuMeal, parseItem, SwapRule } from './parse';
+import type { SlotId } from '../nutrition/meals';
 
 const norm = (s: string) =>
   s
@@ -29,30 +30,64 @@ export interface OptionMatch {
   score: number;
   /** What he ate instead of the first choice: "סלמון" for "עוף" */
   swaps: string[];
+  /** Every food named is in the option: "סלמון" alone is part of the meal, not off it */
+  allIn: boolean;
 }
+
+const splitFoods = (n: string) => n.split(/\s*[+,;]\s*|\s+עם\s+|\s+ו(?=[א-ת]{2})/);
 
 /** Which option of a meal some food names fit best, item by item (any alternative counts) */
 export function matchOption(meal: MenuMeal, names: string[]): OptionMatch | null {
-  const eaten = new Set(names.flatMap(wordsOf));
-  // The kind of each food too: a salad counts for "2 סוגי ירק", rice for "פחמימה 100 גרם אורז"
-  const kinds = new Set(names.flatMap((n) => n.split(/\s*[+,;]\s*|\s+עם\s+|\s+ו(?=[א-ת]{2})/)).map((n) => parseItem(n).foodId).filter(Boolean) as string[]);
-  if (!eaten.size || !meal.options.length) return null;
+  const foods = names.flatMap(splitFoods).map((n) => ({ words: new Set(wordsOf(n)), kind: parseItem(n).foodId })).filter((f) => f.words.size || f.kind);
+  if (!foods.length || !meal.options.length) return null;
   let best: OptionMatch | null = null;
   meal.options.forEach((o, k) => {
     const swaps: string[] = [];
+    const used = new Set<number>();
     const hit = o.items.map((it) => {
       const ch = choicesOf(it);
-      let at = ch.findIndex((c) => wordsOf(c).some((w) => eaten.has(w)));
+      // The words first; the kind of food too: a salad counts for "2 סוגי ירק", rice for "פחמימה 100 גרם אורז"
+      let at = -1;
+      foods.forEach((f, fi) => {
+        if (at >= 0) return;
+        const w = ch.findIndex((c) => wordsOf(c).some((x) => f.words.has(x)));
+        if (w >= 0) {
+          at = w;
+          used.add(fi);
+        }
+      });
       if (at < 0) {
         const ids = [it.foodId, ...(it.alts ?? []).map((a) => a.foodId)];
-        at = ids.findIndex((id) => !!id && kinds.has(id));
+        foods.forEach((f, fi) => {
+          if (at >= 0 || !f.kind) return;
+          const w = ids.findIndex((id) => id === f.kind);
+          if (w >= 0) {
+            at = w;
+            used.add(fi);
+          }
+        });
       }
       if (at > 0) swaps.push(ch[at]);
       return at >= 0;
     });
     const counted = o.items.filter((it) => !it.free).length || 1;
     const score = hit.filter((h, i) => h && !o.items[i].free).length / counted;
-    if (!best || score > best.score) best = { option: k, hit, score, swaps };
+    const allIn = used.size === foods.length && hit.some((h, i) => h && !o.items[i].free);
+    const better = !best || score > best.score || (score === best.score && allIn && !best.allIn);
+    if (better) best = { option: k, hit, score, swaps, allIn };
   });
   return best;
 }
+
+/** The meal is this option: most of it, or everything he named is in it ("סלמון" for lunch) */
+export const fits = (m: OptionMatch | null | undefined): m is OptionMatch => !!m && (m.score >= 0.5 || m.allIn);
+
+const MAIN: SlotId[] = ['breakfast', 'lunch', 'dinner'];
+/** The other meals this one may trade places with, by the menu's swap rule */
+export function swapMeals(menu: DietMenu | null, slot: SlotId, rule: SwapRule | undefined = menu?.swap): MenuMeal[] {
+  if (!menu || !rule || rule === 'none') return [];
+  const pair: SlotId[] = rule === 'lunchDinner' ? ['lunch', 'dinner'] : MAIN;
+  if (!pair.includes(slot)) return [];
+  return menu.meals.filter((m) => m.slot !== slot && pair.includes(m.slot));
+}
+

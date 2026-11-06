@@ -5,7 +5,7 @@ import { caloriesFor, GOALS } from '../config/goals';
 import { SlotId, SLOTS, slotOf } from '../nutrition/meals';
 import { findFood } from '../nutrition/cravings';
 import { t as tr } from '../i18n';
-import { matchOption } from './match';
+import { fits, matchOption, swapMeals } from './match';
 import { DietMenu, MenuMeal, optionKcal, optionProtein, parseItem } from './parse';
 
 export interface CheckRow {
@@ -16,7 +16,9 @@ export interface CheckRow {
 }
 
 export interface CheckResult {
-  verdict: 'on' | 'near' | 'off' | 'fits' | 'over';
+  verdict: 'on' | 'near' | 'off' | 'fits' | 'over' | 'ask';
+  /** Another meal's food, and the menu does not say yet whether meals may trade places: ask */
+  ask?: { from: SlotId; to: SlotId };
   /** "בתפריט", "לא בתפריט", "מתאים" */
   pill: string;
   /** "צהריים, אפשרות 1" or "בערך 560 קל'" */
@@ -77,21 +79,59 @@ export function checkFood(
   const kcal = ctx.logged?.kcal ?? est.reduce((a, x) => a + x.kcal, 0);
   const protein = ctx.logged?.protein ?? est.reduce((a, x) => a + x.protein, 0);
   let { meal } = mealNow(ctx.menu, ctx.now);
-  // Not this meal's food, but another meal's (he plans ahead): answer for that meal
+  const left = caloriesFor(ctx.now) - ctx.eatenKcal;
+  // Not this meal's food, but another meal's
   let other: MenuMeal | undefined;
-  if (ctx.menu && meal && !((matchOption(meal, foods)?.score ?? 0) >= 0.5)) {
-    const best = ctx.menu.meals.map((m) => ({ m, sc: matchOption(m, foods)?.score ?? 0 })).sort((a, b) => b.sc - a.sc)[0];
-    if (best && best.sc >= 0.5) {
-      other = best.m;
-      meal = best.m;
+  let swapped: MenuMeal | undefined;
+  const cur = meal ? matchOption(meal, foods) : null;
+  // Another meal is the better answer when this one does not fit, or fits only part of what he named
+  if (ctx.menu && meal && (!fits(cur) || !cur.allIn)) {
+    const partly = fits(cur);
+    const best = ctx.menu.meals
+      .filter((m) => m !== meal)
+      .map((m) => ({ m, x: matchOption(m, foods) }))
+      .filter((b) => fits(b.x) && (!partly || b.x.allIn))
+      .sort((a, b) => b.x!.score - a.x!.score)[0];
+    if (best) {
+      const ORDER: SlotId[] = SLOTS.map((s) => s.id);
+      const later = ORDER.indexOf(best.m.slot) > ORDER.indexOf(meal.slot);
+      const MAIN: SlotId[] = ['breakfast', 'lunch', 'dinner'];
+      if (later) {
+        // He plans ahead: answer for that meal
+        other = best.m;
+        meal = best.m;
+      } else if (swapMeals(ctx.menu, meal.slot).includes(best.m)) {
+        swapped = meal;
+        meal = best.m;
+      } else if (!ctx.menu.swap && MAIN.includes(best.m.slot) && MAIN.includes(meal.slot)) {
+        const from = best.m.title.replace(/^ארוחת\s+/, '');
+        return {
+          verdict: 'ask',
+          ask: { from: best.m.slot, to: meal.slot },
+          pill: tr('התפריט', 'The menu'),
+          headline: tr(`זה מופיע אצלך ב${from}, ועכשיו ${meal.title}. המאמן שלך מרשה להחליף בין ארוחות?`, `This is on your ${best.m.title.toLowerCase()}, and now it is ${meal.title.toLowerCase()}. Does your coach let you swap meals?`),
+          rows: [],
+        };
+      } else {
+        // Not allowed: what this meal can be instead
+        const rows: CheckRow[] = meal.options.slice(0, 3).map((o, i) => ({ mark: String(i + 1) as CheckRow['mark'], text: pretty(o.items.map((x) => x.text).join(', ')), kcal: optionKcal(o) }));
+        return {
+          verdict: 'off',
+          pill: tr(`לא ב${meal.title.replace(/^ארוחת\s+/, '')}`, `Not at ${meal.title.toLowerCase()}`),
+          where: kcal ? tr(`בערך ${k(kcal)} קל'`, `About ${k(kcal)} kcal`) : undefined,
+          headline: tr(`זה מופיע אצלך רק ב${best.m.title.replace(/^ארוחת\s+/, '')}. ל${meal.title} בתפריט:`, `This is only on your ${best.m.title.toLowerCase()}. For ${meal.title.toLowerCase()} the menu has:`),
+          rows,
+          note: tr('אם בכל זאת: חצי מנה, עם סלט גדול מהתוספות החופשיות.', 'If you eat it anyway: half a portion, with a big salad from the free additions.'),
+          total: tr(`נשארו היום ${k(Math.max(0, left))} קל'`, `${k(Math.max(0, left))} kcal left today`),
+        };
+      }
     }
   }
-  const left = caloriesFor(ctx.now) - ctx.eatenKcal;
 
   if (meal && meal.options.length) {
     const match = matchOption(meal, foods);
     const mealName = meal.title.replace(/^ארוחת\s+/, '');
-    if (match && match.score >= 0.5) {
+    if (fits(match)) {
       const o = meal.options[match.option];
       const rows: CheckRow[] = [];
       o.items.forEach((it, i) => {
@@ -106,8 +146,10 @@ export function checkFood(
       return {
         verdict: missing.length || over > 150 ? 'near' : 'on',
         pill: tr('בתפריט', 'On the menu'),
-        where: meal.options.length > 1 ? `${mealName}, ${o.label}` : mealName,
-        note: other ? tr(`זה מהתפריט של ${other.title}, לא של הארוחה של עכשיו.`, `This is from the ${other.title.toLowerCase()} menu, not this meal's.`) : undefined,
+        where: (meal.options.length > 1 ? `${mealName}, ${o.label}` : mealName) + (swapped ? tr(`, כ${swapped.title}`, `, as ${swapped.title.toLowerCase()}`) : ''),
+        note: swapped
+          ? tr(`במקום ${swapped.title}: ${k(optionKcal(o))} קל' מול ${k(optionKcal(swapped.options[Math.min(swapped.options.length - 1, ctx.picks[swapped.slot] ?? swapped.pick)]))} בתפריט.`, `Instead of ${swapped.title.toLowerCase()}: ${k(optionKcal(o))} kcal against ${k(optionKcal(swapped.options[Math.min(swapped.options.length - 1, ctx.picks[swapped.slot] ?? swapped.pick)]))} on the menu.`)
+          : other ? tr(`זה מהתפריט של ${other.title}, לא של הארוחה של עכשיו.`, `This is from the ${other.title.toLowerCase()} menu, not this meal's.`) : undefined,
         headline: over > 150 ? tr(`בתפריט, אבל ${k(over)} קל' מעל. קח חצי מהפחמימה.`, `On the menu, but ${k(over)} kcal over. Take half the carbs.`) : missing.length ? tr(`כמעט. חסר: ${missing.map((r) => r.text.split(' / ')[0]).join(', ')}.`, `Almost. Missing: ${missing.map((r) => r.text.split(' / ')[0]).join(', ')}.`) : tr('מתאים לתפריט.', 'Fits the menu.'),
         rows,
         total: tr(`${missing.length ? 'עם מה שחסר' : 'סה"כ'}: ${k(optionKcal(o))} קל' · ${k(optionProtein(o))} ג' חלבון`, `${missing.length ? 'With what is missing' : 'Total'}: ${k(optionKcal(o))} kcal · ${k(optionProtein(o))} g protein`),

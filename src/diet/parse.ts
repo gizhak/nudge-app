@@ -53,6 +53,8 @@ export interface MenuRules {
   useCups: boolean;
 }
 
+export type SwapRule = 'none' | 'lunchDinner' | 'main';
+
 export interface DietMenu {
   v: 2;
   meals: MenuMeal[];
@@ -61,6 +63,8 @@ export interface DietMenu {
   /** Sandwich suggestions, instead of a meal */
   sandwiches: string[];
   rules: MenuRules;
+  /** May meals trade places: not asked yet (undefined), never, lunch and dinner, or any of the main three */
+  swap?: SwapRule;
   /** Lines that are not the menu: the clinic, the date, table headers, the fine print */
   ignored: string[];
   text: string;

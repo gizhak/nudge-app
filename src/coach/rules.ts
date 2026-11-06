@@ -1,6 +1,6 @@
 import type { DietMenu, MenuMeal } from '../diet/parse';
 import { optionKcal } from '../diet/parse';
-import { matchOption } from '../diet/match';
+import { fits, matchOption, swapMeals } from '../diet/match';
 import { daysBack, LIGHT_IDS, onVacation } from './vacation';
 // Pure decision logic: given the situation, which messages should the coach send?
 // No I/O here, so every rule can be tested with plain inputs.
@@ -803,10 +803,23 @@ function menuFeedback(c: CoachContext, plate: MealLike[], meal: MealLike): Coach
   const mm = menu.meals.find((x) => x.slot === slot);
   const base = { id: `meal_${meal.time.getTime()}`, meal: { name: meal.name, kcal: meal.kcal, protein: meal.protein, good: true } };
   const names = plate.map((x) => x.name);
-  const match = mm ? matchOption(mm, names) : null;
+  let match = mm ? matchOption(mm, names) : null;
   const pickOf = (m: MenuMeal) => Math.min(m.options.length - 1, c.menuPicks?.[m.slot] ?? m.pick);
-  if (mm && match && match.score >= 0.5) {
-    const o = mm.options[match.option];
+  // Another meal's food, where the menu lets meals trade places: that meal's option
+  let from: MenuMeal | undefined;
+  if (mm && !fits(match)) {
+    for (const o of swapMeals(menu, slot)) {
+      const x = matchOption(o, names);
+      if (fits(x)) {
+        match = x;
+        from = o;
+        break;
+      }
+    }
+  }
+  const src = from ?? mm;
+  if (mm && src && match && fits(match)) {
+    const o = src.options[match.option];
     const kcal = optionKcal(o);
     const over = meal.kcal - kcal;
     const swaps = match.swaps.length ? t(`, עם ${match.swaps.join(' ו')}`, `, with ${match.swaps.join(' and ')}`) : '';
@@ -820,8 +833,8 @@ function menuFeedback(c: CoachContext, plate: MealLike[], meal: MealLike): Coach
     return {
       ...base,
       priority: 2,
-      title: t(`${mm.title} לפי התפריט`, `${mm.title} by the menu`),
-      body: t(`${mm.options.length > 1 ? o.label : 'כמו בתפריט'}${swaps}. ${Math.round(meal.kcal)} קל', ${Math.round(meal.protein)} ג' חלבון.${tail}`, `${mm.options.length > 1 ? o.label : 'As on the menu'}${swaps}. ${Math.round(meal.kcal)} kcal, ${Math.round(meal.protein)} g protein.${tail}`),
+      title: from ? t(`${mm.title} לפי התפריט, מה${from.title.replace(/^ארוחת\s+/, '')}`, `${mm.title} by the menu, from ${from.title.toLowerCase()}`) : t(`${mm.title} לפי התפריט`, `${mm.title} by the menu`),
+      body: t(`${src.options.length > 1 ? o.label : 'כמו בתפריט'}${swaps}. ${Math.round(meal.kcal)} קל', ${Math.round(meal.protein)} ג' חלבון.${tail}`, `${src.options.length > 1 ? o.label : 'As on the menu'}${swaps}. ${Math.round(meal.kcal)} kcal, ${Math.round(meal.protein)} g protein.${tail}`),
     };
   }
   // Not on the menu: a lighter option later today keeps the day on target, if there is one
