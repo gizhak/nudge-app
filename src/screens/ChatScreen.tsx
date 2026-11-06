@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, AppState, Dimensions, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { runCoach } from '../coach/engine';
 import { ackTopic, didIt, doneSince, loadActed } from '../coach/followupStore';
@@ -152,6 +152,29 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
   };
   // ---- The camera: a fresh Zepp meal not checked yet is checked now; otherwise Zepp opens, and the
   // meal is waited for when he comes back (every 20 seconds, for 3 minutes after the return)
+  // The keyboard covers the bottom of the screen: the chat ends above it, so the input stays in view.
+  // The tab bar under the chat is covered anyway; when the window itself shrank, only the rest.
+  const rootRef = useRef<View>(null);
+  const below = useRef(0);
+  const [kb, setKb] = useState(0);
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', (e) => {
+      const shrunk = Math.max(0, WIN0 - Dimensions.get('window').height);
+      setKb(Math.max(0, e.endCoordinates.height - shrunk - below.current));
+      setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 120);
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKb(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  const measure = () => {
+    if (kb) return;
+    rootRef.current?.measureInWindow((_x, y, _w, h) => {
+      below.current = Math.max(0, Dimensions.get('window').height - (y + h));
+    });
+  };
   const [wait, setWait] = useState<{ since: number; back?: number; failed?: boolean } | null>(null);
   const freshMeal = async (since: number): Promise<Meal | undefined> => {
     const meals = await readMeals().catch(() => [] as Meal[]);
@@ -325,7 +348,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg }}>
+    <View ref={rootRef} onLayout={measure} style={{ flex: 1, backgroundColor: C.bg, paddingBottom: kb }}>
       <View style={s.head}>
         <View style={s.avatar}>
           <View style={s.avatarDot} />
@@ -593,7 +616,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
           {checking ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
         </Pressable>
       </View>
-      <View style={s.bottom}>
+      <View style={[s.bottom, kb > 0 && { display: 'none' }]}>
         <Pressable onPress={() => onRoute({ tab: 'food', focus: 'craving' })} style={({ pressed }) => [s.quick, { backgroundColor: C.signal }, pressed && { opacity: 0.85 }]}>
           <Text style={[T.bold, { fontSize: 15, color: '#fff', textAlign: 'center' }]}>{tr('בא לי משהו', 'I feel like something')}</Text>
         </Pressable>
@@ -614,6 +637,9 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
     </View>
   );
 }
+
+// The window's height before any keyboard, like the drawer measures it
+const WIN0 = Dimensions.get('window').height;
 
 const s = StyleSheet.create({
   coachNew: { borderWidth: 2, borderColor: C.signal },
