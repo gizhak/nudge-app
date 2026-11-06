@@ -25,7 +25,7 @@ import { readSituation, Situation } from '../coach/situation';
 import { CheckAction, checklist, missingMeals } from '../coach/checklist';
 import { isQuietTime } from '../coach/rules';
 import { dm as vdm, onVacation } from '../coach/vacation';
-import { ackNight, loadSnoozes, loadUnlogged, markAteUnlogged, markWorkoutDone, snoozeToday, declineOuting, setOutingPlan, dayKey as dk, loadNightState, NightState, nightKey, loadPrefs, DEFAULT_PREFS, CoachPrefs } from '../coach/store';
+import { ackNight, loadSkipped, loadSnoozes, loadUnlogged, markAteUnlogged, markWorkoutDone, snoozeToday, declineOuting, setOutingPlan, dayKey as dk, loadNightState, NightState, nightKey, loadPrefs, DEFAULT_PREFS, CoachPrefs } from '../coach/store';
 import { loadAndApply } from '../profile/bootstrap';
 import { expectsBrokenNights, FoodAppKind, interruptLabels, Kids, WatchKind } from '../profile/profile';
 import { graceEnd, nightMinutes, OUTING_KINDS, OUTING_LABEL, OUTING_TIP, OutingPlan } from '../coach/outing';
@@ -373,6 +373,7 @@ export default function TodayScreen({
   const [coachToday, setCoachToday] = useState<SentMessage[]>([]);
   const [tick, setTick] = useState(0);
   const [unlogged, setUnlogged] = useState<string[]>([]);
+  const [skipped, setSkipped] = useState<string[]>([]);
   const [quiet, setQuiet] = useState<Record<string, number>>({});
   const [follow, setFollow] = useState<Record<string, FollowUp>>({});
   const [acted, setActed] = useState<Record<string, number>>({});
@@ -475,6 +476,7 @@ export default function TodayScreen({
       setFamily({ kids: profile.kids, nightWakeups: profile.nightWakeups, watch: profile.watch, foodApp: profile.foodApp });
       setPrefs(await loadPrefs());
       setUnlogged(await loadUnlogged());
+      setSkipped(await loadSkipped());
       setQuiet(await loadSnoozes());
       setFollow(await loadFollowUps());
       setActed(await loadActed());
@@ -678,6 +680,7 @@ export default function TodayScreen({
               devices={family}
               sit={sit}
               unlogged={unlogged}
+              skipped={skipped}
               follow={follow}
               prefs={prefs}
               onAction={async (key) => {
@@ -687,7 +690,7 @@ export default function TodayScreen({
                 else if (key === 'zepp') { const f = foodApp(family.foodApp); if (f) openApp(f.pkg); }
                 else if (key === 'mifitness') { const a = activityApp(family.watch); if (a) openApp(a.pkg); }
                 else if (key === 'ate') {
-                  const slots = missingMeals(new Date(), sit.meals.map((x) => x.time), prefs.mealSlots, unlogged);
+                  const slots = missingMeals(new Date(), sit.meals.map((x) => x.time), prefs.mealSlots, [...unlogged, ...skipped]);
                   await markAteUnlogged(slots);
                   await didIt([...slots.map((x) => `meal_reminder_${x}`), 'food']);
                   await refreshDone();
@@ -914,11 +917,13 @@ function Checklist({
   onDrink,
   devices,
   unlogged,
+  skipped,
   follow,
 }: {
   follow: Record<string, FollowUp>;
   devices: { watch?: WatchKind; foodApp?: FoodAppKind };
   unlogged: string[];
+  skipped: string[];
   sit: Situation;
   prefs: CoachPrefs;
   onAction: (k: CheckAction) => void;
@@ -946,6 +951,7 @@ function Checklist({
     foodAppName: devices.foodApp === 'other' ? null : foodApp(devices.foodApp)?.name ?? null,
     hasWatch: devices.watch === undefined ? undefined : hasWatch(devices.watch),
     unloggedSlots: unlogged,
+    skippedSlots: skipped,
   });
   const shown = items;
   const open = shown.filter((i) => !i.done);

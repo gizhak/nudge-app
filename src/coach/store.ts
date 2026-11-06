@@ -308,6 +308,44 @@ export async function markAteUnlogged(slots: string[], now = new Date()) {
   await AsyncStorage.setItem(UNLOGGED_KEY, JSON.stringify({ day: dayKey(now), slots: [...new Set([...cur, ...slots])] }));
 }
 
+// ---------- Meals he skipped on purpose ----------
+
+const SKIP_KEY = 'coach.skipped.v1';
+type Skips = Record<string, string[]>;
+async function loadSkips(): Promise<Skips> {
+  try {
+    return JSON.parse((await AsyncStorage.getItem(SKIP_KEY)) ?? '{}');
+  } catch {
+    return {};
+  }
+}
+
+/** Meal slots he skipped today: no reminders, and not "not logged" either */
+export async function loadSkipped(now = new Date()): Promise<string[]> {
+  return (await loadSkips())[dayKey(now)] ?? [];
+}
+
+export async function markSkipped(slot: string, now = new Date(), undo = false) {
+  const all = await loadSkips();
+  const k = dayKey(now);
+  const cur = new Set(all[k] ?? []);
+  if (undo) cur.delete(slot);
+  else cur.add(slot);
+  all[k] = [...cur];
+  // Three weeks is enough for the weekly pattern
+  const keep = new Set(Array.from({ length: 21 }, (_, i) => dayKey(new Date(now.getTime() - i * 86400000))));
+  for (const d of Object.keys(all)) if (!keep.has(d)) delete all[d];
+  await AsyncStorage.setItem(SKIP_KEY, JSON.stringify(all));
+}
+
+/** How many times each meal was skipped in the days from `from` to `to` (midnights) */
+export async function skipCounts(from: number, to: number): Promise<Record<string, number>> {
+  const all = await loadSkips();
+  const out: Record<string, number> = {};
+  for (let t = from; t < to; t += 86400000) for (const s of all[dayKey(new Date(t + 3600000))] ?? []) out[s] = (out[s] ?? 0) + 1;
+  return out;
+}
+
 // ---------- Leaving a place, confirmed ----------
 
 const PENDING_EXIT = 'coach.pendingExit.v1';

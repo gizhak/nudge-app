@@ -5,7 +5,7 @@ import { daysBack, LIGHT_IDS, onVacation } from './vacation';
 // Pure decision logic: given the situation, which messages should the coach send?
 // No I/O here, so every rule can be tested with plain inputs.
 import { GOALS, MINIMUM_WORKOUT, pad2, planThisWeek, sessionOf, weekendStart, caloriesFor } from '../config/goals';
-import { judgeMeal, MealLike, plateMeal, plates, SLOT_BY_ID, slotBudgets, slotOf } from '../nutrition/meals';
+import { judgeMeal, MealLike, plateMeal, plates, SLOT_BY_ID, slotBudgets, slotOf, SLOTS, SlotId } from '../nutrition/meals';
 import { drinkNow, waterBehind, waterExpectedByNow, waterProgress, waterText } from '../nutrition/water';
 import { graceEnd, nightMinutes, OUTING_LABEL, OUTING_TIP, OutingPlan } from './outing';
 import { CoachPrefs, hhmm, NagLevel, PlaceId } from './store';
@@ -65,6 +65,8 @@ export interface CoachContext {
   prefs: CoachPrefs;
   /** Today's meals, oldest first */
   mealList?: MealLike[];
+  /** Meals he skipped on purpose today */
+  skippedSlots?: string[];
   /** A dietitian's menu and today's option for each of its meals */
   menu?: DietMenu | null;
   menuPicks?: Partial<Record<string, number>>;
@@ -420,6 +422,45 @@ export function evaluate(c: CoachContext): CoachMessage[] {
         priority: 2,
         title: atOffice ? t('אל תשכח לאכול', 'Don\'t forget to eat') : `${slot.label}?`,
         body: t(`${atOffice ? 'אתה במשרד ועוד לא נרשמה ארוחת צהריים. ' : 'עוד לא נרשמה. '}${MEAL_IDEAS(id, !!c.vegetarian)} ${c.foodAppName === 'Zepp' ? 'צלם ב Zepp' : c.foodAppName ? `רשום ב ${c.foodAppName}` : 'רשום באפליקציית האוכל'} כשאתה אוכל.`, `${atOffice ? 'You are at the office and no lunch is logged yet. ' : 'Not logged yet. '}${MEAL_IDEAS(id, !!c.vegetarian)} ${c.foodAppName === 'Zepp' ? 'Snap it in Zepp' : c.foodAppName ? `Log it in ${c.foodAppName}` : 'Log it in the food app'} when you eat.`),
+      });
+    }
+  }
+
+  // A meal skipped on purpose: no calories made up, but its protein goes to the next meal;
+  // and in the late afternoon, a word about the hunger that comes after a skipped meal
+  const skipped = c.skippedSlots ?? [];
+  if (skipped.length) {
+    const order = SLOTS.map((x) => x.id);
+    for (const sl of skipped as SlotId[]) {
+      const mm = c.menu?.meals.find((x) => x.slot === sl);
+      const opt = mm?.options.length ? mm.options[Math.min(mm.options.length - 1, c.menuPicks?.[sl] ?? mm.pick)] : undefined;
+      const protein = opt ? opt.items.reduce((a, x) => a + (x.free ? 0 : x.protein), 0) : 0;
+      const next = order.slice(order.indexOf(sl) + 1).find((x) => (c.menu ? c.menu.meals.some((y) => y.slot === x) : c.prefs.mealSlots.includes(x)) && !meals.some((y) => slotOf(y.time) === x) && !skipped.includes(x));
+      if (!next || !(c.menu ? protein >= 15 : sl === 'breakfast' || sl === 'lunch')) continue;
+      const top = opt?.items.filter((x) => !x.free).sort((a, b) => b.protein - a.protein)[0];
+      const add = top && top.protein >= 6 ? top.text.replace(/\s*[\\|/]\s*/g, ' / ') : t("ביצה או 2 כפות קוטג'", 'an egg or 2 tbsp cottage cheese');
+      out.push({
+        id: `skip_protein_${sl}`,
+        priority: 2,
+        title: t(`דילגת על ${SLOT_BY_ID[sl].label}`, `You skipped ${SLOT_BY_ID[sl].label.toLowerCase()}`),
+        body: t(
+          `לא צריך להשלים קלוריות. אבל ${protein ? `היו בה ${Math.round(protein)} גרם חלבון, אז ` : ''}ב${SLOT_BY_ID[next].label} תוסיף ${add}.`,
+          `No need to make up the calories. But ${protein ? `it had ${Math.round(protein)} grams of protein, so ` : ''}at ${SLOT_BY_ID[next].label.toLowerCase()} add ${add}.`,
+        ),
+      });
+    }
+    if (between(m, 16 * 60, 18 * 60 + 30)) {
+      const snack = c.menu?.meals.find((x) => x.slot === 'snack_pm' || x.slot === 'snack_am');
+      const so = snack?.options[Math.min(snack.options.length - 1, c.menuPicks?.[snack.slot] ?? snack.pick)];
+      const what = so ? so.items.map((x) => x.text.replace(/\s*[\\|/]\s*/g, ' / ')).join(' + ') : t('פרי ויוגורט', 'fruit and a yogurt');
+      out.push({
+        id: 'skip_hunger',
+        priority: 2,
+        title: t('הרעב שאחרי דילוג', 'The hunger after a skipped meal'),
+        body: t(
+          `דילגת היום על ${skipped.map((x) => SLOT_BY_ID[x as SlotId].label).join(' ו')}. בשעות האלה זה בדרך כלל חוזר כנשנוש. תכין עכשיו ${what}, ותאכל לפני שהרעב מגיע.`,
+          `You skipped ${skipped.map((x) => SLOT_BY_ID[x as SlotId].label.toLowerCase()).join(' and ')} today. Around now that usually comes back as snacking. Get ${what} ready now, and eat before the hunger comes.`,
+        ),
       });
     }
   }

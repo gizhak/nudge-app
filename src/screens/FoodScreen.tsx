@@ -5,7 +5,7 @@ import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, View } from '
 import { openApp } from '../apps/zepp';
 import { APPS, AppInfo, foodApp } from '../setup/devices';
 import { loadProfile } from '../profile/profile';
-import { loadPrefs } from '../coach/store';
+import { loadPrefs, loadSkipped, markSkipped } from '../coach/store';
 import { judgeInPlate, plateMeal, plates, SlotId, SLOTS, slotBudgets, slotOf } from '../nutrition/meals';
 import { GOALS, caloriesFor } from '../config/goals';
 import { Meal, readMeals, readProteinByDay } from '../health/history';
@@ -61,6 +61,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
   const [swap, setSwap] = useState<SlotId | null>(null);
   const [swapTo, setSwapTo] = useState(0);
   const [swapAlways, setSwapAlways] = useState(false);
+  const [skipped, setSkipped] = useState<string[]>([]);
   useEffect(() => {
     if (!sharedMenu) return;
     if (looksLikeDiet(sharedMenu)) setDietOpen(true);
@@ -79,6 +80,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
       setDiet(menu);
       const pk = await todayPicks().catch(() => ({}));
       setPicks(menu ? await adoptEatenOptions(menu, pk, m).catch(() => pk) : pk);
+      setSkipped(await loadSkipped().catch(() => []));
       setSlots(prefs.mealSlots);
       setBedTime(prefs.bedTime);
       const profile = await loadProfile();
@@ -263,19 +265,33 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
           const mm = menuMealOf(diet, slot.id);
           const started = slot.from < slot.to ? nowMin >= slot.from : nowMin >= slot.from || nowMin < slot.to;
           const check = mm ? checkMeal(mm, { kcal: slotKcal, protein: inSlot.reduce((a, m) => a + m.protein, 0), count: inSlot.length, names: inSlot.map((m) => m.name) }, passed ? 'past' : started ? 'now' : 'future', picks[slot.id]) : null;
-          const canSwap = !!mm && mm.options.length > 1 && !inSlot.length;
+          const canSwap = !!mm && mm.options.length > 1 && !inSlot.length && !skipped.includes(slot.id);
+          const isSkipped = skipped.includes(slot.id) && !inSlot.length;
+          // Its time came and nothing was logged: he can say he skipped it
+          const canSkip = !inSlot.length && !isSkipped && (passed || started);
           return (
             <OpenRow
               key={slot.id}
               first={idx === 0}
               title={inSlot.length ? `${slot.label} · ${fmt(slotKcal)}` : slot.label}
-              sub={inSlot.length ? `${at} · ${inSlot.map((m) => m.name).join(', ')}` : passed ? tr('לא נרשמה', 'Not logged') : tr('בהמשך', 'Later')}
-              dot={!inSlot.length && passed}
+              sub={inSlot.length ? `${at} · ${inSlot.map((m) => m.name).join(', ')}` : isSkipped ? tr('דילגת', 'Skipped') : passed ? tr('לא נרשמה', 'Not logged') : tr('בהמשך', 'Later')}
+              dot={!inSlot.length && passed && !isSkipped}
               note={check ? tr(`בתפריט: ${check.plan}`, `Menu: ${check.plan}`) : undefined}
               right={
-                check ? (
+                check || canSkip || isSkipped ? (
                   <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                    <Text style={[T.bold, { fontSize: 12, color: check.tone === 'good' ? C.good : check.tone === 'off' ? C.warn : C.muted }]}>{check.chip}</Text>
+                    {check && !isSkipped && <Text style={[T.bold, { fontSize: 12, color: check.tone === 'good' ? C.good : check.tone === 'off' ? C.warn : C.muted }]}>{check.chip}</Text>}
+                    {(canSkip || isSkipped) && (
+                      <Pressable
+                        hitSlop={8}
+                        onPress={async () => {
+                          await markSkipped(slot.id, new Date(), isSkipped).catch(() => undefined);
+                          setSkipped(await loadSkipped());
+                        }}
+                      >
+                        <Text style={[T.bold, { fontSize: 12.5, color: C.muted, textDecorationLine: 'underline' }]}>{isSkipped ? tr('בטל דילוג', 'Undo skip') : tr('דילגתי', 'I skipped it')}</Text>
+                      </Pressable>
+                    )}
                     {canSwap && (
                       <Pressable
                         hitSlop={8}

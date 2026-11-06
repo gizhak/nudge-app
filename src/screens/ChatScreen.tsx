@@ -3,7 +3,7 @@ import { ActivityIndicator, AppState, Pressable, ScrollView, StyleSheet, Text, T
 import { Ionicons } from '@expo/vector-icons';
 import { runCoach } from '../coach/engine';
 import { ackTopic, didIt, doneSince, loadActed } from '../coach/followupStore';
-import { dayKey, loadLog, loadPrefs, loadSnoozes, SentMessage } from '../coach/store';
+import { dayKey, loadLog, loadPrefs, loadSnoozes, markSkipped, SentMessage } from '../coach/store';
 import { addWater, readWaterToday } from '../health/water';
 import { Container, waterText } from '../nutrition/water';
 import { Route, routeFor } from '../notifications/route';
@@ -413,6 +413,17 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                       {a && (
                         <Pressable onPress={() => act(m)} style={({ pressed }) => [s.btnDark, pressed && { opacity: 0.8 }]}>
                           <Text style={[T.bold, { fontSize: 14, color: '#fff' }]}>{a.label}</Text>
+                        </Pressable>
+                      )}
+                      {baseOf(m.id).startsWith('meal_reminder_') && (
+                        <Pressable
+                          onPress={async () => {
+                            await markSkipped(baseOf(m.id).replace('meal_reminder_', '')).catch(() => undefined);
+                            await say(m, tr('דילגתי', 'I skipped it'), tr('רשמתי. לא אזכיר עליה שוב היום, ולא צריך להשלים קלוריות.', 'Noted. I will not remind you about it again today, and there is no need to make up the calories.'));
+                          }}
+                          style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}
+                        >
+                          <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('דילגתי', 'I skipped it')}</Text>
                         </Pressable>
                       )}
                       {a?.kind === 'proposal' ? (

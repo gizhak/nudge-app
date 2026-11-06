@@ -1,3 +1,5 @@
+import { skipCounts } from '../coach/store';
+import { SLOT_BY_ID, SlotId } from '../nutrition/meals';
 import { loadWaist } from '../progress/waist';
 import { safeGoal } from '../profile/safety';
 // Makes the reports that are due. Called when the progress tab loads and from the coach's
@@ -10,7 +12,7 @@ import { loadCheckpoints } from '../progress/store';
 import { collectBody, collectDays } from './collect';
 import { buildReport, DAY, lastWeeklyDue, monthPeriod, ReportKind, Targets, weekPeriod } from './compute';
 import { loadReportPrefs, loadReports, saveReport } from './store';
-import { LANG } from '../i18n';
+import { LANG, t as tr } from '../i18n';
 
 let running: Promise<number> | null = null;
 
@@ -59,6 +61,13 @@ async function make(kind: ReportKind, start: number, end: number, noNewMeasure?:
     weekend: derive(profile).weekend,
     vacation: (await loadPrefs().catch(() => null))?.vacation ?? null,
   });
+  // The same meal skipped three times or more: worth taking to the dietitian
+  const skips = await skipCounts(start, end).catch(() => ({}) as Record<string, number>);
+  const many = Object.entries(skips).filter(([, n]) => n >= 3);
+  for (const [slot, n] of many) {
+    const label = SLOT_BY_ID[slot as SlotId]?.label ?? slot;
+    report.patterns.push(tr(`דילגת על ${label} ${n} פעמים. אם היא לא מסתדרת לך, כדאי לדבר עם המאמן או הדיאטנית על להזיז אותה או לוותר עליה.`, `You skipped ${label.toLowerCase()} ${n} times. If it does not work for you, talk to your coach or dietitian about moving it or dropping it.`));
+  }
   await saveReport({ ...report, lang: LANG, targets });
 }
 

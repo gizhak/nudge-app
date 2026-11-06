@@ -36,7 +36,7 @@ import { factsFrom } from './facts';
 import { countLongVisit, countOnExit, logGym, resetOldGymDays } from './gymDays';
 import { slotOf } from '../nutrition/meals';
 import { waterExpectedByNow } from '../nutrition/water';
-import { loadNightState, loadPlaces, loadSnoozes, loadUnlogged, nightKey } from './store';
+import { loadNightState, loadPlaces, loadSkipped, loadSnoozes, loadUnlogged, nightKey } from './store';
 import { interruptLabels } from '../profile/profile';
 import { appendLog, claimRun, dayKey, loadLog, loggedIds, releaseRun, loadPlaceState, loadPrefs, PlaceId, savePlaceState } from './store';
 
@@ -168,7 +168,9 @@ async function runOnce(
     workoutLogged: sit.workedOutToday || (data?.workouts.count ?? 0) > 0,
     prefs,
     mealList,
-    unloggedSlots: await loadUnlogged(now),
+    // Skipped on purpose: no reminder for it, like a meal eaten and not logged
+    unloggedSlots: [...(await loadUnlogged(now)), ...(await loadSkipped(now))],
+    skippedSlots: await loadSkipped(now),
     checkpointDue: isDue(await loadCheckpoints(), now.getTime()),
     waistDaysAgo: daysSinceWaist(await loadWaist().catch(() => []), await loadCheckpoints().catch(() => []), now.getTime()),
     vegetarian: profile.diet.includes('vegetarian'),
@@ -351,7 +353,8 @@ async function runOnce(
 
   // Follow-ups after "got it": close what the data shows done, and say so when he still did not
   const unlogged = await loadUnlogged(now);
-  const pending = await syncDoneFromData(factsFrom(sit, now, prefs, unlogged, state.gymDay === today), now).catch(
+  const skippedNow = await loadSkipped(now);
+  const pending = await syncDoneFromData(factsFrom(sit, now, prefs, [...unlogged, ...skippedNow], state.gymDay === today), now).catch(
     () => ({}) as Record<string, FollowUp>,
   );
   const ignoredOf = new Map<string, { count: number; at: string }>();
@@ -388,6 +391,7 @@ async function runOnce(
       foodAppName: profile.foodApp === 'other' ? null : foodApp(profile.foodApp)?.name ?? null,
       hasWatch: profile.watch === undefined ? undefined : hasWatch(profile.watch),
       unloggedSlots: unlogged,
+      skippedSlots: skippedNow,
     }).filter((i) => !i.done);
     const next = nextWorkout(now, !!sit.workedOutToday || (data?.workouts.count ?? 0) > 0);
     chosen.push(

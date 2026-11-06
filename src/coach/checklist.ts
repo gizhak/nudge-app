@@ -39,6 +39,8 @@ export interface ChecklistInput {
   hasWatch?: boolean;
   /** Meal slots marked "ate, did not log" today */
   unloggedSlots?: string[];
+  /** Meals skipped on purpose: neither missing nor unlogged */
+  skippedSlots?: string[];
 }
 
 const mins = (d: Date) => d.getHours() * 60 + d.getMinutes();
@@ -121,7 +123,8 @@ export function checklist(c: ChecklistInput): CheckItem[] {
   if (c.hcOk) {
     const passed = passedSlots(c.mealSlots, m);
     const unlogged = passed.filter((id) => c.unloggedSlots?.includes(id));
-    const missing = passed.filter((id) => !c.mealTimes.some((t) => slotOf(t) === id) && !unlogged.includes(id));
+    const skipped = passed.filter((id) => c.skippedSlots?.includes(id));
+    const missing = passed.filter((id) => !c.mealTimes.some((t) => slotOf(t) === id) && !unlogged.includes(id) && !skipped.includes(id));
     out.push({
       key: 'meals',
       label: tr('רישום ארוחות', 'Meal logging'),
@@ -134,6 +137,7 @@ export function checklist(c: ChecklistInput): CheckItem[] {
               ? tr('ארוחה אחת נרשמה', 'One meal logged')
               : tr(`${c.mealTimes.length} ארוחות נרשמו`, `${c.mealTimes.length} meals logged`)
             : tr('עוד אין ארוחה שהייתה צריכה להירשם', 'No meal was due yet')) +
+        (skipped.length ? tr(`. דילגת: ${skipped.map((id) => SLOT_BY_ID[id].label).join(', ')}`, `. Skipped: ${skipped.map((id) => SLOT_BY_ID[id].label).join(', ')}`) : '') +
         (unlogged.length ? tr(`. בלי רישום: ${unlogged.map((id) => SLOT_BY_ID[id].label).join(', ')}, הקלוריות לא נספרו`, `. Not logged: ${unlogged.map((id) => SLOT_BY_ID[id].label).join(', ')}, the calories were not counted`) : ''),
       action: missing.length && c.foodAppName ? { key: 'zepp', label: tr(`פתח ${c.foodAppName}`, `Open ${c.foodAppName}`) } : undefined,
       extra: missing.length ? { key: 'ate', label: tr('אכלתי', 'I ate') } : undefined,
