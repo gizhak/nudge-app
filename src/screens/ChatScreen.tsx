@@ -38,7 +38,7 @@ const NOTHING_CHANGED =
   tr('אז כנראה הסנכרון נתקע.\n1. פתח את אפליקציית השעון ותן לה דקה לסנכרן מהשעון.\n2. ב Health Connect, בדוק שהיא עדיין מורשית לכתוב שינה.\nאם מחר בבוקר עדיין אין נתון, תגיד לי.', 'Then the sync is probably stuck.\n1. Open the watch app and give it a minute to sync from the watch.\n2. In Health Connect, check it is still allowed to write sleep.\nIf there is still no data tomorrow morning, tell me.');
 
 /** "What I'm going to eat" and the coach's answer; kept for the day */
-type Check = { at: number; text: string; src: 'text' | 'zepp'; result: CheckResult; mealId?: string; mealKey?: string; mealName?: string; ate?: 'all' | 'half' | 'none'; reply?: string };
+type Check = { at: number; text: string; src: 'text' | 'zepp'; result: CheckResult; mealId?: string; mealKey?: string; mealIds?: { id: string; key?: string }[]; mealName?: string; ate?: 'all' | 'half' | 'none'; reply?: string };
 const CHECKS = 'chat.checks.v1';
 
 type Mine = { at: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; text: string; sub?: string; water?: boolean; reply?: string };
@@ -124,6 +124,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
     await AsyncStorage.setItem(CHECKS, JSON.stringify({ day: dayKey(), checks: next })).catch(() => undefined);
   };
   /** A food check: typed words, or the last meal Zepp read from a photo */
+  const wasChecked = (id: string) => checks.some((c) => c.mealId === id || c.mealIds?.some((x) => x.id === id));
   const runCheck = async (src: 'text' | 'zepp', given?: Meal) => {
     if (checking) return;
     const text = draft.trim();
@@ -136,9 +137,16 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
       if (src === 'zepp') {
         const last = given ?? [...meals].reverse().find((m) => now.getTime() - m.time.getTime() < 90 * 60000);
         if (!last) return;
-        const others = meals.filter((m) => m.id !== last.id);
-        const result = checkFood(last.name, { menu, picks, now, eatenKcal: others.reduce((a, m) => a + m.kcal, 0), eatenProtein: others.reduce((a, m) => a + m.protein, 0), logged: { kcal: last.kcal, protein: last.protein } });
-        item = { at: now.getTime(), text: tr('צילמתי ב Zepp, תבדוק', 'I snapped it in Zepp, check it'), src, result, mealId: last.id, mealKey: last.key, mealName: `${last.name} · ${Math.round(last.kcal)} ${tr("קל'", 'kcal')}` };
+        // One photo can come from Zepp as a record per food (rice, beans), all at the same minute: one plate
+        const plate = meals.filter((m) => Math.abs(m.time.getTime() - last.time.getTime()) <= 3 * 60000 && !wasChecked(m.id));
+        if (!plate.some((m) => m.id === last.id)) plate.push(last);
+        const ids = new Set(plate.map((m) => m.id));
+        const others = meals.filter((m) => !ids.has(m.id));
+        const name = plate.map((m) => m.name).join(', ');
+        const kcal = plate.reduce((a, m) => a + m.kcal, 0);
+        const protein = plate.reduce((a, m) => a + m.protein, 0);
+        const result = checkFood(name, { menu, picks, now, eatenKcal: others.reduce((a, m) => a + m.kcal, 0), eatenProtein: others.reduce((a, m) => a + m.protein, 0), logged: { kcal, protein } });
+        item = { at: now.getTime(), text: tr('צילמתי ב Zepp, תבדוק', 'I snapped it in Zepp, check it'), src, result, mealId: last.id, mealKey: last.key, mealIds: plate.map((m) => ({ id: m.id, key: m.key })), mealName: `${name} · ${Math.round(kcal)} ${tr("קל'", 'kcal')}` };
       } else {
         const result = checkFood(text, { menu, picks, now, eatenKcal: meals.reduce((a, m) => a + m.kcal, 0), eatenProtein: meals.reduce((a, m) => a + m.protein, 0) });
         item = { at: now.getTime(), text, src, result };
@@ -178,7 +186,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
   const [wait, setWait] = useState<{ since: number; back?: number; failed?: boolean } | null>(null);
   const freshMeal = async (since: number): Promise<Meal | undefined> => {
     const meals = await readMeals().catch(() => [] as Meal[]);
-    return [...meals].reverse().find((m) => m.time.getTime() >= since && !checks.some((c) => c.mealId === m.id));
+    return [...meals].reverse().find((m) => m.time.getTime() >= since && !wasChecked(m.id));
   };
   const camera = async () => {
     if (checking) return;
@@ -227,9 +235,10 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
 
   /** After a Zepp check: all of it, half, or none (left out here; Zepp keeps its record) */
   const ate = async (c: Check, how: 'all' | 'half' | 'none') => {
-    if (c.mealId) {
-      if (how === 'none') await hideMeal(c.mealId, Date.now(), c.mealKey).catch(() => undefined);
-      else await setPortion(c.mealId, how === 'half' ? 0.5 : 1, c.mealKey).catch(() => undefined);
+    // Every record of the plate: "I did not eat it" takes the beans off along with the rice
+    for (const m of c.mealIds ?? (c.mealId ? [{ id: c.mealId, key: c.mealKey }] : [])) {
+      if (how === 'none') await hideMeal(m.id, Date.now(), m.key).catch(() => undefined);
+      else await setPortion(m.id, how === 'half' ? 0.5 : 1, m.key).catch(() => undefined);
     }
     const reply =
       how === 'all'
