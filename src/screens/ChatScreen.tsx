@@ -29,6 +29,7 @@ import { SLEEP_MISSING, SLEEP_MISSING2 } from '../sleep/ask';
 import { checkFood, CheckResult } from '../diet/check';
 import { loadMenu, todayPicks } from '../diet/store';
 import { hideMeal, setPortion } from '../health/hiddenMeals';
+import { openZepp } from '../apps/zepp';
 
 import { ROW, SIDE_END, SIDE_START, START, LOCALE, t as tr } from '../i18n';
 const WATCH_CHANGED =
@@ -123,7 +124,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
     await AsyncStorage.setItem(CHECKS, JSON.stringify({ day: dayKey(), checks: next })).catch(() => undefined);
   };
   /** A food check: typed words, or the last meal Zepp read from a photo */
-  const runCheck = async (src: 'text' | 'zepp') => {
+  const runCheck = async (src: 'text' | 'zepp', given?: Meal) => {
     if (checking) return;
     const text = draft.trim();
     if (src === 'text' && !text) return;
@@ -133,12 +134,8 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
       const now = new Date();
       let item: Check;
       if (src === 'zepp') {
-        const last = [...meals].reverse().find((m) => now.getTime() - m.time.getTime() < 90 * 60000);
-        if (!last) {
-          setNote({ text: tr('לא מצאתי ארוחה מ Zepp בשעה וחצי האחרונות. פתח את Zepp לכמה שניות כדי שיסנכרן, ונסה שוב.', 'No meal from Zepp in the last hour and a half. Open Zepp for a few seconds so it syncs, and try again.'), bad: true });
-          setTimeout(() => setNote(null), 5000);
-          return;
-        }
+        const last = given ?? [...meals].reverse().find((m) => now.getTime() - m.time.getTime() < 90 * 60000);
+        if (!last) return;
         const others = meals.filter((m) => m.id !== last.id);
         const result = checkFood(last.name, { menu, picks, now, eatenKcal: others.reduce((a, m) => a + m.kcal, 0), eatenProtein: others.reduce((a, m) => a + m.protein, 0), logged: { kcal: last.kcal, protein: last.protein } });
         item = { at: now.getTime(), text: tr('צילמתי ב Zepp, תבדוק', 'I snapped it in Zepp, check it'), src, result, mealId: last.id, mealKey: last.key, mealName: `${last.name} · ${Math.round(last.kcal)} ${tr("קל'", 'kcal')}` };
@@ -153,6 +150,58 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
       setChecking(false);
     }
   };
+  // ---- The camera: a fresh Zepp meal not checked yet is checked now; otherwise Zepp opens, and the
+  // meal is waited for when he comes back (every 20 seconds, for 3 minutes after the return)
+  const [wait, setWait] = useState<{ since: number; back?: number; failed?: boolean } | null>(null);
+  const freshMeal = async (since: number): Promise<Meal | undefined> => {
+    const meals = await readMeals().catch(() => [] as Meal[]);
+    return [...meals].reverse().find((m) => m.time.getTime() >= since && !checks.some((c) => c.mealId === m.id));
+  };
+  const camera = async () => {
+    if (checking) return;
+    const ready = await freshMeal(Date.now() - 90 * 60000);
+    if (ready) {
+      setWait(null);
+      await runCheck('zepp', ready);
+      return;
+    }
+    // A photo is dated when it is taken, a little before the return; five minutes of slack
+    setWait({ since: Date.now() - 5 * 60000 });
+    setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 200);
+    await openZepp();
+  };
+  useEffect(() => {
+    if (!wait || wait.failed) return;
+    let stop = false;
+    // The 3 minutes start when he comes back from Zepp, not when the camera was tapped
+    let back = wait.back;
+    const look = async () => {
+      if (stop || AppState.currentState !== 'active') return;
+      const m = await freshMeal(wait.since);
+      if (stop) return;
+      const from = back ?? wait.since + 5 * 60000 + 7 * 60000;
+      if (m) {
+        setWait(null);
+        await runCheck('zepp', m);
+      } else if (Date.now() - from > 3 * 60000) setWait((w) => (w ? { ...w, failed: true } : w));
+    };
+    const id = setInterval(look, 20000);
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st !== 'active') return;
+      if (back == null) {
+        back = Date.now();
+        setWait((w) => (w ? { ...w, back } : w));
+      }
+      look();
+    });
+    return () => {
+      stop = true;
+      clearInterval(id);
+      sub.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wait?.since, wait?.failed, checks.length]);
+
   /** After a Zepp check: all of it, half, or none (left out here; Zepp keeps its record) */
   const ate = async (c: Check, how: 'all' | 'half' | 'none') => {
     if (c.mealId) {
@@ -484,7 +533,42 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
             );
           });
         })()}
-        {!log.length && !checks.length && <Text style={[T.muted, { fontSize: 14, textAlign: 'center', marginTop: 40 }]}>{tr('כשהמאמן יגיד משהו, זה יופיע כאן.', 'When the coach says something, it will show up here.')}</Text>}
+        {wait && (
+          <View style={{ gap: 8 }}>
+            <View style={s.me}>
+              <Ionicons name="camera" size={15} color="#E9B872" />
+              <Text style={[T.bold, { fontSize: 15, color: '#fff', flexShrink: 1 }]}>{tr('צילמתי ב Zepp, תבדוק', 'I snapped it in Zepp, check it')}</Text>
+            </View>
+            <View style={s.coach}>
+              <View style={{ flexDirection: ROW, gap: 8, alignItems: 'center' }}>
+                {!wait.failed && <ActivityIndicator color={C.ink} size="small" />}
+                <Text style={[T.bold, { fontSize: 16, lineHeight: 22, flexShrink: 1, textAlign: START }]}>
+                  {wait.failed ? tr('לא הגיעה ארוחה מ Zepp', 'No meal came from Zepp') : tr('מחכה ש Zepp ישלח את הארוחה', 'Waiting for Zepp to send the meal')}
+                </Text>
+              </View>
+              <Text style={[T.base, { fontSize: 14, lineHeight: 20, textAlign: START }]}>
+                {wait.failed
+                  ? tr('אולי הצילום לא נשמר, או ש Zepp לא מסנכרן ל Health Connect. פתח את Zepp לכמה שניות ונסה שוב.', 'Maybe the photo was not saved, or Zepp is not syncing to Health Connect. Open Zepp for a few seconds and try again.')
+                  : tr('אני בודק שוב כל 20 שניות, עד 3 דקות. אם זה לא מגיע, פתח את Zepp לכמה שניות כדי שיסנכרן.', 'I check again every 20 seconds, for up to 3 minutes. If it does not come, open Zepp for a few seconds so it syncs.')}
+              </Text>
+              <View style={s.btns}>
+                {wait.failed ? (
+                  <Pressable onPress={() => setWait({ since: wait.since, back: Date.now() })} style={({ pressed }) => [s.btnDark, pressed && { opacity: 0.8 }]}>
+                    <Text style={[T.bold, { fontSize: 14, color: '#fff' }]}>{tr('לנסות שוב', 'Try again')}</Text>
+                  </Pressable>
+                ) : (
+                  <Pressable onPress={() => openZepp()} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                    <Text style={[T.bold, { fontSize: 14 }]}>{tr('לפתוח את Zepp', 'Open Zepp')}</Text>
+                  </Pressable>
+                )}
+                <Pressable onPress={() => setWait(null)} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                  <Text style={[T.bold, { fontSize: 14 }]}>{tr('ביטול', 'Cancel')}</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        )}
+        {!log.length && !checks.length && !wait && <Text style={[T.muted, { fontSize: 14, textAlign: 'center', marginTop: 40 }]}>{tr('כשהמאמן יגיד משהו, זה יופיע כאן.', 'When the coach says something, it will show up here.')}</Text>}
       </ScrollView>
 
       {note && (
@@ -493,7 +577,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
         </View>
       )}
       <View style={s.ask}>
-        <Pressable onPress={() => runCheck('zepp')} hitSlop={6} style={s.askIcon} accessibilityLabel={tr('צילמתי ב Zepp, תבדוק', 'I snapped it in Zepp, check it')}>
+        <Pressable onPress={camera} hitSlop={6} style={s.askIcon} accessibilityLabel={tr('לצלם ב Zepp ולבדוק', 'Snap it in Zepp and check')}>
           <Ionicons name="camera-outline" size={20} color={C.ink} />
         </Pressable>
         <TextInput
