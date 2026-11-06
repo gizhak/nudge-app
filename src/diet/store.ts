@@ -124,6 +124,11 @@ export function checkMeal(m: MenuMeal, eaten: { kcal: number; protein: number; c
   const kcal = optionKcal(target);
   const protein = optionProtein(target);
   const fits = match && match.score >= 0.5 && match.option !== (pick ?? m.pick) ? match.option : undefined;
+  // A coffee in the meal's hours is not the meal yet, while its window is still open
+  if (state !== 'past' && eaten.kcal < kcal * 0.35) {
+    const what = (eaten.names?.[0] ?? '').split(/[,،]/)[0].trim().split(/\s+/).slice(0, 2).join(' ');
+    return { chip: what && what.length <= 18 ? tr(`בינתיים ${what}`, `So far ${what}`) : tr('בינתיים משהו קטן', 'So far something small'), tone: 'later', plan };
+  }
   const over = eaten.kcal - kcal;
   if (over > Math.max(120, kcal * 0.25)) return { chip: tr(`${Math.round(over)} מעל`, `${Math.round(over)} over`), tone: 'off', plan, fits };
   if (protein >= 10 && eaten.protein < protein * 0.75) return { chip: tr(`חסרים ${Math.round(protein - eaten.protein)} ג' חלבון`, `${Math.round(protein - eaten.protein)} g protein missing`), tone: 'off', plan, fits };
