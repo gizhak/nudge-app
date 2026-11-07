@@ -12,7 +12,7 @@ import { carPlaceEvents, placeCheck } from './car';
 import { acceptGuess, clearWifiLost, learnConnected, loadWifiLost, rejectGuess, wifiAt, wifiCheck, wifiPlaceNow } from './wifi';
 import { loadAndApply } from '../profile/bootstrap';
 import { ackTopic, didIt } from './followupStore';
-import { loadPendingExits, savePendingExits } from './store';
+import { loadPendingEnters, loadPendingExits, savePendingEnters, savePendingExits } from './store';
 import { ackNight, loadPlaces, loadPlaceState, loadPrefs, markAteUnlogged, markWorkoutDone, PlaceId, snoozeTopic, snoozeToday, SNOOZE_MS } from './store';
 import { initialize } from 'react-native-health-connect';
 import { addWater } from '../health/water';
@@ -86,6 +86,21 @@ TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
   const type = eventType === Location.GeofencingEventType.Enter ? 'enter' : 'exit';
   try {
     const pending = await loadPendingExits();
+    // The gym by location: only once he stays (a walk past it is not a workout)
+    if (place === 'gym') {
+      const enters = await loadPendingEnters();
+      if (type === 'enter' && !pending.gym) {
+        enters.gym = Date.now();
+        await savePendingEnters(enters);
+        return;
+      }
+      if (type === 'exit' && enters.gym) {
+        // Left before the arrival was confirmed: he never arrived
+        delete enters.gym;
+        await savePendingEnters(enters);
+        return;
+      }
+    }
     if (type === 'exit') {
       // Not yet: a leave counts only once confirmed (still away in a few minutes, or the car)
       pending[place] = Date.now();
@@ -105,12 +120,51 @@ TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }) => {
 });
 
 const CONFIRM_MS = 8 * 60 * 1000;
+const STAY_MS = 5 * 60 * 1000;
+
+/** An arrival found by location: the gym waits until he stays, the rest are arrivals at once */
+async function arriveByLocation(place: PlaceId, now: number) {
+  if (place !== 'gym') return runCoach({ type: 'enter', place, via: 'מיקום' }).catch(() => undefined);
+  const enters = await loadPendingEnters();
+  if (!enters.gym) {
+    enters.gym = now;
+    await savePendingEnters(enters);
+  }
+}
+
+/** A held gym arrival: still there, close, a few minutes later (or on its Wi-Fi) is an arrival */
+async function confirmEnters(now: number, carLeft: boolean): Promise<void> {
+  const enters = await loadPendingEnters();
+  const places = Object.keys(enters) as PlaceId[];
+  if (!places.length) return;
+  for (const p of places) {
+    const since = enters[p] ?? now;
+    if (carLeft) {
+      delete enters[p];
+      continue;
+    }
+    if (now - since < STAY_MS) continue;
+    const onIt = await wifiAt(p).catch(() => 'unknown' as const);
+    const fix = onIt === 'here' ? { ok: true, place: p as PlaceId | null } : await placeCheck(null, true);
+    if (fix.ok && fix.place === p) {
+      delete enters[p];
+      await savePendingEnters(enters);
+      const st = await loadPlaceState();
+      if (st.place !== p) await runCoach({ type: 'enter', place: p, via: onIt === 'here' ? 'Wi-Fi' : 'מיקום, אחרי כמה דקות' }).catch(() => undefined);
+      continue;
+    }
+    // Somewhere else, or no fix for half an hour: it was a walk past
+    if (fix.ok || now - since > 30 * 60000) delete enters[p];
+  }
+  await savePendingEnters(enters);
+}
 
 /**
  * Turns held leaves into real ones: when the car connects, or when a few minutes later
  * the phone is really somewhere else. A leave the phone is back from is dropped.
  */
 export async function confirmExits(now = Date.now(), carLeft = false): Promise<void> {
+  await confirmEnters(now, carLeft).catch(() => undefined);
   const pending = await loadPendingExits();
   const places = Object.keys(pending) as PlaceId[];
   if (!places.length) return;
@@ -138,7 +192,7 @@ export async function confirmExits(now = Date.now(), carLeft = false): Promise<v
     delete pending[p];
     await noteCheck({ at: now, place: p, result: fix.place ? 'moved' : 'left', how: wifiGone ? 'ה Wi-Fi של המקום לא נמצא' : 'מיקום' });
     await runCoach({ type: 'exit', place: p, via: wifiGone ? 'Wi-Fi' : 'מיקום' }).catch(() => undefined);
-    if (fix.ok && fix.place) await runCoach({ type: 'enter', place: fix.place, via: 'מיקום' }).catch(() => undefined);
+    if (fix.ok && fix.place) await arriveByLocation(fix.place, now);
     if (wifiGone) await clearWifiLost();
   }
   await savePendingExits(pending);
@@ -243,7 +297,10 @@ export async function verifyPlace(now = Date.now(), minStayMs = 20 * 60000): Pro
     await savePendingExits(pending);
   }
   await runCoach({ type: 'exit', place: st.place, via: wifiGone ? 'Wi-Fi' : 'בדיקת מיקום' }).catch(() => undefined);
-  if (fix.place) await runCoach({ type: 'enter', place: fix.place, via: wifi ? 'Wi-Fi' : 'מיקום' }).catch(() => undefined);
+  if (fix.place) {
+    if (wifi) await runCoach({ type: 'enter', place: fix.place, via: 'Wi-Fi' }).catch(() => undefined);
+    else await arriveByLocation(fix.place, now);
+  }
 }
 
 TaskManager.defineTask(COACH_TASK, async () => {

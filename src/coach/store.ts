@@ -366,3 +366,20 @@ export async function loadPendingExits(): Promise<Partial<Record<PlaceId, number
 export async function savePendingExits(p: Partial<Record<PlaceId, number>>) {
   await AsyncStorage.setItem(PENDING_EXIT, JSON.stringify(p));
 }
+
+/**
+ * An arrival at the gym by location alone is held until he stays: a walk past it with the
+ * stroller is not a workout. Confirmed a few minutes later by a close location fix.
+ */
+const PENDING_ENTER = 'coach.pendingEnter.v1';
+export async function loadPendingEnters(): Promise<Partial<Record<PlaceId, number>>> {
+  try {
+    return JSON.parse((await AsyncStorage.getItem(PENDING_ENTER)) ?? '{}');
+  } catch {
+    return {};
+  }
+}
+
+export async function savePendingEnters(p: Partial<Record<PlaceId, number>>) {
+  await AsyncStorage.setItem(PENDING_ENTER, JSON.stringify(p));
+}
