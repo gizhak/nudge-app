@@ -57,6 +57,9 @@ export function mealNow(menu: DietMenu | null, now: Date): { slot: SlotId; meal?
   if (!menu) return { slot };
   const inWindow = menu.meals.find((x) => x.from != null && x.to != null && m >= x.from - 30 && m <= x.to);
   if (inWindow) return { slot: inWindow.slot, meal: inWindow };
+  // Up to an hour after a meal's hours: that meal, eaten late
+  const late = menu.meals.find((x) => x.to != null && m >= x.to && m < x.to + 60);
+  if (late) return { slot: late.slot, meal: late };
   const same = menu.meals.find((x) => x.slot === slot);
   if (same) return { slot, meal: same };
   const next = menu.meals.find((x) => x.from != null && x.from > m && x.from - m <= 90);
@@ -72,13 +75,14 @@ const k = (n: number) => Math.round(n);
  */
 export function checkFood(
   text: string,
-  ctx: { menu: DietMenu | null; picks: Partial<Record<SlotId, number>>; now: Date; eatenKcal: number; eatenProtein: number; logged?: { kcal: number; protein: number } },
+  ctx: { menu: DietMenu | null; picks: Partial<Record<SlotId, number>>; now: Date; eatenKcal: number; eatenProtein: number; logged?: { kcal: number; protein: number }; at?: Date },
 ): CheckResult {
   const foods = foodsOf(text);
   const est = foods.map((f) => ({ f, ...estimate(f) }));
   const kcal = ctx.logged?.kcal ?? est.reduce((a, x) => a + x.kcal, 0);
   const protein = ctx.logged?.protein ?? est.reduce((a, x) => a + x.protein, 0);
-  let { meal } = mealNow(ctx.menu, ctx.now);
+  // A logged meal is judged by when it was eaten, not by when it is checked
+  let { meal } = mealNow(ctx.menu, ctx.at ?? ctx.now);
   const left = caloriesFor(ctx.now) - ctx.eatenKcal;
   // Not this meal's food, but another meal's
   let other: MenuMeal | undefined;
@@ -94,7 +98,7 @@ export function checkFood(
       .sort((a, b) => b.x!.score - a.x!.score)[0];
     if (best) {
       const ORDER: SlotId[] = SLOTS.map((s) => s.id);
-      const later = ORDER.indexOf(best.m.slot) > ORDER.indexOf(meal.slot);
+      const later = !ctx.logged && ORDER.indexOf(best.m.slot) > ORDER.indexOf(meal.slot);
       const MAIN: SlotId[] = ['breakfast', 'lunch', 'dinner'];
       if (later) {
         // He plans ahead: answer for that meal

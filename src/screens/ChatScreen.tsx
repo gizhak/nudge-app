@@ -29,7 +29,7 @@ import { SLEEP_MISSING, SLEEP_MISSING2 } from '../sleep/ask';
 import { checkFood, CheckResult } from '../diet/check';
 import { loadMenu, setSwap, todayPicks } from '../diet/store';
 import type { SwapRule } from '../diet/parse';
-import { hideMeal, setPortion } from '../health/hiddenMeals';
+import { hideMeal, setPortion, unhideMeal } from '../health/hiddenMeals';
 import { openZepp } from '../apps/zepp';
 
 import { ROW, SIDE_END, SIDE_START, START, LOCALE, t as tr } from '../i18n';
@@ -39,7 +39,7 @@ const NOTHING_CHANGED =
   tr('אז כנראה הסנכרון נתקע.\n1. פתח את אפליקציית השעון ותן לה דקה לסנכרן מהשעון.\n2. ב Health Connect, בדוק שהיא עדיין מורשית לכתוב שינה.\nאם מחר בבוקר עדיין אין נתון, תגיד לי.', 'Then the sync is probably stuck.\n1. Open the watch app and give it a minute to sync from the watch.\n2. In Health Connect, check it is still allowed to write sleep.\nIf there is still no data tomorrow morning, tell me.');
 
 /** "What I'm going to eat" and the coach's answer; kept for the day */
-type Check = { at: number; text: string; src: 'text' | 'zepp'; result: CheckResult; mealId?: string; mealKey?: string; mealIds?: { id: string; key?: string }[]; mealName?: string; q?: { text: string; logged?: { kcal: number; protein: number }; ids?: string[] }; ate?: 'all' | 'half' | 'none'; reply?: string };
+type Check = { at: number; text: string; src: 'text' | 'zepp'; result: CheckResult; mealId?: string; mealKey?: string; mealIds?: { id: string; key?: string }[]; mealName?: string; mealAt?: number; q?: { text: string; logged?: { kcal: number; protein: number }; ids?: string[] }; ate?: 'all' | 'half' | 'none'; reply?: string };
 const CHECKS = 'chat.checks.v1';
 
 type Mine = { at: number; icon: React.ComponentProps<typeof Ionicons>['name']; color: string; text: string; sub?: string; water?: boolean; reply?: string };
@@ -146,8 +146,8 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
         const name = plate.map((m) => m.name).join(', ');
         const kcal = plate.reduce((a, m) => a + m.kcal, 0);
         const protein = plate.reduce((a, m) => a + m.protein, 0);
-        const result = checkFood(name, { menu, picks, now, eatenKcal: others.reduce((a, m) => a + m.kcal, 0), eatenProtein: others.reduce((a, m) => a + m.protein, 0), logged: { kcal, protein } });
-        item = { at: now.getTime(), text: tr('צילמתי ב Zepp, תבדוק', 'I snapped it in Zepp, check it'), src, result, q: { text: name, logged: { kcal, protein }, ids: [...ids] }, mealId: last.id, mealKey: last.key, mealIds: plate.map((m) => ({ id: m.id, key: m.key })), mealName: `${name} · ${Math.round(kcal)} ${tr("קל'", 'kcal')}` };
+        const result = checkFood(name, { menu, picks, now, eatenKcal: others.reduce((a, m) => a + m.kcal, 0), eatenProtein: others.reduce((a, m) => a + m.protein, 0), logged: { kcal, protein }, at: last.time });
+        item = { at: now.getTime(), text: tr('צילמתי ב Zepp, תבדוק', 'I snapped it in Zepp, check it'), src, result, q: { text: name, logged: { kcal, protein }, ids: [...ids] }, mealAt: last.time.getTime(), mealId: last.id, mealKey: last.key, mealIds: plate.map((m) => ({ id: m.id, key: m.key })), mealName: `${name} · ${Math.round(kcal)} ${tr("קל'", 'kcal')}` };
       } else {
         const result = checkFood(text, { menu, picks, now, eatenKcal: meals.reduce((a, m) => a + m.kcal, 0), eatenProtein: meals.reduce((a, m) => a + m.protein, 0) });
         item = { at: now.getTime(), text, src, result, q: { text } };
@@ -240,7 +240,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
     const [menu, picks, meals] = await Promise.all([loadMenu().catch(() => null), todayPicks().catch(() => ({})), readMeals().catch(() => [] as Meal[])]);
     const q = c.q ?? { text: c.text };
     const others = meals.filter((m) => !q.ids?.includes(m.id));
-    const result = checkFood(q.text, { menu, picks, now: new Date(c.at), eatenKcal: others.reduce((a, m) => a + m.kcal, 0), eatenProtein: others.reduce((a, m) => a + m.protein, 0), logged: q.logged });
+    const result = checkFood(q.text, { menu, picks, now: new Date(c.at), eatenKcal: others.reduce((a, m) => a + m.kcal, 0), eatenProtein: others.reduce((a, m) => a + m.protein, 0), logged: q.logged, at: c.mealAt ? new Date(c.mealAt) : undefined });
     await saveChecks(checks.map((x) => (x.at === c.at ? { ...x, result } : x)));
   };
   /** After a Zepp check: all of it, half, or none (left out here; Zepp keeps its record) */
@@ -256,7 +256,23 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
         : how === 'half'
           ? tr('נספר אצלי חצי. ב Zepp רשומה המנה המלאה, אם תרצה שיתאים גם שם, תתקן שם.', 'I count half. Zepp has the full meal; to match there too, fix it in Zepp.')
           : tr('הסרתי את זה מהחשבון אצלי. ב Zepp זה עדיין רשום כמנה שנאכלה, כדאי למחוק שם.', 'I took it off the count here. Zepp still has it as eaten, worth deleting it there.');
+    setConfirmNone(null);
     await saveChecks(checks.map((x) => (x.at === c.at ? { ...x, ate: how, reply } : x)));
+  };
+  /** A wrong tap: the records come back as they were, and the buttons with them */
+  const undoAte = async (c: Check) => {
+    for (const m of c.mealIds ?? (c.mealId ? [{ id: c.mealId, key: c.mealKey }] : [])) {
+      await unhideMeal(m.id, m.key).catch(() => undefined);
+      await setPortion(m.id, 1, m.key).catch(() => undefined);
+    }
+    await saveChecks(checks.map((x) => (x.at === c.at ? { ...x, ate: undefined, reply: undefined } : x)));
+  };
+  // "I did not eat it" on a meal logged over an hour ago asks first: a whole meal is a lot to lose by a tap
+  const [confirmNone, setConfirmNone] = useState<number | null>(null);
+  const tapNone = (c: Check) => {
+    const old = !c.mealAt || Date.now() - c.mealAt > 60 * 60000;
+    if (old && confirmNone !== c.at) setConfirmNone(c.at);
+    else ate(c, 'none');
   };
   useEffect(() => {
     AsyncStorage.getItem(CHECKS)
@@ -459,15 +475,39 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
                         <Pressable onPress={() => ate(c, 'half')} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
                           <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('אכלתי חצי', 'Ate half')}</Text>
                         </Pressable>
-                        <Pressable onPress={() => ate(c, 'none')} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                        <Pressable onPress={() => tapNone(c)} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
                           <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('לא אכלתי את זה', 'Did not eat it')}</Text>
                         </Pressable>
+                      </View>
+                    )}
+                    {c.src === 'zepp' && !c.ate && confirmNone === c.at && (
+                      <View style={{ gap: 8, borderTopWidth: 1, borderTopColor: C.track, paddingTop: 10 }}>
+                        <Text style={[T.bold, { fontSize: 14.5, textAlign: START }]}>
+                          {(() => {
+                            const n = (c.mealIds ?? []).length || 1;
+                            const kc = Math.round(c.q?.logged?.kcal ?? 0);
+                            return tr(`להסתיר ${n === 1 ? 'פריט אחד' : `${n} פריטים`}${kc ? `, ${kc} קל'` : ''}? הם לא ייספרו היום.`, `Hide ${n === 1 ? 'one item' : `${n} items`}${kc ? `, ${kc} kcal` : ''}? They will not count today.`);
+                          })()}
+                        </Text>
+                        <View style={s.btns}>
+                          <Pressable onPress={() => ate(c, 'none')} style={({ pressed }) => [s.btnDark, pressed && { opacity: 0.8 }]}>
+                            <Text style={[T.bold, { fontSize: 14, color: '#fff' }]}>{tr('כן, להסתיר', 'Yes, hide')}</Text>
+                          </Pressable>
+                          <Pressable onPress={() => setConfirmNone(null)} style={({ pressed }) => [s.btnLight, pressed && { opacity: 0.8 }]}>
+                            <Text style={[T.bold, { fontSize: 14, color: C.ink }]}>{tr('לא', 'No')}</Text>
+                          </Pressable>
+                        </View>
                       </View>
                     )}
                   </View>
                   {c.reply && (
                     <View style={s.coachShort}>
                       <Text style={[T.base, { fontSize: 15, lineHeight: 21 }]}>{c.reply}</Text>
+                      {c.ate && c.ate !== 'all' && (
+                        <Pressable onPress={() => undoAte(c)} hitSlop={8} style={{ alignSelf: 'flex-start', marginTop: 6 }}>
+                          <Text style={[T.bold, { fontSize: 13, color: C.muted, textDecorationLine: 'underline' }]}>{tr('ביטול', 'Undo')}</Text>
+                        </Pressable>
+                      )}
                     </View>
                   )}
                 </View>
