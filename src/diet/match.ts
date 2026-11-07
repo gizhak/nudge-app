@@ -1,7 +1,7 @@
 // A meal's foods against a menu meal's options: which option it fits, item by item, any
 // alternative counting. Pure, so the coach's rules can use it.
 import { DietMenu, MenuChoice, MenuMeal, parseItem, SwapRule } from './parse';
-import type { SlotId } from '../nutrition/meals';
+import { slotOf, type SlotId } from '../nutrition/meals';
 
 const norm = (s: string) =>
   s
@@ -91,3 +91,19 @@ export function swapMeals(menu: DietMenu | null, slot: SlotId, rule: SwapRule | 
   return menu.meals.filter((m) => m.slot !== slot && pair.includes(m.slot));
 }
 
+
+const minOf = (d: Date) => d.getHours() * 60 + d.getMinutes();
+/**
+ * The meal a logged food belongs to, with a menu: inside a menu meal's hours it is that meal; up to an
+ * hour after a menu meal that has nothing logged in its hours, it is that meal eaten late (breakfast at
+ * 10:30 is still breakfast). Otherwise the usual slot by the clock.
+ */
+export function mealSlot(menu: DietMenu | null | undefined, time: Date, all: Date[] = []): SlotId {
+  if (!menu) return slotOf(time);
+  const m = minOf(time);
+  const inside = (x: MenuMeal, t: number) => x.from != null && x.to != null && t >= x.from && t < x.to;
+  const own = menu.meals.find((x) => inside(x, m));
+  if (own) return own.slot;
+  const late = menu.meals.find((x) => x.to != null && m >= x.to && m < x.to + 60 && !all.some((d) => inside(x, minOf(d))));
+  return late ? late.slot : slotOf(time);
+}

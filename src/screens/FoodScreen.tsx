@@ -18,6 +18,7 @@ import { C, FONT, fmt, T } from '../ui/theme';
 import MenuAdvisor from './MenuAdvisor';
 import DietMenuScreen from './DietMenu';
 import { DietMenu, looksLikeDiet, MenuMeal, menuTotals, optionKcal, optionProtein } from '../diet/parse';
+import { mealSlot } from '../diet/match';
 import { adoptEatenOptions, checkMeal, lighterOption, loadMenu, menuMealOf, setPick, todayPicks, swapMeals } from '../diet/store';
 import Craving from './Craving';
 import { Sheet } from '../ui/Sheet';
@@ -35,6 +36,17 @@ const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}
 const alt = (x: string) => x.replace(/\s*[\\|]\s*/g, ' / ');
 
 /** The menu meal in a line: today's option, each food with up to two of its alternatives, and what else there is */
+/** "בעוד שעה ו 45 ד'" up to three hours ahead, then the hour itself */
+function untilText(nowMin: number, from: number): string {
+  const d = (from - nowMin + 1440) % 1440;
+  if (d > 180) return tr(`ב ${hhmm(from)}`, `At ${hhmm(from)}`);
+  const h = Math.floor(d / 60);
+  const m = d % 60;
+  if (!h) return tr(`בעוד ${m} ד'`, `In ${m} min`);
+  const hh = h === 1 ? 'שעה' : h === 2 ? 'שעתיים' : `${h} שעות`;
+  return tr(m ? `בעוד ${hh} ו ${m} ד'` : `בעוד ${hh}`, m ? `In ${h} h ${m} min` : `In ${h} h`);
+}
+
 function menuNote(mm: MenuMeal, pick?: number): string {
   const k = Math.min(mm.options.length - 1, pick ?? mm.pick);
   const o = mm.options[k];
@@ -74,6 +86,8 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
   const [menuOpen, setMenuOpen] = useState(!!sharedMenu && !sharedDiet);
   const [dietOpen, setDietOpen] = useState(sharedDiet);
   const [diet, setDiet] = useState<DietMenu | null>(null);
+  // With a menu, a meal eaten a little after its hours still belongs to it
+  const slotOfMeal = (d: Date) => mealSlot(diet, d, meals.map((x) => x.time));
   // Today's option for each meal of the menu, and the meal whose options are open
   const [picks, setPicks] = useState<Partial<Record<SlotId, number>>>({});
   const [swap, setSwap] = useState<SlotId | null>(null);
@@ -281,8 +295,8 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
 
 
       <RowsCard>
-        {SLOTS.filter((slot) => (slots.includes(slot.id) || (diet ? !!menuMealOf(diet, slot.id) : false)) || meals.some((m) => slotOf(m.time) === slot.id)).map((slot, idx) => {
-          const inSlot = meals.filter((m) => slotOf(m.time) === slot.id);
+        {SLOTS.filter((slot) => (slots.includes(slot.id) || (diet ? !!menuMealOf(diet, slot.id) : false)) || meals.some((m) => slotOfMeal(m.time) === slot.id)).map((slot, idx) => {
+          const inSlot = meals.filter((m) => slotOfMeal(m.time) === slot.id);
           const slotKcal = inSlot.reduce((a, m) => a + m.kcal, 0);
           const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
           const at = inSlot[0]?.time.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
@@ -297,18 +311,26 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
           const isSkipped = skipped.includes(slot.id) && !inSlot.length;
           // Its time came and nothing was logged: he can say he skipped it
           const canSkip = !inSlot.length && !isSkipped && (passed || started);
+          // Nothing logged yet: how long until it, or that its time is now
+          const when = inSlot.length || isSkipped || passed ? null : started ? (mm ? { text: tr('עוד לא נרשמה', 'Not logged yet'), warn: true } : null) : { text: mm ? untilText(nowMin, from) : tr(`בסביבות ${hhmm(slot.remindAt)}`, `Around ${hhmm(slot.remindAt)}`), warn: false };
           return (
             <OpenRow
               key={slot.id}
               first={idx === 0}
               title={inSlot.length ? `${slot.label} · ${fmt(slotKcal)}` : slot.label}
-              sub={inSlot.length ? `${at} · ${inSlot.map((m) => m.name).join(', ')}` : isSkipped ? tr('דילגת', 'Skipped') : passed ? tr('לא נרשמה', 'Not logged') : tr('בהמשך', 'Later')}
+              sub={inSlot.length ? `${at} · ${inSlot.map((m) => m.name).join(', ')}` : isSkipped ? tr('דילגת', 'Skipped') : passed ? tr('לא נרשמה', 'Not logged') : undefined}
+              badge={mm?.from != null && mm.to != null ? (started && !passed && !inSlot.length ? tr(`עכשיו · עד ${hhmm(mm.to)}`, `Now · until ${hhmm(mm.to)}`) : tr(`${hhmm(mm.from)} עד ${hhmm(mm.to)}`, `${hhmm(mm.from)} to ${hhmm(mm.to)}`)) : undefined}
+              badgeOn={!!mm && started && !passed && !inSlot.length && !isSkipped}
               dot={!inSlot.length && passed && !isSkipped}
-              note={mm ? menuNote(mm, picks[slot.id]) : undefined}
+              note={mm ? menuNote(mm, picks[slot.id]) : diet && !inSlot.length && !passed ? tr('לא בתפריט. מהתוספות החופשיות, אם רעב.', 'Not on the menu. From the free additions, if hungry.') : undefined}
               right={
-                check || canSkip || isSkipped ? (
+                check || canSkip || isSkipped || when ? (
                   <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                    {check && !isSkipped && <Text style={[T.bold, { fontSize: 12, color: check.tone === 'good' ? C.good : check.tone === 'off' ? C.warn : C.muted }]}>{check.chip}</Text>}
+                    {when ? (
+                      <Text style={[T.bold, { fontSize: 12, color: when.warn ? C.warn : C.muted }]}>{when.text}</Text>
+                    ) : (
+                      check && !isSkipped && <Text style={[T.bold, { fontSize: 12, color: check.tone === 'good' ? C.good : check.tone === 'off' ? C.warn : C.muted }]}>{check.chip}</Text>
+                    )}
                     {(canSkip || isSkipped) && (
                       <Pressable
                         hitSlop={8}
@@ -454,7 +476,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
         {swap && diet && (() => {
           const mm = menuMealOf(diet, swap)!;
           // Eaten past the plan already today: the lighter option is the one to suggest
-          const plannedSoFar = diet.meals.filter((m) => meals.some((x) => slotOf(x.time) === m.slot)).reduce((a, m) => a + optionKcal(m.options[Math.min(m.options.length - 1, picks[m.slot] ?? m.pick)]), 0);
+          const plannedSoFar = diet.meals.filter((m) => meals.some((x) => slotOfMeal(x.time) === m.slot)).reduce((a, m) => a + optionKcal(m.options[Math.min(m.options.length - 1, picks[m.slot] ?? m.pick)]), 0);
           const eatenSoFar = meals.reduce((a, m) => a + m.kcal, 0);
           const light = eatenSoFar - plannedSoFar > 150 ? lighterOption(mm, picks[swap]) : null;
           return (
@@ -510,7 +532,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
       <Sheet open={slotOpen !== null} onClose={() => setSlotOpen(null)} title={slotOpen ? SLOTS.find((x) => x.id === slotOpen)?.label : undefined}>
         {slotOpen &&
           meals
-            .filter((m) => slotOf(m.time) === slotOpen)
+            .filter((m) => slotOfMeal(m.time) === slotOpen)
             .map((m) => {
               const v = judgeInPlate(m, meals, budgets[slotOpen]);
               const plate = plates(meals).find((p) => p.includes(m))!;

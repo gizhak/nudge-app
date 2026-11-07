@@ -1,6 +1,6 @@
 import type { DietMenu, MenuMeal } from '../diet/parse';
 import { optionKcal } from '../diet/parse';
-import { fits, matchOption, swapMeals } from '../diet/match';
+import { fits, mealSlot, matchOption, swapMeals } from '../diet/match';
 import { daysBack, LIGHT_IDS, onVacation } from './vacation';
 // Pure decision logic: given the situation, which messages should the coach send?
 // No I/O here, so every rule can be tested with plain inputs.
@@ -397,7 +397,7 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       const remindAt = eveningWorkout ? plan!.start + plan!.session.minutes + 20 : slot.remindAt;
       const end = eveningWorkout || slot.to < slot.remindAt ? remindAt + 90 : Math.min(slot.to, remindAt + 90);
       if (!between(m, remindAt, end) || c.place === 'gym') continue;
-      if (meals.some((x) => slotOf(x.time) === id)) continue;
+      if (meals.some((x) => mealSlot(c.menu, x.time, meals.map((y) => y.time)) === id)) continue;
       if (c.unloggedSlots?.includes(id)) continue;
       const atOffice = c.place === 'office' && id === 'lunch';
       // With a menu: what it says for this meal today, and the water before it
@@ -435,7 +435,7 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       const mm = c.menu?.meals.find((x) => x.slot === sl);
       const opt = mm?.options.length ? mm.options[Math.min(mm.options.length - 1, c.menuPicks?.[sl] ?? mm.pick)] : undefined;
       const protein = opt ? opt.items.reduce((a, x) => a + (x.free ? 0 : x.protein), 0) : 0;
-      const next = order.slice(order.indexOf(sl) + 1).find((x) => (c.menu ? c.menu.meals.some((y) => y.slot === x) : c.prefs.mealSlots.includes(x)) && !meals.some((y) => slotOf(y.time) === x) && !skipped.includes(x));
+      const next = order.slice(order.indexOf(sl) + 1).find((x) => (c.menu ? c.menu.meals.some((y) => y.slot === x) : c.prefs.mealSlots.includes(x)) && !meals.some((y) => mealSlot(c.menu, y.time, meals.map((z) => z.time)) === x) && !skipped.includes(x));
       if (!next || !(c.menu ? protein >= 15 : sl === 'breakfast' || sl === 'lunch')) continue;
       const top = opt?.items.filter((x) => !x.free).sort((a, b) => b.protein - a.protein)[0];
       const add = top && top.protein >= 6 ? top.text.replace(/\s*[\\|/]\s*/g, ' / ') : t("ביצה או 2 כפות קוטג'", 'an egg or 2 tbsp cottage cheese');
@@ -488,7 +488,7 @@ export function evaluate(c: CoachContext): CoachMessage[] {
       const meal = plateMeal(plate);
       const age = c.now.getTime() - meal.time.getTime();
       if (age < 0 || age > 3 * 3600 * 1000) continue;
-      const menuMsg = c.menu ? menuFeedback(c, plate, meal) : null;
+      const menuMsg = c.menu ? menuFeedback(c, plate, meal, meals.map((x) => x.time)) : null;
       if (menuMsg) {
         out.push(menuMsg);
         continue;
@@ -797,9 +797,9 @@ const isFeedback = (id: string) => /^(meal|status)_\d+$/.test(id) || /^(place_|g
  * A meal against the menu: which option it is ("with salmon instead of chicken"), or that it is not
  * on the menu, with the lighter option of a later meal that keeps the day on target.
  */
-function menuFeedback(c: CoachContext, plate: MealLike[], meal: MealLike): CoachMessage | null {
+function menuFeedback(c: CoachContext, plate: MealLike[], meal: MealLike, times: Date[]): CoachMessage | null {
   const menu = c.menu!;
-  const slot = slotOf(meal.time);
+  const slot = mealSlot(menu, meal.time, times);
   const mm = menu.meals.find((x) => x.slot === slot);
   const base = { id: `meal_${meal.time.getTime()}`, meal: { name: meal.name, kcal: meal.kcal, protein: meal.protein, good: true } };
   const names = plate.map((x) => x.name);

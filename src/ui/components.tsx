@@ -300,11 +300,18 @@ export function RowsCard({ children }: { children: ReactNode }) {
 }
 
 /** One line that opens its details: a title, one line under it, a dot when something is new or missing. */
-export function OpenRow({ title, sub, dot, onPress, first, right, note }: { title: string; sub?: string; dot?: boolean; onPress: () => void; first?: boolean; right?: ReactNode; note?: string }) {
+export function OpenRow({ title, sub, dot, onPress, first, right, note, badge, badgeOn }: { title: string; sub?: string; dot?: boolean; onPress: () => void; first?: boolean; right?: ReactNode; note?: string; badge?: string; badgeOn?: boolean }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [r.line, !first && r.sep, pressed && { opacity: 0.6 }]}>
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={[T.bold, { fontSize: 15 }]}>{title}</Text>
+        {badge ? (
+          <View style={{ flexDirection: ROW, alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <Text style={[T.bold, { fontSize: 15 }]}>{title}</Text>
+            <Text style={[T.bold, r.badge, badgeOn && r.badgeOn]}>{badge}</Text>
+          </View>
+        ) : (
+          <Text style={[T.bold, { fontSize: 15 }]}>{title}</Text>
+        )}
         {sub ? (
           <View style={r.sub}>
             {dot && <View style={r.dot} />}
@@ -330,5 +337,7 @@ const r = StyleSheet.create({
   line: { flexDirection: ROW, alignItems: 'center', gap: 10, paddingVertical: 14 },
   sep: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
   sub: { flexDirection: ROW, alignItems: 'center', gap: 6 },
+  badge: { fontSize: 12, color: C.muted, backgroundColor: C.bg, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 1, overflow: 'hidden', fontVariant: ['tabular-nums'] },
+  badgeOn: { backgroundColor: C.ink, color: '#fff' },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.signal },
 });

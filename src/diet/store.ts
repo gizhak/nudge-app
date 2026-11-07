@@ -105,7 +105,7 @@ export const menuMealOf = (menu: DietMenu | null, slot: SlotId): MenuMeal | unde
 
 export { matchOption } from './match';
 export type { OptionMatch } from './match';
-import { fits, matchOption, swapMeals } from './match';
+import { fits, mealSlot, matchOption, swapMeals } from './match';
 export { swapMeals };
 
 export interface MealCheck {
@@ -179,7 +179,7 @@ export async function adoptEatenOptions(menu: DietMenu, picks: Picks, meals: { n
   let changed = false;
   const next = { ...picks };
   for (const m of menu.meals) {
-    const names = meals.filter((x) => slotOf(x.time) === m.slot).map((x) => x.name);
+    const names = meals.filter((x) => mealSlot(menu, x.time, meals.map((y) => y.time)) === m.slot).map((x) => x.name);
     if (!names.length || m.options.length < 2) continue;
     const match = matchOption(m, names);
     const cur = next[m.slot] ?? m.pick;
@@ -199,7 +199,7 @@ export async function adoptEatenOptions(menu: DietMenu, picks: Picks, meals: { n
 export function menuDayLine(menu: DietMenu, picks: Picks, meals: { name: string; time: Date; kcal: number; protein: number }[]): string {
   let on = 0;
   for (const m of menu.meals) {
-    const inSlot = meals.filter((x) => slotOf(x.time) === m.slot);
+    const inSlot = meals.filter((x) => mealSlot(menu, x.time, meals.map((y) => y.time)) === m.slot);
     if (!inSlot.length) continue;
     const c = checkMeal(m, { kcal: inSlot.reduce((a, x) => a + x.kcal, 0), protein: inSlot.reduce((a, x) => a + x.protein, 0), count: inSlot.length, names: inSlot.map((x) => x.name) }, 'past', picks[m.slot], swapMeals(menu, m.slot));
     if (c.tone === 'good') on++;
