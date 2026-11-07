@@ -32,19 +32,25 @@ export interface OptionMatch {
   swaps: string[];
   /** Every food named is in the option: "סלמון" alone is part of the meal, not off it */
   allIn: boolean;
+  /** By item: the food eaten in its place by the carb exchange ("לחם מלא" for "4 פריכיות") */
+  instead: (string | undefined)[];
 }
+
+/** Starches a dietitian trades one for another at the same amount of carbs: bread for rice cakes */
+const CARBS = new Set(['bread_light', 'bread', 'pita', 'tortilla', 'rice_cake', 'crackers', 'oats', 'cereal', 'rice', 'pasta', 'quinoa', 'buckwheat', 'bulgur', 'couscous', 'potato', 'sweet_potato', 'corn', 'x_carb']);
 
 const splitFoods = (n: string) => n.split(/\s*[+,;]\s*|\s+עם\s+|\s+ו(?=[א-ת]{2})/);
 
 /** Which option of a meal some food names fit best, item by item (any alternative counts) */
 export function matchOption(meal: MenuMeal, names: string[]): OptionMatch | null {
-  const foods = names.flatMap(splitFoods).map((n) => ({ words: new Set(wordsOf(n)), kind: parseItem(n).foodId })).filter((f) => f.words.size || f.kind);
+  const foods = names.flatMap(splitFoods).map((n) => ({ name: n.trim(), words: new Set(wordsOf(n)), kind: parseItem(n).foodId })).filter((f) => f.words.size || f.kind);
   if (!foods.length || !meal.options.length) return null;
   let best: OptionMatch | null = null;
   meal.options.forEach((o, k) => {
     const swaps: string[] = [];
     const used = new Set<number>();
-    const hit = o.items.map((it) => {
+    const instead: (string | undefined)[] = [];
+    const hit = o.items.map((it, ii) => {
       const ch = choicesOf(it);
       // The words first; the kind of food too: a salad counts for "2 סוגי ירק", rice for "פחמימה 100 גרם אורז"
       let at = -1;
@@ -67,6 +73,19 @@ export function matchOption(meal: MenuMeal, names: string[]): OptionMatch | null
           }
         });
       }
+      if (at < 0) {
+        // The carb exchange: any starch for the starch on the menu
+        const ids = [it.foodId, ...(it.alts ?? []).map((a) => a.foodId)];
+        if (ids.some((id) => id && CARBS.has(id))) {
+          const fi = foods.findIndex((f, k) => !used.has(k) && f.kind && CARBS.has(f.kind));
+          if (fi >= 0) {
+            used.add(fi);
+            instead[ii] = foods[fi].name;
+            swaps.push(foods[fi].name);
+            return true;
+          }
+        }
+      }
       if (at > 0) swaps.push(ch[at]);
       return at >= 0;
     });
@@ -74,7 +93,7 @@ export function matchOption(meal: MenuMeal, names: string[]): OptionMatch | null
     const score = hit.filter((h, i) => h && !o.items[i].free).length / counted;
     const allIn = used.size === foods.length && hit.some((h, i) => h && !o.items[i].free);
     const better = !best || score > best.score || (score === best.score && allIn && !best.allIn);
-    if (better) best = { option: k, hit, score, swaps, allIn };
+    if (better) best = { option: k, hit, score, swaps, allIn, instead };
   });
   return best;
 }

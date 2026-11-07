@@ -139,7 +139,9 @@ export function checkFood(
       const o = meal.options[match.option];
       const rows: CheckRow[] = [];
       o.items.forEach((it, i) => {
-        if (match.hit[i]) {
+        if (match.hit[i] && match.instead[i]) {
+          rows.push({ mark: '✓', text: tr(`${match.instead[i]}, במקום ${pretty(it.text)}`, `${match.instead[i]}, instead of ${pretty(it.text)}`), kcal: it.kcal });
+        } else if (match.hit[i]) {
           const swapped = [it.text, ...(it.alts ?? []).map((a) => a.text)].find((c) => foods.some((f) => f.includes(c.split(' ').slice(-1)[0]) || c.includes(f.split(' ').slice(-1)[0])));
           const isSwap = swapped && swapped !== it.text;
           rows.push({ mark: '✓', text: isSwap ? tr(`${pretty(swapped!)}, במקום ${pretty(it.text)}`, `${pretty(swapped!)}, instead of ${pretty(it.text)}`) : pretty(it.text), kcal: it.kcal });
