@@ -78,6 +78,8 @@ export function checkFood(
   ctx: { menu: DietMenu | null; picks: Partial<Record<SlotId, number>>; now: Date; eatenKcal: number; eatenProtein: number; logged?: { kcal: number; protein: number }; at?: Date },
 ): CheckResult {
   const foods = foodsOf(text);
+  // For the menu: by comma, so a drink drops with what is in it (the matcher splits the rest)
+  const parts = text.split(/\s*[+,;]\s*/).filter((x) => x.trim());
   const est = foods.map((f) => ({ f, ...estimate(f) }));
   const kcal = ctx.logged?.kcal ?? est.reduce((a, x) => a + x.kcal, 0);
   const protein = ctx.logged?.protein ?? est.reduce((a, x) => a + x.protein, 0);
@@ -87,13 +89,13 @@ export function checkFood(
   // Not this meal's food, but another meal's
   let other: MenuMeal | undefined;
   let swapped: MenuMeal | undefined;
-  const cur = meal ? matchOption(meal, foods) : null;
+  const cur = meal ? matchOption(meal, parts) : null;
   // Another meal is the better answer when this one does not fit, or fits only part of what he named
   if (ctx.menu && meal && (!fits(cur) || !cur.allIn)) {
     const partly = fits(cur);
     const best = ctx.menu.meals
       .filter((m) => m !== meal)
-      .map((m) => ({ m, x: matchOption(m, foods) }))
+      .map((m) => ({ m, x: matchOption(m, parts) }))
       .filter((b) => fits(b.x) && (!partly || b.x.allIn))
       .sort((a, b) => b.x!.score - a.x!.score)[0];
     if (best) {
@@ -133,7 +135,7 @@ export function checkFood(
   }
 
   if (meal && meal.options.length) {
-    const match = matchOption(meal, foods);
+    const match = matchOption(meal, parts);
     const mealName = meal.title.replace(/^ארוחת\s+/, '');
     if (fits(match)) {
       const o = meal.options[match.option];

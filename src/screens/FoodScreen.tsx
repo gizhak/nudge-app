@@ -1,3 +1,4 @@
+import type { MealCheck } from '../diet/store';
 import { Ionicons } from '@expo/vector-icons';
 import { firstTime } from '../ui/once';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -36,6 +37,12 @@ const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}
 const alt = (x: string) => x.replace(/\s*[\\|]\s*/g, ' / ');
 
 /** The menu meal in a line: today's option, each food with up to two of its alternatives, and what else there is */
+/** With a menu, the menu's verdict is the one that counts; a second, general one only confuses */
+function VerdictChip({ c, v }: { c: MealCheck | null; v: { good: boolean; label: string } }) {
+  const good = c ? c.tone === 'good' : v.good;
+  return <Text style={[s.chip, { color: good ? C.accent : C.signal, borderColor: good ? C.accent : C.signal }]}>{c ? c.chip : v.label}</Text>;
+}
+
 /** "בעוד שעה ו 45 ד'" up to three hours ahead, then the hour itself */
 function untilText(nowMin: number, from: number): string {
   const d = (from - nowMin + 1440) % 1440;
@@ -88,6 +95,19 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
   const [diet, setDiet] = useState<DietMenu | null>(null);
   // With a menu, a meal eaten a little after its hours still belongs to it
   const slotOfMeal = (d: Date) => mealSlot(diet, d, meals.map((x) => x.time));
+  /** The menu's verdict on one meal, as its row shows it */
+  const sheetCheck = (id: SlotId) => {
+    const mm = menuMealOf(diet, id);
+    if (!mm) return null;
+    const inSlot = meals.filter((m) => slotOfMeal(m.time) === id);
+    const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+    const slot = SLOTS.find((x) => x.id === id)!;
+    const from = mm.from ?? slot.from;
+    const to = mm.to ?? slot.to;
+    const passed = from < to ? nowMin >= to : false;
+    const started = from < to ? nowMin >= from : nowMin >= from || nowMin < to;
+    return checkMeal(mm, { kcal: inSlot.reduce((a, m) => a + m.kcal, 0), protein: inSlot.reduce((a, m) => a + m.protein, 0), count: inSlot.length, names: inSlot.map((m) => m.name) }, passed ? 'past' : started ? 'now' : 'future', picks[id], swapMeals(diet, id));
+  };
   // Today's option for each meal of the menu, and the meal whose options are open
   const [picks, setPicks] = useState<Partial<Record<SlotId, number>>>({});
   const [swap, setSwap] = useState<SlotId | null>(null);
@@ -545,7 +565,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
                     <Text style={[T.bold, { fontSize: 13, flex: 1 }]}>
                       {tr('יחד, מנה אחת:', 'Together, as one meal:')} {fmt(tot.kcal)} {tr('קלוריות · חלבון', 'calories · protein')} {fmt(tot.protein)}
                     </Text>
-                    <Text style={[s.chip, { color: v.good ? C.accent : C.signal, borderColor: v.good ? C.accent : C.signal }]}>{v.label}</Text>
+                    <VerdictChip c={slotOpen ? sheetCheck(slotOpen) : null} v={v} />
                   </View>
                 )}
                 <Pressable
@@ -566,7 +586,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
                       {m.time.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })} {tr('· חלבון', '· protein')} {fmt(m.protein)} {tr('· פחמ\'', '· carbs')} {fmt(m.carbs)} {tr('· שומן', '· fat')} {fmt(m.fat)}
                     </Text>
                     {plate.length === 1 && (
-                      <Text style={[s.chip, { color: v.good ? C.accent : C.signal, borderColor: v.good ? C.accent : C.signal }]}>{v.label}</Text>
+                      <VerdictChip c={sheetCheck(slotOfMeal(m.time))} v={v} />
                     )}
                   </View>
                 </Pressable>

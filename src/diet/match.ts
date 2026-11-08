@@ -32,18 +32,24 @@ export interface OptionMatch {
   swaps: string[];
   /** Every food named is in the option: "סלמון" alone is part of the meal, not off it */
   allIn: boolean;
-  /** By item: the food eaten in its place by the carb exchange ("לחם מלא" for "4 פריכיות") */
+  /** By item: the food eaten in its place by an exchange ("לחם מלא" for "4 פריכיות") */
   instead: (string | undefined)[];
 }
 
 /** Starches a dietitian trades one for another at the same amount of carbs: bread for rice cakes */
+/** Protein foods a dietitian trades within their kind: white cheese for cottage, turkey for chicken */
+const DAIRY = new Set(['cottage', 'white_cheese', 'labane', 'goat_yogurt', 'protein_yogurt', 'yogurt', 'egg_white']);
+const LEAN = new Set(['chicken_breast', 'chicken', 'pastrami', 'tuna', 'salmon', 'white_fish', 'beef', 'tofu', 'soy']);
+/** Drinks that go with any meal: they neither fit nor break it */
+const DRINK = /^(קפה|הפוך|אספרסו|נס|תה|מים|סודה|לאטה|קפוצ|coffee|latte|espresso|cappuccino|tea|water|soda)/i;
 const CARBS = new Set(['bread_light', 'bread', 'pita', 'tortilla', 'rice_cake', 'crackers', 'oats', 'cereal', 'rice', 'pasta', 'quinoa', 'buckwheat', 'bulgur', 'couscous', 'potato', 'sweet_potato', 'corn', 'x_carb']);
 
 const splitFoods = (n: string) => n.split(/\s*[+,;]\s*|\s+עם\s+|\s+ו(?=[א-ת]{2})/);
 
 /** Which option of a meal some food names fit best, item by item (any alternative counts) */
 export function matchOption(meal: MenuMeal, names: string[]): OptionMatch | null {
-  const foods = names.flatMap(splitFoods).map((n) => ({ name: n.trim(), words: new Set(wordsOf(n)), kind: parseItem(n).foodId })).filter((f) => f.words.size || f.kind);
+  // A drink goes whole, with what is in it: "קפה הפוך עם חלב שיבולת שועל" is not oats
+  const foods = names.flatMap((n) => n.split(/\s*[+,;]\s*/)).filter((n) => !DRINK.test(n.trim())).flatMap(splitFoods).map((n) => ({ name: n.trim(), words: new Set(wordsOf(n)), kind: parseItem(n).foodId })).filter((f) => f.words.size || f.kind);
   if (!foods.length || !meal.options.length) return null;
   let best: OptionMatch | null = null;
   meal.options.forEach((o, k) => {
@@ -74,10 +80,11 @@ export function matchOption(meal: MenuMeal, names: string[]): OptionMatch | null
         });
       }
       if (at < 0) {
-        // The carb exchange: any starch for the starch on the menu
+        // The exchanges: a starch for the starch on the menu, a dairy protein for a dairy protein, a lean one for a lean one
         const ids = [it.foodId, ...(it.alts ?? []).map((a) => a.foodId)];
-        if (ids.some((id) => id && CARBS.has(id))) {
-          const fi = foods.findIndex((f, k) => !used.has(k) && f.kind && CARBS.has(f.kind));
+        const group = [CARBS, DAIRY, LEAN].find((g) => ids.some((id) => id && g.has(id)));
+        if (group) {
+          const fi = foods.findIndex((f, k) => !used.has(k) && f.kind && group.has(f.kind));
           if (fi >= 0) {
             used.add(fi);
             instead[ii] = foods[fi].name;

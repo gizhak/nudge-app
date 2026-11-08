@@ -151,6 +151,8 @@ export function checkMeal(m: MenuMeal, eaten: { kcal: number; protein: number; c
     return { chip: what && what.length <= 18 ? tr(`בינתיים ${what}`, `So far ${what}`) : tr('בינתיים משהו קטן', 'So far something small'), tone: 'later', plan };
   }
   const over = eaten.kcal - kcal;
+  // While its hours are open, part of the meal so far is on the way, not short
+  if (state !== 'past' && fits(match) && match.score < 1 && over <= Math.max(120, kcal * 0.25)) return { chip: tr('בינתיים לפי התפריט', 'On the menu so far'), tone: 'good', plan, fits: fitsOpt };
   if (over > Math.max(120, kcal * 0.25)) return { chip: tr(`${Math.round(over)} מעל`, `${Math.round(over)} over`), tone: 'off', plan, fits: fitsOpt };
   if (protein >= 10 && eaten.protein < protein * 0.75) return { chip: tr(`חסרים ${Math.round(protein - eaten.protein)} ג' חלבון`, `${Math.round(protein - eaten.protein)} g protein missing`), tone: 'off', plan, fits: fitsOpt };
   if (state === 'past' && eaten.kcal < kcal * 0.5) return { chip: tr('פחות מהתפריט', 'Less than the menu'), tone: 'off', plan, fits: fitsOpt };
