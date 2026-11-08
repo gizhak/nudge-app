@@ -20,14 +20,15 @@ import MenuAdvisor from './MenuAdvisor';
 import DietMenuScreen from './DietMenu';
 import { DietMenu, looksLikeDiet, MenuMeal, menuTotals, optionKcal, optionProtein } from '../diet/parse';
 import { mealSlot } from '../diet/match';
-import { adoptEatenOptions, checkMeal, lighterOption, loadMenu, menuMealOf, setPick, todayPicks, swapMeals } from '../diet/store';
+import { adoptEatenOptions, checkMeal, mealLeft, lighterOption, loadMenu, menuMealOf, setPick, todayPicks, swapMeals } from '../diet/store';
 import Craving from './Craving';
 import { Sheet } from '../ui/Sheet';
 
-import { END, ROW, t as tr, LOCALE } from '../i18n';
+import { END, ROW, START, t as tr, LOCALE } from '../i18n';
 const DAY_SHORT = [tr('א', 'S'), tr('ב', 'M'), tr('ג', 'T'), tr('ד', 'W'), tr('ה', 'T'), tr('ו', 'F'), tr('ש', 'S')];
 const POLL_MS = 15_000;
 const WAIT_LIMIT_MS = 5 * 60_000;
+const mealSig = (ms: { id: string; kcal: number; name: string }[]) => ms.map((m) => `${m.id}:${Math.round(m.kcal)}:${m.name}`).join('|');
 
 // Last data shown, so switching back to this tab does not start empty and jump
 const foodCache: { meals: Meal[]; week: { date: Date; protein: number }[] } = { meals: [], week: [] };
@@ -72,7 +73,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
   const [week, setWeek] = useState<{ date: Date; protein: number }[]>(foodCache.week);
   const [loading, setLoading] = useState(false);
   // Waiting for a meal logged in Zepp to sync through Health Connect
-  const [waiting, setWaiting] = useState<{ since: number; baseline: number } | null>(null);
+  const [waiting, setWaiting] = useState<{ since: number; baseline: number; sig?: string } | null>(null);
   const [notice, setNotice] = useState<{ text: string; ok: boolean; undo?: string; undoKey?: string } | null>(null);
   const mealsRef = useRef(0);
   const [slots, setSlots] = useState<SlotId[]>(['breakfast', 'lunch', 'dinner']);
@@ -174,6 +175,14 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
       setWaiting(null);
       return;
     }
+    // A meal edited in Zepp (white cheese changed to cottage) is news too, not only a new one
+    if (waiting.sig && mealSig(meals) !== waiting.sig) {
+      const prev = new Set(waiting.sig.split('|'));
+      const changed = meals.find((m) => !prev.has(`${m.id}:${Math.round(m.kcal)}:${m.name}`));
+      setNotice({ text: changed ? tr(`עודכן: ${changed.name}, ${fmt(changed.kcal)} קלוריות`, `Updated: ${changed.name}, ${fmt(changed.kcal)} calories`) : tr('הארוחה עודכנה', 'The meal was updated'), ok: true });
+      setWaiting(null);
+      return;
+    }
     if (Date.now() - waiting.since > WAIT_LIMIT_MS) {
       setNotice({
         text: tr(`הארוחה עוד לא הגיעה מ ${app?.name ?? 'אפליקציית האוכל'}. פתח אותו לכמה שניות כדי שיסנכרן, ואז משוך למטה לרענון.`, `The meal has not arrived from ${app?.name ?? 'the food app'} yet. Open it for a few seconds so it syncs, then pull down to refresh.`),
@@ -205,7 +214,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
     setNotice(null);
     if (!app) return;
     const opened = await openApp(app.pkg);
-    if (opened) setWaiting({ since: Date.now(), baseline: mealsRef.current });
+    if (opened) setWaiting({ since: Date.now(), baseline: mealsRef.current, sig: mealSig(meals) });
     else setNotice({ text: tr(`${app.name} לא מותקן. נפתח עמוד ההתקנה שלו.`, `${app.name} is not installed. Opening its install page.`), ok: false });
   };
 
@@ -331,6 +340,8 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
           const isSkipped = skipped.includes(slot.id) && !inSlot.length;
           // Its time came and nothing was logged: he can say he skipped it
           const canSkip = !inSlot.length && !isSkipped && (passed || started);
+          // While its hours are open and what he ate fits: what is still left of it
+          const left = mm && started && !passed && !isSkipped && inSlot.length && check?.tone === 'good' ? mealLeft(mm, inSlot.map((m) => m.name), picks[slot.id]) : null;
           // Nothing logged yet: how long until it, or that its time is now
           const when = inSlot.length || isSkipped || passed ? null : started ? (mm ? { text: tr('עוד לא נרשמה', 'Not logged yet'), warn: true } : null) : { text: mm ? untilText(nowMin, from) : tr(`בסביבות ${hhmm(slot.remindAt)}`, `Around ${hhmm(slot.remindAt)}`), warn: false };
           return (
@@ -342,7 +353,17 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
               badge={mm?.from != null && mm.to != null ? (started && !passed && !inSlot.length ? tr(`עכשיו · עד ${hhmm(mm.to)}`, `Now · until ${hhmm(mm.to)}`) : tr(`${hhmm(mm.from)} עד ${hhmm(mm.to)}`, `${hhmm(mm.from)} to ${hhmm(mm.to)}`)) : undefined}
               badgeOn={!!mm && started && !passed && !inSlot.length && !isSkipped}
               dot={!inSlot.length && passed && !isSkipped}
-              note={mm ? menuNote(mm, picks[slot.id]) : diet && !inSlot.length && !passed ? tr('לא בתפריט. מהתוספות החופשיות, אם רעב.', 'Not on the menu. From the free additions, if hungry.') : undefined}
+              below={
+                left && mm?.to != null ? (
+                  <View style={s.leftBox}>
+                    <Text style={[T.base, { fontSize: 13, lineHeight: 18, textAlign: START }]}>
+                      <Text style={[T.bold, { color: C.good }]}>{tr(`עוד אפשר עד ${hhmm(mm.to)}: `, `Still to eat by ${hhmm(mm.to)}: `)}</Text>
+                      {left.short} · {tr(`בערך ${fmt(left.leftKcal)} קל'`, `about ${fmt(left.leftKcal)} kcal`)}
+                    </Text>
+                  </View>
+                ) : undefined
+              }
+              note={left ? undefined : mm ? menuNote(mm, picks[slot.id]) : diet && !inSlot.length && !passed ? tr('לא בתפריט. מהתוספות החופשיות, אם רעב.', 'Not on the menu. From the free additions, if hungry.') : undefined}
               right={
                 check || canSkip || isSkipped || when ? (
                   <View style={{ alignItems: 'flex-end', gap: 4 }}>
@@ -593,6 +614,31 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
                 </View>
               );
             })}
+        {slotOpen &&
+          (() => {
+            // What is still left of the meal, while its hours are open
+            const mm = menuMealOf(diet, slotOpen);
+            const c = sheetCheck(slotOpen);
+            if (!mm || mm.to == null || !c || c.tone !== 'good' || c.chip === tr('לפי התפריט', 'By the menu')) return null;
+            const inSlot = meals.filter((m) => slotOfMeal(m.time) === slotOpen);
+            const left = mealLeft(mm, inSlot.map((m) => m.name), picks[slotOpen]);
+            if (!left) return null;
+            return (
+              <View style={{ gap: 8, paddingTop: 14 }}>
+                <Text style={[T.bold, { fontSize: 13, color: C.muted, textAlign: START }]}>{tr(`עוד אפשר, עד ${hhmm(mm.to)}`, `Still to eat, by ${hhmm(mm.to)}`)}</Text>
+                {left.rows.map((r, i) => (
+                  <View key={i} style={{ flexDirection: ROW, gap: 8, alignItems: 'baseline' }}>
+                    <Text style={[T.bold, { width: 16, textAlign: 'center', color: r.mark === '✓' ? C.good : C.warn }]}>{r.mark}</Text>
+                    <Text style={[T.base, { flex: 1, fontSize: 14, textAlign: START }]}>{r.text}</Text>
+                    {r.mark === '+' && <Text style={[T.muted, { fontSize: 12 }]}>{fmt(r.kcal)} {tr("קל'", 'kcal')}</Text>}
+                  </View>
+                ))}
+                <Text style={[T.muted, { fontSize: 13, textAlign: START, borderTopWidth: 1, borderTopColor: C.track, borderStyle: 'dashed', paddingTop: 6 }]}>
+                  {tr(`עם מה שנשאר: בערך ${fmt(inSlot.reduce((a, m) => a + m.kcal, 0) + left.leftKcal)} קל'`, `With what is left: about ${fmt(inSlot.reduce((a, m) => a + m.kcal, 0) + left.leftKcal)} kcal`)}
+                </Text>
+              </View>
+            );
+          })()}
       </Sheet>
 
       <Sheet open={open !== null} onClose={() => setOpen(null)} title={meals.find((m) => m.id === open)?.name}>
@@ -606,7 +652,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
               <Card>
                 <View style={s.row}>
                   <Text style={[T.bold, { fontSize: 22 }]}>{fmt(m.kcal)} {tr('קלוריות', 'calories')}</Text>
-                  <Text style={[s.chip, { color: v.good ? C.accent : C.signal, borderColor: v.good ? C.accent : C.signal }]}>{v.label}</Text>
+                  <VerdictChip c={sheetCheck(slotOfMeal(m.time))} v={v} />
                 </View>
                 <Text style={[T.muted, { fontSize: 14 }]}>
                   {tr('חלבון', 'protein')} {fmt(m.protein)} {tr('· פחמ\'', '· carbs')} {fmt(m.carbs)} {tr('· שומן', '· fat')} {fmt(m.fat)}
@@ -668,4 +714,5 @@ const s = StyleSheet.create({
   meal: { gap: 3, paddingVertical: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track },
   chip: { fontFamily: FONT.bold, fontSize: 12, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 1 },
   waiting: { flexDirection: ROW, alignItems: 'center', gap: 10 },
+  leftBox: { marginTop: 6, backgroundColor: '#E6F0E9', borderRadius: 12, paddingVertical: 7, paddingHorizontal: 10 },
 });

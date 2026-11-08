@@ -300,7 +300,7 @@ export function RowsCard({ children }: { children: ReactNode }) {
 }
 
 /** One line that opens its details: a title, one line under it, a dot when something is new or missing. */
-export function OpenRow({ title, sub, dot, onPress, first, right, note, badge, badgeOn }: { title: string; sub?: string; dot?: boolean; onPress: () => void; first?: boolean; right?: ReactNode; note?: string; badge?: string; badgeOn?: boolean }) {
+export function OpenRow({ title, sub, dot, onPress, first, right, note, badge, badgeOn, below }: { title: string; sub?: string; dot?: boolean; onPress: () => void; first?: boolean; right?: ReactNode; note?: string; badge?: string; badgeOn?: boolean; below?: ReactNode }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [r.line, !first && r.sep, pressed && { opacity: 0.6 }]}>
       <View style={{ flex: 1, gap: 2 }}>
@@ -325,6 +325,7 @@ export function OpenRow({ title, sub, dot, onPress, first, right, note, badge, b
             {note}
           </Text>
         ) : null}
+        {below}
       </View>
       {right}
       <Ionicons name={CHEVRON_ON} size={16} color={C.muted} />

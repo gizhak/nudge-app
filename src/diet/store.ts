@@ -160,6 +160,49 @@ export function checkMeal(m: MenuMeal, eaten: { kcal: number; protein: number; c
   return { chip: tr('לפי התפריט', 'By the menu'), tone: 'good', plan, fits: fitsOpt };
 }
 
+export interface MealLeft {
+  /** ✓ eaten, + still to eat */
+  rows: { mark: '✓' | '+'; text: string; kcal: number }[];
+  /** "2 סוגי ירק, ביצה קשה, 4 פריכיות" */
+  short: string;
+  leftKcal: number;
+  totalKcal: number;
+  totalProtein: number;
+}
+
+const CARB_IDS = new Set(['bread_light', 'bread', 'pita', 'tortilla', 'rice_cake', 'crackers', 'oats', 'cereal', 'rice', 'pasta', 'quinoa', 'buckwheat', 'bulgur', 'couscous', 'potato', 'sweet_potato', 'corn', 'x_carb']);
+
+/**
+ * What is left of a meal while its hours are open: the option he is eating (the one his food fits, or
+ * today's pick), item by item, eaten or still to eat.
+ */
+export function mealLeft(m: MenuMeal, names: string[], pick?: number): MealLeft | null {
+  const match = names.length ? matchOption(m, names) : null;
+  const k = fits(match) ? match.option : Math.min(m.options.length - 1, pick ?? m.pick);
+  const o = m.options[k];
+  if (!o) return null;
+  const rows: MealLeft['rows'] = [];
+  o.items.forEach((it, i) => {
+    const ate = fits(match) && match.option === k && match.hit[i];
+    if (ate) rows.push({ mark: '✓', text: tr(`${match.instead[i] ?? it.text}, אכלת`, `${match.instead[i] ?? it.text}, eaten`), kcal: it.kcal });
+    else if (!it.free) {
+      const alt = it.alts?.[0]?.text;
+      const carb = [it.foodId, ...(it.alts ?? []).map((a) => a.foodId)].some((id) => id && CARB_IDS.has(id));
+      const text = alt ? tr(`${it.text}, או ${alt}`, `${it.text}, or ${alt}`) : carb ? tr(`${it.text}, או פחמימה אחרת`, `${it.text}, or another starch`) : it.text;
+      rows.push({ mark: '+', text, kcal: it.kcal });
+    }
+  });
+  const plus = rows.filter((r) => r.mark === '+');
+  if (!plus.length) return null;
+  return {
+    rows,
+    short: o.items.filter((it, i) => !it.free && !(fits(match) && match.option === k && match.hit[i])).map((it) => it.text).join(', '),
+    leftKcal: plus.reduce((a, r) => a + r.kcal, 0),
+    totalKcal: optionKcal(o),
+    totalProtein: optionProtein(o),
+  };
+}
+
 /** The lightest option of a later meal, when something off the menu took its room */
 export function lighterOption(m: MenuMeal, pick?: number): { option: number; kcal: number } | null {
   const cur = mealKcal(m, pick);
