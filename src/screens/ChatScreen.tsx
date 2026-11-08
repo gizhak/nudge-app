@@ -687,8 +687,8 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
           returnKeyType="send"
           onSubmitEditing={() => runCheck('text')}
         />
-        <Pressable onPress={() => runCheck('text')} disabled={!draft.trim() || checking} style={[s.send, (!draft.trim() || checking) && { opacity: 0.35 }]} accessibilityLabel={tr('לבדוק', 'Check')}>
-          {checking ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name="arrow-up" size={18} color="#fff" />}
+        <Pressable onPress={() => runCheck('text')} disabled={!draft.trim() || checking} style={[s.send, !draft.trim() && !checking && s.sendOff]} accessibilityLabel={tr('לבדוק', 'Check')}>
+          {checking ? <ActivityIndicator color="#fff" size="small" /> : <Text style={[T.bold, { fontSize: 14.5, color: draft.trim() ? '#fff' : '#B3ABA1' }]}>{tr('בדוק', 'Check')}</Text>}
         </Pressable>
       </View>
       <View style={[s.bottom, kb > 0 && { display: 'none' }]}>
@@ -736,7 +736,8 @@ const s = StyleSheet.create({
   ask: { flexDirection: ROW, alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 4, backgroundColor: C.card, borderRadius: 18, paddingVertical: 5, paddingHorizontal: 6 },
   askIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center' },
   askInput: { flex: 1, fontSize: 15, textAlign: START, fontFamily: T.base.fontFamily, color: C.ink, paddingVertical: 6 },
-  send: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
+  send: { height: 38, minWidth: 64, paddingHorizontal: 16, borderRadius: 19, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' },
+  sendOff: { backgroundColor: C.bg },
   pill: { fontSize: 12, fontFamily: T.bold.fontFamily, paddingVertical: 2, paddingHorizontal: 9, borderRadius: 999, overflow: 'hidden' },
   quick: { flex: 1, height: 50, borderRadius: 18, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
 });
