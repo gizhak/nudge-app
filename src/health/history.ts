@@ -1,3 +1,4 @@
+import { applyMoves } from './mealMoves';
 import { workoutsOnly } from './isWorkout';
 import { insertRecords, readRecords } from 'react-native-health-connect';
 import { sleepMinutesInWindow } from './today';
@@ -46,6 +47,9 @@ export interface Meal {
   carbs: number;
   fat: number;
   sugar?: number;
+  /** He said which meal it was: the time is that meal's, the food came at origTime */
+  moved?: import('../nutrition/meals').SlotId;
+  origTime?: Date;
 }
 
 export async function readMeals(day = new Date()): Promise<Meal[]> {
@@ -55,8 +59,8 @@ export async function readMeals(day = new Date()): Promise<Meal[]> {
   const start = isToday ? new Date(await currentEatingDayStart(now)) : startOfDay(day);
   const end = isToday ? new Date(now) : new Date(start.getTime() + DAY);
   const records = await readNutrition(start, end);
-  return records
-    .map((r: any) => ({
+  return applyMoves(
+    records.map((r: any) => ({
       id: mealId(r),
       key: mealKey(r),
       name: r.name || tr('ארוחה', 'Meal'),
@@ -67,14 +71,14 @@ export async function readMeals(day = new Date()): Promise<Meal[]> {
       fat: r.totalFat?.inGrams ?? 0,
       sugar: r.sugar?.inGrams,
     }))
-    .sort((a: Meal, b: Meal) => a.time.getTime() - b.time.getTime());
+  ).then((x) => x.sort((a: Meal, b: Meal) => a.time.getTime() - b.time.getTime()));
 }
 
 /** Every food item of the last `days` days, oldest first. */
 export async function readMealsSince(days: number, now = new Date()): Promise<Meal[]> {
   const records = await readNutrition(new Date(now.getTime() - days * DAY), now);
-  return records
-    .map((r: any) => ({
+  return applyMoves(
+    records.map((r: any) => ({
       id: mealId(r),
       key: mealKey(r),
       name: r.name || tr('ארוחה', 'Meal'),
@@ -85,7 +89,7 @@ export async function readMealsSince(days: number, now = new Date()): Promise<Me
       fat: r.totalFat?.inGrams ?? 0,
       sugar: r.sugar?.inGrams,
     }))
-    .sort((a: Meal, b: Meal) => a.time.getTime() - b.time.getTime());
+  ).then((x) => x.sort((a: Meal, b: Meal) => a.time.getTime() - b.time.getTime()));
 }
 
 /** Protein per day for the last `days` days, oldest first. */

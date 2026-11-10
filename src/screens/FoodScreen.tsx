@@ -7,6 +7,7 @@ import { openApp } from '../apps/zepp';
 import { APPS, AppInfo, foodApp } from '../setup/devices';
 import { loadProfile } from '../profile/profile';
 import { loadPrefs, loadSkipped, markSkipped } from '../coach/store';
+import { moveMeal } from '../health/mealMoves';
 import { judgeInPlate, plateMeal, plates, SlotId, SLOTS, slotBudgets, slotOf } from '../nutrition/meals';
 import { GOALS, caloriesFor } from '../config/goals';
 import { Meal, readMeals, readProteinByDay } from '../health/history';
@@ -226,6 +227,13 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
     setNotice({ text: tr(`${m.name} הוסתרה ולא נספרת יותר.`, `${m.name} is hidden and no longer counts.`), ok: true, undo: m.id, undoKey: m.key });
     load();
   };
+  /** He ate it at another meal than the time it came with */
+  const move = async (m: Meal, slot: SlotId | null) => {
+    await moveMeal(m, slot);
+    setOpen(null);
+    setNotice({ text: slot ? tr(`${m.name} הועבר ל${SLOTS.find((x) => x.id === slot)!.label}.`, `${m.name} moved to ${SLOTS.find((x) => x.id === slot)!.label.toLowerCase()}.`) : tr(`${m.name} חזר לשעה שבה נרשם.`, `${m.name} is back at the time it was logged.`), ok: true });
+    load();
+  };
   const undoHide = async (id: string, key?: string) => {
     setNotice(null);
     await unhideMeal(id, key);
@@ -349,7 +357,7 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
               key={slot.id}
               first={idx === 0}
               title={inSlot.length ? `${slot.label} · ${fmt(slotKcal)}` : slot.label}
-              sub={inSlot.length ? `${at} · ${inSlot.map((m) => m.name).join(', ')}` : isSkipped ? tr('דילגת', 'Skipped') : passed ? tr('לא נרשמה', 'Not logged') : undefined}
+              sub={inSlot.length ? `${inSlot[0].moved ? tr('הועבר', 'Moved') : at} · ${inSlot.map((m) => m.name).join(', ')}` : isSkipped ? tr('דילגת', 'Skipped') : passed ? tr('לא נרשמה', 'Not logged') : undefined}
               badge={mm?.from != null && mm.to != null ? (started && !passed && !inSlot.length ? tr(`עכשיו · עד ${hhmm(mm.to)}`, `Now · until ${hhmm(mm.to)}`) : tr(`${hhmm(mm.from)} עד ${hhmm(mm.to)}`, `${hhmm(mm.from)} to ${hhmm(mm.to)}`)) : undefined}
               badgeOn={!!mm && started && !passed && !inSlot.length && !isSkipped}
               dot={!inSlot.length && passed && !isSkipped}
@@ -665,6 +673,28 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
                 </Text>
               )}
               <Text style={[T.base, { fontSize: 15, lineHeight: 23 }]}>{v.message}</Text>
+              <View style={{ gap: 8, borderTopWidth: 1, borderTopColor: '#ECE6DD', paddingTop: 10 }}>
+                <Text style={[T.bold, { fontSize: 14, textAlign: START }]}>{tr('אכלתי את זה ב', 'I ate this at')}</Text>
+                <View style={s.chipRow}>
+                  {SLOTS.map((sl) => {
+                    const on = slotOfMeal(m.time) === sl.id;
+                    const came = (m.origTime ?? m.time).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
+                    return (
+                      <Pressable key={sl.id} onPress={() => !on && move(m, m.origTime && slotOf(m.origTime) === sl.id ? null : sl.id)} style={[s.slotChip, on && { backgroundColor: C.ink }]}>
+                        <Text style={[T.bold, { fontSize: 13, color: on ? '#fff' : C.ink }]}>
+                          {sl.label.replace(/^ארוחת\s+/, '')}
+                          {!m.moved && on ? ` · ${came}` : ''}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Text style={[T.muted, { fontSize: 12.5, lineHeight: 18, textAlign: START }]}>
+                  {m.moved
+                    ? tr(`הועבר. מ ${app?.name ?? 'האפליקציה'} זה הגיע ב ${(m.origTime ?? m.time).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}.`, `Moved. ${app?.name ?? 'The app'} sent it at ${(m.origTime ?? m.time).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}.`)
+                    : tr(`מ ${app?.name ?? 'האפליקציה'} זה הגיע עם ${m.time.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}. אם אכלת קודם, בחר את הארוחה.`, `${app?.name ?? 'The app'} sent it with ${m.time.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' })}. If you ate it earlier, pick the meal.`)}
+                </Text>
+              </View>
               <View style={s.removeBox}>
                 <Text style={[T.muted, { fontSize: 13, lineHeight: 19 }]}>
                   {tr('מחקת את הארוחה ב', 'Deleted the meal in')} {app?.name ?? tr('אפליקציית האוכל', 'the food app')} {tr('והיא עדיין כאן?', 'and it is still here?')} {app?.name ?? tr('האפליקציה', 'The app')} {tr('לא תמיד מעביר מחיקה ל Health Connect. אפשר להסתיר אותה כאן, או למחוק אותה ב Health Connect עצמו.', 'does not always pass a deletion on to Health Connect. You can hide it here, or delete it in Health Connect itself.')}
@@ -693,6 +723,7 @@ const s = StyleSheet.create({
   swapBtn: { backgroundColor: C.ink, borderRadius: 14, paddingVertical: 13 },
   moreCard: { backgroundColor: C.card, borderRadius: 20, padding: 14, gap: 8 },
   chipRow: { flexDirection: ROW, flexWrap: 'wrap', gap: 5 },
+  slotChip: { backgroundColor: C.bg, borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
   pill: { fontSize: 12.5, fontFamily: T.base.fontFamily, color: C.ink, backgroundColor: C.bg, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 10, overflow: 'hidden' },
   menuItem: { gap: 5, borderTopWidth: 1, borderTopColor: '#ECE6DD', paddingTop: 8 },
   actions: { flexDirection: ROW, gap: 10 },
