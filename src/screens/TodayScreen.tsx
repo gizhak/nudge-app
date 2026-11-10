@@ -301,7 +301,7 @@ async function readWeek(): Promise<Week> {
   const why = explainWeight(
     weightRecs.map((r: any) => ({ time: new Date(r.time).getTime(), kg: r.weight?.inKilograms, source: r.metadata?.dataOrigin })).filter((p: any) => p.kg > 0),
     lite,
-    { target: GOALS.calories, maintenance: usable ? derive(profile!).maintenance : undefined, label: sourceLabel, now },
+    { target: GOALS.calories, maintenance: usable ? derive(profile!).maintenance : undefined, label: sourceLabel, now, plannedWorkouts: profile?.slots?.length || undefined },
   );
   const days = nut.length ? nut.map((d) => d.date) : sleep.map((d) => d.date);
   return {

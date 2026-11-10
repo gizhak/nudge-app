@@ -71,7 +71,7 @@ export async function readWeightStory(days = 14): Promise<WeightStory> {
     .map((r: any) => ({ time: new Date(r.time).getTime(), kg: r.weight?.inKilograms, source: r.metadata?.dataOrigin }))
     .filter((p: any) => p.kg > 0);
   const usable = profile && profile.completed && profile.heightCm > 0 && profile.weightKg > 0;
-  const why = explainWeight(points, lite, { target: GOALS.calories, maintenance: usable ? derive(profile!).maintenance : undefined, label: sourceLabel, now });
+  const why = explainWeight(points, lite, { target: GOALS.calories, maintenance: usable ? derive(profile!).maintenance : undefined, label: sourceLabel, now, plannedWorkouts: profile?.slots?.length || undefined });
 
   // The day's number on the scale of the latest weigh-in, as the explanation measures it
   const merged = merge(points, []);

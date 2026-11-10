@@ -39,7 +39,7 @@ export default function WeightWhyCard({
   if (!story) return null;
   const { why, rows, target } = story;
   const joined = reconcile(weights);
-  const step = why ? nextStep(why.allReasons) : null;
+  const step = why ? why.action ?? nextStep(why.allReasons) : null;
   if (!why && !joined) return null;
 
   // Newest first; four days unless he asked for more, or picked an older day on the chart
@@ -48,7 +48,8 @@ export default function WeightWhyCard({
   const shown = more || olderPicked ? newest : newest.slice(0, 4);
   // The direction is said once, in the black card above; here the reason, so the two never disagree
   const title = tr('למה המשקל זז', 'Why the weight moved');
-  const lead = why?.reality ?? why?.allReasons[0] ?? joined ?? why?.headline;
+  // One sentence that says what the week means; the lists under it never repeat it
+  const lead = why?.lead ?? joined ?? why?.headline;
 
   return (
     <Card title={title}>
@@ -61,10 +62,52 @@ export default function WeightWhyCard({
       </Pressable>
       {open && (
         <>
-      {why && <Text style={[T.muted, { fontSize: 12 }]}>{tr(`ב ${why.basis}: ${why.headline}`, `Over ${why.basis}: ${why.headline}`)}</Text>}
-      {why && joined && <Text style={[T.base, s.joined]}>{joined}</Text>}
+      {why && <Text style={[T.muted, { fontSize: 12 }]}>{why.basis}</Text>}
+      {why?.week && (
+        <View style={s.avgs}>
+          <View style={s.avg}>
+            <Text style={[T.muted, { fontSize: 12 }]}>{tr('ממוצע שבוע קודם', 'Last week')}</Text>
+            <Text style={[T.bold, { fontSize: 17 }]}>{why.week.prev.toFixed(1)}</Text>
+          </View>
+          <View style={s.avg}>
+            <Text style={[T.muted, { fontSize: 12 }]}>{tr('ממוצע השבוע', 'This week')}</Text>
+            <Text style={[T.bold, { fontSize: 17, color: why.week.now - why.week.prev >= 0.3 ? C.warn : why.week.now - why.week.prev <= -0.3 ? C.good : C.ink }]}>{why.week.now.toFixed(1)}</Text>
+          </View>
+        </View>
+      )}
+      {why && joined && why.mode !== 'trend' && <Text style={[T.base, s.joined]}>{joined}</Text>}
 
-      {why && why.allReasons.length > 0 && (
+      {why?.mode === 'trend' && (
+        <View style={{ gap: 8 }}>
+          <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>{tr('מה גרם לזה, מהנתונים שלך', 'What caused it, from your data')}</Text>
+          {why.causes.map((r, i) => (
+            <View key={i} style={s.reason}>
+              <Text style={[T.bold, { fontSize: 14, color: C.warn }]}>{i + 1}</Text>
+              <Text style={[T.base, { fontSize: 14, lineHeight: 21, flex: 1 }]}>{r}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+      {why?.mode === 'down' && (why.worked.length > 0 || why.hidden.length > 0) && (
+        <View style={{ gap: 8 }}>
+          {why.worked.length > 0 && <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>{tr('מה עבד', 'What worked')}</Text>}
+          {why.worked.map((r, i) => (
+            <View key={`w${i}`} style={s.reason}>
+              <Text style={[T.bold, { fontSize: 14, color: C.good }]}>✓</Text>
+              <Text style={[T.base, { fontSize: 14, lineHeight: 21, flex: 1 }]}>{r}</Text>
+            </View>
+          ))}
+          {why.hidden.length > 0 && <Text style={[T.bold, { fontSize: 13, color: C.muted }]}>{tr('מה מסתיר', 'What hides the picture')}</Text>}
+          {why.hidden.map((r, i) => (
+            <View key={`h${i}`} style={s.reason}>
+              <Text style={[T.bold, { fontSize: 14, color: C.warn }]}>!</Text>
+              <Text style={[T.base, { fontSize: 14, lineHeight: 21, flex: 1 }]}>{r}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {why && (why.mode === 'blip' || why.mode === 'flat') && why.allReasons.length > 0 && (
         <View style={{ gap: 8 }}>
           {why.allReasons.map((r, i) => (
             <View key={i} style={s.reason}>
@@ -137,11 +180,14 @@ export default function WeightWhyCard({
       )}
 
       {step && (
-        <View style={s.step}>
-          <Text style={[T.bold, { fontSize: 12, color: C.signal }]}>{tr('לשבוע הבא', 'To next week')}</Text>
-          <Text style={[T.bold, { fontSize: 15, lineHeight: 22 }]}>{step}</Text>
+        <View style={[s.step, why?.mode === 'trend' && s.stepDark, why?.mode === 'down' && s.stepGood]}>
+          <Text style={[T.bold, { fontSize: 12, color: why?.mode === 'trend' ? '#ffffffb3' : C.signal }]}>
+            {why?.mode === 'trend' ? tr('ל 3 הימים הבאים', 'For the next 3 days') : why?.mode === 'down' ? tr('להמשך', 'Going on') : tr('לשבוע הבא', 'To next week')}
+          </Text>
+          <Text style={[T.bold, { fontSize: 15, lineHeight: 22, color: why?.mode === 'trend' ? '#fff' : C.ink }]}>{step}</Text>
         </View>
       )}
+      {why?.check && <Text style={[T.muted, { fontSize: 12.5, lineHeight: 19 }]}>{why.check}</Text>}
         </>
       )}
     </Card>
@@ -163,4 +209,8 @@ const s = StyleSheet.create({
   meals: { gap: 4, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 4, backgroundColor: C.bg, borderRadius: 10 },
   meal: { flexDirection: ROW, alignItems: 'center', gap: 8 },
   step: { gap: 2, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.track, paddingTop: 10 },
+  stepDark: { backgroundColor: C.ink, borderRadius: 14, padding: 12, borderTopWidth: 0 },
+  stepGood: { backgroundColor: '#E6F0E9', borderRadius: 14, padding: 12, borderTopWidth: 0 },
+  avgs: { flexDirection: ROW, gap: 8 },
+  avg: { flex: 1, backgroundColor: C.bg, borderRadius: 12, paddingVertical: 6, paddingHorizontal: 10 },
 });

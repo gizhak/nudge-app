@@ -41,6 +41,20 @@ export interface WeightWhy {
   reality?: string;
   /** Weigh-ins left out because they came from another scale */
   otherScales?: string;
+  /** The honest signal: this week's average against the week before */
+  week?: { now: number; prev: number };
+  /** trend: the average went up; blip: one morning jumped, the average did not; down; flat */
+  mode: 'trend' | 'blip' | 'down' | 'flat';
+  /** The card's one sentence, never repeated in the lists under it */
+  lead: string;
+  /** trend: what caused it, from his data, in numbers, biggest first */
+  causes: string[];
+  /** down: what worked, and what hides the picture */
+  worked: string[];
+  hidden: string[];
+  /** One thing for the next three days, and when it is checked */
+  action?: string;
+  check?: string;
 }
 
 const kg1 = (n: number) => tr(`${(Math.round(Math.abs(n) * 10) / 10).toFixed(1)} ק"ג`, `${(Math.round(Math.abs(n) * 10) / 10).toFixed(1)} kg`);
@@ -108,7 +122,7 @@ export function onePerDay<P extends { time: number }>(points: P[]): P[] {
 export function explainWeight(
   points: WeighPoint[],
   days: DayLite[],
-  opts: { target: number; maintenance?: number; label?: (source?: string) => string; now?: number },
+  opts: { target: number; maintenance?: number; label?: (source?: string) => string; now?: number; plannedWorkouts?: number },
 ): WeightWhy | null {
   const now = opts.now ?? Date.now();
   const label = opts.label ?? ((s?: string) => s ?? tr('לא ידוע', 'unknown'));
@@ -146,7 +160,8 @@ export function explainWeight(
 
   const reasons: string[] = [];
   let reality: string | undefined;
-  if (turned) {
+  // The turned sentence used to open the list too, and so said the headline twice; the down case below says what worked instead
+  if (turned && turn > 0) {
     reasons.push(
       turn < 0
         ? tr(`המגמה התהפכה: מיום ${dayName(peak!.time)} (${peak!.kg.toFixed(1)}) ירדת ל ${last.kg.toFixed(1)}. על השבועיים זה עדיין ${Math.abs(change) < 0.3 ? 'יציב' : change > 0 ? `עלייה של ${kg1(change)}` : `ירידה של ${kg1(change)}`}, אבל הכיוון עכשיו נכון. אם זה מים שיוצאים, זה בדיוק מה שציפינו.`, `The trend turned: from ${dayName(peak!.time)} (${peak!.kg.toFixed(1)}) you went down to ${last.kg.toFixed(1)}. Over two weeks it is still ${Math.abs(change) < 0.3 ? 'steady' : change > 0 ? `a gain of ${kg1(change)}` : `a loss of ${kg1(change)}`}, but the direction is right now. If this is water leaving, it is exactly what we expected.`)
@@ -201,8 +216,112 @@ export function explainWeight(
     if (!reasons.length) reasons.push(tr('אין סיבה ברורה בנתונים. תנודה של עד 1.5 ק"ג בין ימים היא נורמלית; הממוצע השבועי הוא מה שקובע.', 'No clear reason in the data. A swing of up to 1.5 kg between days is normal; the weekly average is what counts.'));
   }
 
+  // ---- The weekly averages, and what they say ---------------------------------------------
+  const lastDay = startOfDay(last.time);
+  const wkNow = series.filter((p) => p.time > last.time - 7 * DAY);
+  const wkPrev = series.filter((p) => p.time <= last.time - 7 * DAY && p.time > last.time - 14 * DAY);
+  const mean = (xs: WeighPoint[]) => xs.reduce((a, p) => a + p.kg, 0) / xs.length;
+  const week = wkNow.length >= 2 && wkPrev.length >= 1 ? { now: mean(wkNow), prev: mean(wkPrev) } : undefined;
+  const wd = week ? week.now - week.prev : null;
+  const prevPoint = series[series.length - 2];
+  const jump = last.kg - prevPoint.kg;
+  // Already falling from the peak: the turn is the news, not the average that still carries the high days
+  const fallingNow = turned && turn < 0;
+  const mode: WeightWhy['mode'] = wd != null && wd >= 0.3 && !fallingNow ? 'trend' : (wd != null && wd <= -0.3) || dir === 'down' ? 'down' : jump >= 0.6 || dir === 'up' ? 'blip' : 'flat';
+  const logged = (d: DayLite) => d.meals >= 2 && d.kcal >= opts.target * 0.45;
+  const win = days.filter((d) => d.day >= lastDay - 7 * DAY && d.day < lastDay).sort((a, b) => a.day - b.day);
+  const causes: string[] = [];
+  const worked: string[] = [];
+  const hidden: string[] = [];
+  let action: string | undefined;
+  let check: string | undefined;
+  let lead = headline;
+
+  if (mode === 'trend') {
+    dir = 'up';
+    // A real trend is not explained away as water
+    reality = undefined;
+    lead = tr(`הממוצע השבועי עלה ${kg1(wd!)}. זו לא תנודה, זו מגמה.`, `The weekly average went up ${kg1(wd!)}. Not a swing: a trend.`);
+    const kinds: { kind: string; text: string; weight: number }[] = [];
+    // Days over the target: the biggest two, with what they cost together
+    const over = win.filter((d) => logged(d) && d.kcal > opts.target * 1.15).sort((a, b) => b.kcal - a.kcal).slice(0, 2).sort((a, b) => a.day - b.day);
+    if (over.length) {
+      const extra = over.reduce((a, d) => a + d.kcal - opts.target, 0);
+      kinds.push({
+        kind: over.some((d) => [5, 6].includes(new Date(d.day).getDay())) ? 'weekend' : 'over',
+        weight: extra,
+        text:
+          over.length === 1
+            ? tr(`ביום ${dayName(over[0].day)} אכלת ${num(over[0].kcal)} קל', ${num(extra)} מעל היעד.`, `On ${dayName(over[0].day)} you ate ${num(over[0].kcal)} kcal, ${num(extra)} over the target.`)
+            : tr(`${dayName(over[0].day)} ו${dayName(over[1].day)}: ${num(over[0].kcal)} ו ${num(over[1].kcal)} קל'. ביחד ${num(extra)} מעל היעד.`, `${dayName(over[0].day)} and ${dayName(over[1].day)}: ${num(over[0].kcal)} and ${num(over[1].kcal)} kcal. Together ${num(extra)} over the target.`),
+      });
+    }
+    const unlogged = win.filter((d) => !logged(d)).length + Math.max(0, 7 - win.length);
+    if (unlogged >= 2) kinds.push({ kind: 'unlogged', weight: unlogged * 300, text: tr(`${unlogged} מתוך 7 ימים לא נרשמו במלואם. ימים שלא נרשמים הם בדרך כלל הכבדים.`, `${unlogged} of 7 days were not fully logged. The days that go unlogged are usually the heavy ones.`) });
+    const full = win.filter(logged);
+    const avgAte = full.length ? full.reduce((a, d) => a + d.kcal, 0) / full.length : 0;
+    if (!over.length && full.length >= 3 && avgAte > opts.target * 1.05) kinds.push({ kind: 'avg', weight: (avgAte - opts.target) * full.length, text: tr(`בממוצע ${num(avgAte)} קל' ביום, ${num(avgAte - opts.target)} מעל היעד.`, `An average of ${num(avgAte)} kcal a day, ${num(avgAte - opts.target)} over the target.`) });
+    const done = win.filter((d) => d.workout).length;
+    if (opts.plannedWorkouts && done < opts.plannedWorkouts) kinds.push({ kind: 'workouts', weight: (opts.plannedWorkouts - done) * 250, text: tr(`${done === 0 ? 'אף אימון' : done === 1 ? 'אימון אחד' : `${done} אימונים`} מתוך ${opts.plannedWorkouts} שתוכננו.`, `${done} workout${done === 1 ? '' : 's'} of ${opts.plannedWorkouts} planned.`) });
+    const shortNights = win.filter((d) => d.sleepMin != null && d.sleepMin > 60 && d.sleepMin < 6 * 60).length;
+    if (shortNights >= 3) kinds.push({ kind: 'sleep', weight: shortNights * 100, text: tr(`${shortNights} לילות מתחת ל 6 שעות שינה. עייפות מגדילה את התיאבון, בעיקר למתוק.`, `${shortNights} nights under 6 hours of sleep. Tiredness raises appetite, for sweets most of all.`) });
+    kinds.sort((a, b) => b.weight - a.weight);
+    causes.push(...kinds.slice(0, 3).map((k) => k.text));
+    if (!causes.length) causes.push(tr('הימים הרשומים בטווח היעד, אז משהו כנראה לא נרשם, או שהיעד גבוה מדי בשבילך.', 'The logged days are within the target, so something was probably not logged, or the target is too high for you.'));
+    const top = kinds[0]?.kind;
+    action =
+      top === 'weekend'
+        ? tr('בסוף השבוע הקרוב: ארוחות לפי היעד, ובארוחת הערב חצי מהפחמימה.', 'This coming weekend: meals by the target, and half the carbs at dinner.')
+        : top === 'over'
+          ? tr('לעצור כשמגיעים ליעד היומי. בא משהו מתוק? מהרשימה של "בא לי", לא מהארון.', 'Stop when you reach the daily target. Craving something sweet? From the "craving" list, not the cupboard.')
+          : top === 'avg'
+            ? tr('להוריד מנה אחת ביום: הנשנוש של הערב, או חצי מהפחמימה בארוחה הגדולה.', 'Drop one portion a day: the evening snack, or half the carbs at the big meal.')
+            : top === 'workouts'
+              ? tr('להגיע לאימון הבא בדיוק במועד שלו.', 'Make the next workout, right on its time.')
+              : top === 'sleep'
+                ? tr('ללכת לישון חצי שעה מוקדם יותר, 3 לילות ברצף.', 'Go to sleep half an hour earlier, 3 nights in a row.')
+                : tr('לרשום כל ארוחה, כולל קפה ונשנושים, 3 ימים ברצף.', 'Log every meal, coffee and snacks too, 3 days in a row.');
+    const checkDay = dayName(now + 5 * DAY);
+    const cut = opts.target - 150 >= 1500;
+    check = tr(
+      `בדיקה ביום ${checkDay}: אם הממוצע לא ירד, ${cut ? "כדאי להוריד 150 קל' מהיעד היומי" : 'נבדוק מה לא נרשם, כי היעד כבר נמוך'}.`,
+      `Check on ${checkDay}: if the average has not come down, ${cut ? 'take 150 kcal off the daily target' : 'look for what was not logged, as the target is already low'}.`,
+    );
+    // Only when both weeks went up, so one bad week does not frighten
+    if (change >= 0.3 && week) check += tr(` בקצב הזה, בעוד חודש: ${(week.now + wd! * 4.3).toFixed(1)}.`, ` At this pace, in a month: ${(week.now + wd! * 4.3).toFixed(1)}.`);
+  } else if (mode === 'down') {
+    dir = 'down';
+    lead = tr(`${headline}. הכיוון נכון.`, `${headline}. The direction is right.`);
+    const before = win.filter((d) => d.day >= lastDay - 3 * DAY);
+    // Under the target, but not starving: a very low day is not praised, it is said plainly
+    const good = before.filter((d) => logged(d) && d.kcal <= opts.target && d.kcal >= opts.target * 0.75);
+    const tooLow = before.filter((d) => logged(d) && d.kcal < opts.target * 0.75);
+    if (good.length) worked.push(tr(`${good.map((d) => dayName(d.day)).join(' ו')} מתחת ליעד: ${good.map((d) => num(d.kcal)).join(' ו ')} קל'.`, `${good.map((d) => dayName(d.day)).join(' and ')} under the target: ${good.map((d) => num(d.kcal)).join(' and ')} kcal.`));
+    const trainedDays = win.filter((d) => d.workout);
+    if (trainedDays.length === 1) worked.push(tr(`אימון ביום ${dayName(trainedDays[0].day)}.`, `A workout on ${dayName(trainedDays[0].day)}.`));
+    else if (trainedDays.length > 1) worked.push(tr(`${trainedDays.length} אימונים השבוע.`, `${trainedDays.length} workouts this week.`));
+    const gap = before.filter((d) => !logged(d));
+    if (gap.length) hidden.push(tr(`${gap.length === 1 ? `יום ${dayName(gap[0].day)} לא נרשם` : `${gap.map((d) => dayName(d.day)).join(' ו')} לא נרשמו`}. ה ${last.kg.toFixed(1)} של ${dayName(last.time)} אולי נמוך מדי, וקשה לדעת למה.`, `${gap.map((d) => dayName(d.day)).join(' and ')} not logged. ${dayName(last.time)}'s ${last.kg.toFixed(1)} may be too low, and it is hard to say why.`));
+    if (tooLow.length) hidden.push(tr(`${tooLow.map((d) => `${dayName(d.day)} ${num(d.kcal)} קל'`).join(', ')}: מעט מדי. חלק מהירידה הוא מים ויחזור, וזה בסדר. לא להוריד עוד.`, `${tooLow.map((d) => `${dayName(d.day)} ${num(d.kcal)} kcal`).join(', ')}: too little. Part of the drop is water and will come back, and that is fine. Do not cut more.`));
+    action = gap.length ? tr('לרשום הכל היום, כולל הקפה. ככה נדע אם זו ירידה אמיתית.', 'Log everything today, coffee too. That is how we know the drop is real.') : tr('להמשיך בדיוק כך.', 'Keep going exactly like this.');
+  } else if (mode === 'blip') {
+    lead = week
+      ? turned
+        ? tr(`${headline}, אבל הממוצע השבועי לא זז.`, `${headline}, but the weekly average did not move.`)
+        : tr(`עלית ${kg1(jump)} מהשקילה הקודמת, אבל הממוצע השבועי לא זז.`, `Up ${kg1(jump)} from the last weigh-in, but the weekly average did not move.`)
+      : tr(`עלית ${kg1(jump)} מהשקילה הקודמת. קפיצה של יום היא בדרך כלל מים.`, `Up ${kg1(jump)} from the last weigh-in. A one-day jump is usually water.`);
+    if (!reasons.length) {
+      const day1 = days.find((d) => d.day === lastDay - DAY);
+      if (day1 && logged(day1) && day1.kcal > opts.target * 1.15) reasons.push(tr(`אתמול ${num(day1.kcal)} קל'. פחמימות ומלח מחזיקים מים ליומיים.`, `Yesterday ${num(day1.kcal)} kcal. Carbs and salt hold water for two days.`));
+      const night = days.find((d) => d.day === lastDay);
+      if (night?.sleepMin != null && night.sleepMin > 60 && night.sleepMin < 6 * 60) reasons.push(tr(`ישנת ${Math.floor(night.sleepMin / 60)}:${String(Math.round(night.sleepMin % 60)).padStart(2, '0')} שעות.`, `You slept ${Math.floor(night.sleepMin / 60)}:${String(Math.round(night.sleepMin % 60)).padStart(2, '0')} hours.`));
+    }
+    check = tr('היום לפי היעד, והמספר יחזור תוך יומיים.', 'Today by the target, and the number comes back within two days.');
+  }
+
   const dm = (t: number) => `${new Date(t).getDate()}.${new Date(t).getMonth() + 1}`;
-  return { headline, dir, basis, values: series.map((p) => p.kg), ends: [dm(first.time), dm(last.time)], reasons: reasons.slice(0, 3), allReasons: reasons, reality, otherScales };
+  const listed = mode === 'trend' ? causes : mode === 'down' ? [...worked, ...hidden, ...reasons] : reasons;
+  return { headline, dir, basis, values: series.map((p) => p.kg), ends: [dm(first.time), dm(last.time)], reasons: listed.slice(0, 3), allReasons: listed, reality, otherScales, week, mode, lead, causes, worked, hidden, action, check };
 }
 
 /**
