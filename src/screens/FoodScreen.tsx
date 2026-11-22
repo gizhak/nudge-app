@@ -150,6 +150,8 @@ export default function FoodScreen({ sharedMenu, openCraving = 0 }: { sharedMenu
       setMeals((foodCache.meals = m));
       setWeek((foodCache.week = w));
       mealsRef.current = m.length;
+      // The food widget follows what this screen just read
+      import('../widgets/widgets').then((x) => x.pushWidgets()).catch(() => undefined);
     } finally {
       setLoading(false);
     }

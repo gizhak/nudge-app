@@ -34,5 +34,19 @@
         <action android:name="android.intent.action.BOOT_COMPLETED" />
       </intent-filter>
     </receiver>
+    <service android:name="expo.modules.nightguard.WidgetTaskService" android:exported="false" />
+    <receiver android:name="expo.modules.nightguard.NudgeWaterWidget" android:exported="false" android:label="Nudge · מים">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="expo.modules.nightguard.WIDGET_ADD_CUP" />
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/nudge_widget_water_info" />
+    </receiver>
+    <receiver android:name="expo.modules.nightguard.NudgeFoodWidget" android:exported="false" android:label="Nudge · אוכל">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/nudge_widget_food_info" />
+    </receiver>
   </application>
 </manifest>

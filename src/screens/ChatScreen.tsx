@@ -102,7 +102,14 @@ function actionOf(m: SentMessage, container = 250): { label: string; kind: 'wate
 }
 
 /** A conversation with the coach: his messages on the right, your answers on the left, today. */
-export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) => void; tick?: number }) {
+export default function ChatScreen({ onRoute, tick = 0, focusCheck = 0 }: { onRoute: (r: Route) => void; tick?: number; focusCheck?: number }) {
+  // Opened from the widget's "Check": the field is ready to type in
+  const askRef = useRef<TextInput>(null);
+  useEffect(() => {
+    if (!focusCheck) return;
+    const id = setTimeout(() => askRef.current?.focus(), 450);
+    return () => clearTimeout(id);
+  }, [focusCheck]);
   const [log, setLog] = useState<SentMessage[] | null>(null);
   const [quiet, setQuiet] = useState<Record<string, number>>({});
   const [acted, setActed] = useState<Record<string, number>>({});
@@ -679,6 +686,7 @@ export default function ChatScreen({ onRoute, tick = 0 }: { onRoute: (r: Route) 
           <Ionicons name="camera-outline" size={20} color={C.ink} />
         </Pressable>
         <TextInput
+          ref={askRef}
           value={draft}
           onChangeText={setDraft}
           placeholder={tr('מה אתה הולך לאכול?', 'What are you going to eat?')}

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/nw_root"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/nw_bg_card"
+  android:orientation="vertical"
+  android:padding="12dp">
+  <TextView android:id="@+id/nw_water_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:textColor="@color/nw_muted" android:textSize="12sp" android:textStyle="bold" android:gravity="start" android:text="Water" />
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="bottom" android:layout_marginTop="2dp">
+    <TextView android:id="@+id/nw_water_num" android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:textColor="@color/nw_ink" android:textSize="24sp" android:textStyle="bold" android:text="0" />
+    <TextView android:id="@+id/nw_water_of" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+      android:layout_marginStart="5dp" android:textColor="@color/nw_muted" android:textSize="12sp" android:maxLines="1" android:ellipsize="end" android:gravity="start" android:text="" />
+  </LinearLayout>
+  <ProgressBar android:id="@+id/nw_water_bar" style="@android:style/Widget.ProgressBar.Horizontal"
+    android:layout_width="match_parent" android:layout_height="8dp" android:layout_marginTop="6dp"
+    android:max="100" android:progress="0" android:progressDrawable="@drawable/nw_progress" />
+  <ProgressBar android:id="@+id/nw_water_bar_good" style="@android:style/Widget.ProgressBar.Horizontal" android:visibility="gone"
+    android:layout_width="match_parent" android:layout_height="8dp" android:layout_marginTop="6dp"
+    android:max="100" android:progress="100" android:progressDrawable="@drawable/nw_progress_good" />
+  <TextView android:id="@+id/nw_water_note" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:layout_marginTop="3dp" android:textColor="@color/nw_good" android:textSize="11sp" android:textStyle="bold" android:gravity="start" android:maxLines="1" android:text="" android:visibility="gone" />
+  <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+  <TextView android:id="@+id/nw_water_add" android:layout_width="match_parent" android:layout_height="40dp"
+    android:background="@drawable/nw_bg_water" android:gravity="center" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold" android:text="+" />
+</LinearLayout>

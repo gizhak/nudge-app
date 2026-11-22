@@ -29,10 +29,41 @@ class NightGuardModule : Module() {
     Name("NightGuard")
 
     // Text shared into the app from another app (for example a menu copied with Google Lens)
-    Events("onSharedText")
+    Events("onSharedText", "onWidgetOpen")
 
     OnNewIntent { intent ->
       sharedText(intent)?.let { sendEvent("onSharedText", mapOf("text" to it)) }
+      intent.getStringExtra("nudge_open")?.let {
+        intent.removeExtra("nudge_open")
+        sendEvent("onWidgetOpen", mapOf("target" to it))
+      }
+    }
+
+    // ---------- Home screen widgets ----------
+
+    /** What the widgets show, as JSON from the app; redraws them */
+    Function("setWidgetData") { json: String ->
+      WidgetPrefs.get(context).edit().putString(WidgetPrefs.DATA, json).putLong(WidgetPrefs.ADDED_AT, 0L).commit()
+      WidgetPrefs.updateAll(context)
+    }
+
+    /** Cups tapped on the water widget, for the app to write; cleared when taken */
+    Function("takeWidgetCups") {
+      WidgetPrefs.takePending(context)
+    }
+
+    /** Puts back cups the app could not write */
+    Function("returnWidgetCups") { n: Int ->
+      WidgetPrefs.addPending(context, n)
+      WidgetPrefs.updateAll(context)
+    }
+
+    /** The place a widget tap asked to open, when the app was started by it */
+    Function("takeWidgetOpen") {
+      val intent = appContext.currentActivity?.intent ?: return@Function null
+      val target = intent.getStringExtra("nudge_open")
+      if (target != null) intent.removeExtra("nudge_open")
+      target
     }
 
     Function("takeInitialSharedText") {

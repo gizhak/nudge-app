@@ -20,7 +20,8 @@ import { openApp } from './src/apps/zepp';
 import Onboarding from './src/screens/Onboarding';
 import MyFile from './src/screens/MyFile';
 import SetupWizard from './src/screens/SetupWizard';
-import { onSharedText, takeInitialSharedText } from './modules/night-guard';
+import { onSharedText, onWidgetOpen, takeInitialSharedText, takeWidgetOpen, WidgetTarget } from './modules/night-guard';
+import { syncWidgets } from './src/widgets/widgets';
 import ReadinessScreen from './src/screens/ReadinessScreen';
 import { runReadiness } from './src/setup/readiness';
 import FoodScreen from './src/screens/FoodScreen';
@@ -84,6 +85,23 @@ function AppInner({ onReady }: { onReady: () => void }) {
     const first = takeInitialSharedText();
     if (first) open(first);
     return onSharedText(open);
+  }, []);
+
+  // A tap on a home screen widget: the food screen, the check in the chat, or home
+  const [checkFocus, setCheckFocus] = useState(0);
+  useEffect(() => {
+    const go = (target: WidgetTarget) => {
+      setSettingsOpen(false);
+      setRescheduleOpen(false);
+      if (target === 'food') setTab('food');
+      else if (target === 'check') {
+        setTab('settings');
+        setCheckFocus((n) => n + 1);
+      } else setTab('today');
+    };
+    const first = takeWidgetOpen();
+    if (first) go(first);
+    return onWidgetOpen(go);
   }, []);
   /** One section of the questionnaire, opened from My File */
   const [editStep, setEditStep] = useState<number | null>(null);
@@ -224,7 +242,13 @@ function AppInner({ onReady }: { onReady: () => void }) {
         refreshUnread(true);
       });
     look();
-    const sub = AppState.addEventListener('change', (st) => st === 'active' && look());
+    // Cups tapped on the widget are written now, and the widgets catch up with today
+    syncWidgets().catch(() => undefined);
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st !== 'active') return;
+      look();
+      syncWidgets().catch(() => undefined);
+    });
     // Messages from background runs while the app is open
     const id = setInterval(() => refreshUnread(false), 30_000);
     return () => {
@@ -369,7 +393,7 @@ function AppInner({ onReady }: { onReady: () => void }) {
           {tab === 'train' && <TrainScreen openReschedule={rescheduleOpen} onEditDays={() => setEditStep(3)} openRun={runTick} />}
           {tab === 'food' && <FoodScreen sharedMenu={sharedMenu} openCraving={cravingTick} />}
           {tab === 'progress' && <ProgressScreen focusWeigh={weighTick} openCheckpoint={checkpointTick} openReport={reportTick} focusWaist={waistTick} />}
-          {tab === 'settings' && <ChatScreen onRoute={goRoute} tick={dataTick} />}
+          {tab === 'settings' && <ChatScreen onRoute={goRoute} tick={dataTick} focusCheck={checkFocus} />}
           {/* Content fades into the ground above the tab bar instead of being cut off */}
           {tab !== 'settings' && <BottomFade />}
         </View>

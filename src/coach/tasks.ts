@@ -212,6 +212,16 @@ export async function runCarEvents(): Promise<void> {
   if (events.length) await runCoach().catch(() => undefined);
 }
 
+// Started by the water widget: write the cups tapped on it, then redraw both widgets
+AppRegistry.registerHeadlessTask('NudgeWidget', () => async () => {
+  try {
+    const { syncWidgets } = await import('../widgets/widgets');
+    await syncWidgets();
+  } catch {
+    // never crash a background task
+  }
+});
+
 // Started by the native unlock listener: the first unlocks of the morning, so the coach asks for the weigh-in and the water at once
 AppRegistry.registerHeadlessTask('NudgeUnlock', () => async () => {
   try {
@@ -312,6 +322,8 @@ TaskManager.defineTask(COACH_TASK, async () => {
     if (arrived) await runCoach(arrived).catch(() => undefined);
     await confirmExits().catch(() => undefined);
     await runCoach();
+    // The widgets follow what Zepp and the watch wrote since the last run
+    await import('../widgets/widgets').then((w) => w.syncWidgets()).catch(() => undefined);
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
     return BackgroundTask.BackgroundTaskResult.Failed;

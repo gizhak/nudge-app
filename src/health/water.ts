@@ -44,6 +44,8 @@ export async function addWater(ml = CUP_ML, at = new Date()) {
   await noteAct('water', at.getTime());
   // His answer in the coach chat: "I drank 5 sips"
   await noteDrink(ml, await readWaterToday().catch(() => undefined), at);
+  // The widget shows the new total
+  import('../widgets/widgets').then((w) => w.pushWidgets()).catch(() => undefined);
 }
 
 /** Removes the last cup added from this app today. Returns false when there is nothing to undo. */
@@ -55,5 +57,6 @@ export async function undoWater(): Promise<boolean> {
   const mls = m.mls ?? m.ids.map(() => CUP_ML);
   await AsyncStorage.setItem(KEY, JSON.stringify({ day: m.day, ids: m.ids.slice(0, -1), mls: mls.slice(0, -1) }));
   await noteDrink(-(mls[mls.length - 1] ?? CUP_ML));
+  import('../widgets/widgets').then((w) => w.pushWidgets()).catch(() => undefined);
   return true;
 }

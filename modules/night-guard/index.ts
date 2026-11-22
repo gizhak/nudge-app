@@ -27,6 +27,10 @@ interface NativeNightGuard {
   getCarState(): CarState;
   takeCarEvents(): CarEvent[];
   wifiNow(scan: boolean): WifiNow;
+  setWidgetData?(json: string): void;
+  takeWidgetCups?(): number;
+  returnWidgetCups?(n: number): void;
+  takeWidgetOpen?(): string | null;
 }
 
 export interface PairedDevice {
@@ -210,4 +214,53 @@ export function reloadApp(): boolean {
     // fall through
   }
   return false;
+}
+
+// ---------- Home screen widgets ----------
+
+/** Hands the widgets what to show; they redraw at once */
+export function setWidgetData(data: object) {
+  try {
+    native?.setWidgetData?.(JSON.stringify(data));
+  } catch {
+    // an older build without widgets
+  }
+}
+
+/** Cups tapped on the water widget and not written yet; cleared when taken */
+export function takeWidgetCups(): number {
+  try {
+    return native?.takeWidgetCups?.() ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function returnWidgetCups(n: number) {
+  try {
+    if (n > 0) native?.returnWidgetCups?.(n);
+  } catch {
+    // nothing to do
+  }
+}
+
+export type WidgetTarget = 'home' | 'food' | 'check';
+
+/** Where a widget tap asked to go, when it started the app */
+export function takeWidgetOpen(): WidgetTarget | null {
+  try {
+    return (native?.takeWidgetOpen?.() as WidgetTarget | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** A widget tap while the app was already running */
+export function onWidgetOpen(cb: (target: WidgetTarget) => void): () => void {
+  try {
+    const sub = (native as any)?.addListener?.('onWidgetOpen', (e: { target: WidgetTarget }) => cb(e.target));
+    return () => sub?.remove();
+  } catch {
+    return () => undefined;
+  }
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="nw_bg">#F4F1EC</color>
+  <color name="nw_ink">#1E1B18</color>
+  <color name="nw_muted">#776F67</color>
+  <color name="nw_box">#FFFFFF</color>
+  <color name="nw_chip">#EAE4DB</color>
+  <color name="nw_on_dark">#FFFFFF</color>
+  <color name="nw_dark">#1E1B18</color>
+  <color name="nw_accent">#D9603C</color>
+  <color name="nw_water">#3D7EB8</color>
+  <color name="nw_water_track">#DCE8F3</color>
+  <color name="nw_good">#3E7A55</color>
+</resources>
