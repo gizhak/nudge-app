@@ -12,7 +12,7 @@ import { checkMeal, swapMeals } from '../diet/store';
 import { mealSlot } from '../diet/match';
 import { pickedOption } from '../diet/parse';
 import { SlotId, SLOTS, slotBudgets } from '../nutrition/meals';
-import { CUP_ML } from '../nutrition/water';
+import { CUP_ML, SIP_ML } from '../nutrition/water';
 import { loadProfile } from '../profile/profile';
 import { ZEPP_PACKAGE } from '../apps/zepp';
 import { RTL, t as tr } from '../i18n';
@@ -102,17 +102,19 @@ export function pushWidgets(): Promise<void> {
       const profile = await loadProfile().catch(() => null);
       const sit = await readSituation(now, profile?.weightKg ?? 80).catch(() => null);
       const food = await foodPart(now).catch(() => null);
+      const step = await widgetStep();
       setWidgetData({
         day: dayKey(now),
         rtl: RTL,
         zeppPackage: ZEPP_PACKAGE,
-        water: { ml: Math.round(sit?.waterMl ?? 0), targetMl: Math.round(sit?.waterTarget ?? 2500), cupMl: CUP_ML },
+        water: { ml: Math.round(sit?.waterMl ?? 0), targetMl: Math.round(sit?.waterTarget ?? 2500), cupMl: step.ml, sipMl: step.sips ? SIP_ML : 0 },
         food: food ?? {},
         text: {
           water: tr('מים', 'Water'),
           of: tr("מתוך %s ל'", 'of %s L'),
-          addCup: tr('+ כוס', '+ Cup'),
-          added: tr('נרשם, %s מ"ל', 'Logged, %s ml'),
+          addCup: step.label,
+          added: step.added,
+          sips: tr('%s לגימות', '%s sips'),
           food: tr('אוכל היום', 'Food today'),
           zepp: tr('צלם ב Zepp', 'Snap in Zepp'),
           check: tr('בדוק', 'Check'),
@@ -130,13 +132,26 @@ export function pushWidgets(): Promise<void> {
   return running;
 }
 
-/** Writes the cups tapped on the widget to Health Connect; what fails goes back to wait for the next run */
+/**
+ * What one tap on the widget adds, in his unit like the app's + button: a glass, a bottle, or five
+ * sips (one sip a tap would take forty taps a day).
+ */
+async function widgetStep(): Promise<{ ml: number; sips: boolean; label: string; added: string }> {
+  const prefs = await loadPrefs().catch(() => null);
+  const c = prefs?.waterContainer ?? 250;
+  if (c === 30) return { ml: 5 * SIP_ML, sips: true, label: tr('+ 5 לגימות', '+ 5 sips'), added: tr('נרשמו 5 לגימות', '5 sips logged') };
+  if (c === 250) return { ml: CUP_ML, sips: false, label: tr('+ כוס', '+ Glass'), added: tr('נרשמה כוס', 'A glass logged') };
+  return { ml: c, sips: false, label: tr('+ בקבוק', '+ Bottle'), added: tr(`נרשם בקבוק, ${c} מ"ל`, `A bottle logged, ${c} ml`) };
+}
+
+/** Writes the taps on the water widget to Health Connect; what fails goes back to wait for the next run */
 export async function flushWidgetCups(): Promise<number> {
   const n = takeWidgetCups();
+  const step = await widgetStep();
   let done = 0;
   for (let i = 0; i < n; i++) {
     try {
-      await addWater(CUP_ML, new Date());
+      await addWater(step.ml, new Date());
       done++;
     } catch {
       break;

@@ -85,8 +85,12 @@ class NudgeWaterWidget : AppWidgetProvider() {
       val done = ml >= target
       val v = RemoteViews(ctx.packageName, R.layout.nudge_widget_water)
       v.setTextViewText(R.id.nw_water_title, t.optString("water", "מים"))
-      v.setTextViewText(R.id.nw_water_num, String.format(Locale.US, if (ml % 1000 == 0) "%.0f" else if (ml % 100 == 0) "%.1f" else "%.2f", ml / 1000.0))
-      v.setTextViewText(R.id.nw_water_of, t.optString("of", "מתוך %s ל'").replace("%s", String.format(Locale.US, "%.1f", target / 1000.0)))
+      // Liters with one decimal, like the app; sips counted too when he drinks in sips
+      v.setTextViewText(R.id.nw_water_num, String.format(Locale.US, "%.1f", Math.round(ml / 100.0) / 10.0))
+      val sipMl = w.optInt("sipMl", 0)
+      val of = t.optString("of", "מתוך %s ל'").replace("%s", String.format(Locale.US, "%.1f", Math.round(target / 100.0) / 10.0))
+      val sipsText = if (sipMl > 0) " · " + t.optString("sips", "%s לגימות").replace("%s", Math.round(ml.toDouble() / sipMl).toString()) else ""
+      v.setTextViewText(R.id.nw_water_of, of + sipsText)
       val pct = minOf(100, ml * 100 / target)
       v.setViewVisibility(R.id.nw_water_bar, if (done) View.GONE else View.VISIBLE)
       v.setViewVisibility(R.id.nw_water_bar_good, if (done) View.VISIBLE else View.GONE)
@@ -97,7 +101,7 @@ class NudgeWaterWidget : AppWidgetProvider() {
       // "Logged, 250 ml" after a tap, until the next drawing that the app makes
       val justAdded = System.currentTimeMillis() - WidgetPrefs.get(ctx).getLong(WidgetPrefs.ADDED_AT, 0L) < 60_000L
       v.setViewVisibility(R.id.nw_water_note, if (justAdded) View.VISIBLE else View.GONE)
-      v.setTextViewText(R.id.nw_water_note, t.optString("added", "נרשם, %s מ\"ל").replace("%s", cup.toString()))
+      v.setTextViewText(R.id.nw_water_note, t.optString("added", "נרשם"))
       val add = PendingIntent.getBroadcast(ctx, 7101, Intent(ctx, NudgeWaterWidget::class.java).setAction(ADD), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
       v.setOnClickPendingIntent(R.id.nw_water_add, add)
       v.setOnClickPendingIntent(R.id.nw_root, WidgetPrefs.openApp(ctx, "home", 7102))
